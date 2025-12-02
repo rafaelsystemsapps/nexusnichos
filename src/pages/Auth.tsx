@@ -20,7 +20,7 @@ export default function Auth() {
   useEffect(() => {
     if (!authLoading && user) {
       if (role === "admin") {
-        navigate("/admin-dashboard", { replace: true });
+        navigate("/admin", { replace: true });
       } else if (role === "colaborador") {
         if (nichoId) {
           navigate(`/workspace/${nichoId}`, { replace: true });
