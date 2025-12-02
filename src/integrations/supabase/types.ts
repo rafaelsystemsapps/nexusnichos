@@ -117,6 +117,50 @@ export type Database = {
           },
         ]
       }
+      membros_time: {
+        Row: {
+          contato: string | null
+          created_at: string | null
+          especialidade: string | null
+          funcao: string
+          id: string
+          nicho_id: string
+          nome: string
+          observacoes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          contato?: string | null
+          created_at?: string | null
+          especialidade?: string | null
+          funcao: string
+          id?: string
+          nicho_id: string
+          nome: string
+          observacoes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          contato?: string | null
+          created_at?: string | null
+          especialidade?: string | null
+          funcao?: string
+          id?: string
+          nicho_id?: string
+          nome?: string
+          observacoes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membros_time_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nichos: {
         Row: {
           created_at: string | null
