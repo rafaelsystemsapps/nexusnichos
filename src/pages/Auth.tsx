@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,19 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { user, role, nichoId, loading: authLoading, signIn, signUp } = useAuth();
   const navigate = useNavigate();
+
+  // Auto-redirect logged-in users
+  useEffect(() => {
+    if (!authLoading && user && role) {
+      if (role === "admin") {
+        navigate("/admin-dashboard", { replace: true });
+      } else if (role === "colaborador" && nichoId) {
+        navigate(`/workspace/${nichoId}`, { replace: true });
+      }
+    }
+  }, [user, role, nichoId, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,12 +35,11 @@ export default function Auth() {
 
     if (error) {
       toast.error("Erro ao fazer login: " + error.message);
+      setLoading(false);
     } else {
       toast.success("Login realizado com sucesso!");
-      navigate("/");
+      // Redirect is handled by useEffect
     }
-
-    setLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -46,6 +56,18 @@ export default function Auth() {
 
     setLoading(false);
   };
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,29 +10,39 @@ import { ConteudosListTab } from "@/components/colaborador/ConteudosListTab";
 import { ContasNichoTab } from "@/components/colaborador/ContasNichoTab";
 import { TimeNichoTab } from "@/components/colaborador/TimeNichoTab";
 import { toast } from "sonner";
+import LoadingScreen from "@/components/LoadingScreen";
 
 export default function ColaboradorWorkspace() {
-  const { signOut, user } = useAuth();
+  const { signOut, user, nichoId: userNichoId } = useAuth();
+  const { nichoId } = useParams<{ nichoId: string }>();
   const [nicho, setNicho] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Validate access: colaborador can only access their assigned nicho
   useEffect(() => {
-    fetchNichoDoColaborador();
-  }, [user]);
+    if (userNichoId && nichoId && userNichoId !== nichoId) {
+      toast.error("Você não tem acesso a este nicho");
+      // Redirect will be handled by Navigate below
+    }
+  }, [userNichoId, nichoId]);
 
-  const fetchNichoDoColaborador = async () => {
-    if (!user) return;
+  useEffect(() => {
+    fetchNicho();
+  }, [nichoId]);
+
+  const fetchNicho = async () => {
+    if (!nichoId) return;
 
     try {
-      const { data: userNicho, error: nichoError } = await supabase
-        .from("user_nichos")
-        .select("nicho_id, nichos(*)")
-        .eq("user_id", user.id)
+      const { data, error } = await supabase
+        .from("nichos")
+        .select("*")
+        .eq("id", nichoId)
         .single();
 
-      if (nichoError) throw nichoError;
+      if (error) throw error;
 
-      setNicho(userNicho.nichos);
+      setNicho(data);
     } catch (error: any) {
       toast.error("Erro ao carregar nicho: " + error.message);
     } finally {
@@ -39,12 +50,13 @@ export default function ColaboradorWorkspace() {
     }
   };
 
+  // Redirect if trying to access wrong nicho
+  if (userNichoId && nichoId && userNichoId !== nichoId) {
+    return <Navigate to={`/workspace/${userNichoId}`} replace />;
+  }
+
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Carregando...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!nicho) {
@@ -85,19 +97,19 @@ export default function ColaboradorWorkspace() {
           </TabsList>
 
           <TabsContent value="calendario">
-            <CalendarioTab nichoId={nicho.id} />
+            <CalendarioTab nichoId={nichoId!} />
           </TabsContent>
 
           <TabsContent value="conteudos">
-            <ConteudosListTab nichoId={nicho.id} />
+            <ConteudosListTab nichoId={nichoId!} />
           </TabsContent>
 
           <TabsContent value="contas">
-            <ContasNichoTab nichoId={nicho.id} />
+            <ContasNichoTab nichoId={nichoId!} />
           </TabsContent>
 
           <TabsContent value="time">
-            <TimeNichoTab nichoId={nicho.id} />
+            <TimeNichoTab nichoId={nichoId!} />
           </TabsContent>
         </Tabs>
       </main>

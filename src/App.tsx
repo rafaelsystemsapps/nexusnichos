@@ -8,25 +8,28 @@ import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
 import ColaboradorWorkspace from "./pages/ColaboradorWorkspace";
 import NotFound from "./pages/NotFound";
+import LoadingScreen from "./components/LoadingScreen";
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: "admin" | "colaborador" }) {
   const { user, role, loading } = useAuth();
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  if (!user) return <Navigate to="/auth" />;
-  if (requiredRole && role !== requiredRole) return <Navigate to="/" />;
+  if (loading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/auth" replace />;
+  if (requiredRole && role !== requiredRole) return <Navigate to="/" replace />;
 
   return <>{children}</>;
 }
 
 function HomePage() {
-  const { role, loading } = useAuth();
+  const { user, role, nichoId, loading } = useAuth();
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  if (role === "admin") return <Navigate to="/admin" />;
-  if (role === "colaborador") return <Navigate to="/workspace" />;
+  if (loading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/auth" replace />;
+  if (role === "admin") return <Navigate to="/admin-dashboard" replace />;
+  if (role === "colaborador" && nichoId) return <Navigate to={`/workspace/${nichoId}`} replace />;
 
-  return <Navigate to="/auth" />;
+  // User without role or colaborador without nicho
+  return <Navigate to="/auth" replace />;
 }
 
 const queryClient = new QueryClient();
@@ -42,7 +45,7 @@ const App = () => (
             <Route path="/" element={<HomePage />} />
             <Route path="/auth" element={<Auth />} />
             <Route 
-              path="/admin" 
+              path="/admin-dashboard" 
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminDashboard />
@@ -50,7 +53,7 @@ const App = () => (
               } 
             />
             <Route 
-              path="/workspace" 
+              path="/workspace/:nichoId" 
               element={
                 <ProtectedRoute requiredRole="colaborador">
                   <ColaboradorWorkspace />
