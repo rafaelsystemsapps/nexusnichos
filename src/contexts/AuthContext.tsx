@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   role: UserRole;
+  nichoId: string | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, nome: string) => Promise<{ error: any }>;
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<UserRole>(null);
+  const [nichoId, setNichoId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -59,17 +61,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserRole = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .single();
+      // Fetch role and nicho simultaneously
+      const [roleResult, nichoResult] = await Promise.all([
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .single(),
+        supabase
+          .from("user_nichos")
+          .select("nicho_id")
+          .eq("user_id", userId)
+          .single()
+      ]);
 
-      if (error) throw error;
-      setRole(data?.role as UserRole);
+      if (roleResult.error) throw roleResult.error;
+      
+      setRole(roleResult.data?.role as UserRole);
+      setNichoId(nichoResult.data?.nicho_id || null);
     } catch (error) {
-      console.error("Error fetching role:", error);
+      console.error("Error fetching user data:", error);
       setRole(null);
+      setNichoId(null);
     } finally {
       setLoading(false);
     }
@@ -102,12 +115,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setRole(null);
+    setNichoId(null);
     navigate("/auth");
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, session, role, loading, signIn, signUp, signOut }}
+      value={{ user, session, role, nichoId, loading, signIn, signUp, signOut }}
     >
       {children}
     </AuthContext.Provider>
