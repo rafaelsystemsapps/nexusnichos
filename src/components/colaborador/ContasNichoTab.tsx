@@ -242,24 +242,32 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {contas.map((conta) => (
-              <TableRow key={conta.id} className="hover:bg-surface-hover transition-colors">
-                <TableCell className="font-medium">{conta.nome_conta}</TableCell>
-                <TableCell className="capitalize text-muted-foreground">{conta.plataforma}</TableCell>
-                <TableCell>{getStatusBadge(conta.status)}</TableCell>
-                <TableCell className="text-muted-foreground">{conta.profiles?.nome || "-"}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEditDialog(conta)}
-                    className="hover:bg-primary/20"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
+            {contas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  Nenhuma conta encontrada. Adicione a primeira!
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              contas.map((conta) => (
+                <TableRow key={conta.id} className="hover:bg-surface-hover transition-colors">
+                  <TableCell className="font-medium">{conta.nome_conta || "-"}</TableCell>
+                  <TableCell className="capitalize text-muted-foreground">{conta.plataforma || "-"}</TableCell>
+                  <TableCell>{getStatusBadge(conta.status)}</TableCell>
+                  <TableCell className="text-muted-foreground">{conta.profiles?.nome || "-"}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEditDialog(conta)}
+                      className="hover:bg-primary/20"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

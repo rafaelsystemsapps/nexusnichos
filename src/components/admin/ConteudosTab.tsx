@@ -78,26 +78,36 @@ export function ConteudosTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {conteudos.map((conteudo) => (
-              <TableRow key={conteudo.id} className="hover:bg-surface-hover transition-colors">
-                <TableCell className="font-medium">{conteudo.titulo}</TableCell>
-                <TableCell className="text-muted-foreground">{format(new Date(conteudo.data_postagem), "dd/MM/yyyy")}</TableCell>
-                <TableCell className="capitalize text-muted-foreground">{conteudo.canal}</TableCell>
-                <TableCell>{getStatusBadge(conteudo.status)}</TableCell>
-                <TableCell>{conteudo.nichos?.nome}</TableCell>
-                <TableCell className="text-muted-foreground">{conteudo.profiles?.nome || "-"}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(conteudo.id)}
-                    className="hover:bg-destructive/20"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+            {conteudos.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  Nenhum conteúdo encontrado.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              conteudos.map((conteudo) => (
+                <TableRow key={conteudo.id} className="hover:bg-surface-hover transition-colors">
+                  <TableCell className="font-medium">{conteudo.titulo || "-"}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {conteudo.data_postagem ? format(new Date(conteudo.data_postagem), "dd/MM/yyyy") : "-"}
+                  </TableCell>
+                  <TableCell className="capitalize text-muted-foreground">{conteudo.canal || "-"}</TableCell>
+                  <TableCell>{getStatusBadge(conteudo.status)}</TableCell>
+                  <TableCell>{conteudo.nichos?.nome || "-"}</TableCell>
+                  <TableCell className="text-muted-foreground">{conteudo.profiles?.nome || "-"}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(conteudo.id)}
+                      className="hover:bg-destructive/20"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

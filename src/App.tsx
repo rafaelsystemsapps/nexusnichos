@@ -29,7 +29,7 @@ function HomePage() {
   if (!user) return <Navigate to="/auth" replace />;
   
   if (role === "admin") {
-    return <Navigate to="/admin-dashboard" replace />;
+    return <Navigate to="/admin" replace />;
   }
   
   if (role === "colaborador") {
@@ -39,7 +39,6 @@ function HomePage() {
     return <Navigate to="/no-nicho" replace />;
   }
   
-  // User without role
   return <Navigate to="/no-role" replace />;
 }
 
@@ -58,7 +57,7 @@ const App = () => (
             <Route path="/no-role" element={<NoRoleAssigned />} />
             <Route path="/no-nicho" element={<NoNichoAssigned />} />
             <Route 
-              path="/admin-dashboard" 
+              path="/admin/*" 
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminDashboard />
@@ -66,7 +65,7 @@ const App = () => (
               } 
             />
             <Route 
-              path="/workspace/:nichoId" 
+              path="/workspace/:nichoId/*" 
               element={
                 <ProtectedRoute requiredRole="colaborador">
                   <ColaboradorWorkspace />

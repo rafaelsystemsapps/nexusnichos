@@ -250,26 +250,34 @@ export function UsuariosTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {usuarios.map((user) => (
-              <TableRow key={user.id} className="hover:bg-surface-hover transition-colors">
-                <TableCell className="font-medium">{user.nome}</TableCell>
-                <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                <TableCell className="capitalize">
-                  {user.user_roles?.[0]?.role || "-"}
-                </TableCell>
-                <TableCell>{user.user_nichos?.[0]?.nichos?.nome || "-"}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEditDialog(user)}
-                    className="hover:bg-primary/20"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
+            {usuarios.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  Nenhum usuário encontrado. Crie o primeiro!
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              usuarios.map((user) => (
+                <TableRow key={user.id} className="hover:bg-surface-hover transition-colors">
+                  <TableCell className="font-medium">{user.nome}</TableCell>
+                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                  <TableCell className="capitalize">
+                    {user.user_roles?.[0]?.role || "-"}
+                  </TableCell>
+                  <TableCell>{user.user_nichos?.[0]?.nichos?.nome || "-"}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEditDialog(user)}
+                      className="hover:bg-primary/20"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
