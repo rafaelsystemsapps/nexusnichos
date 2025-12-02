@@ -71,9 +71,9 @@ export function CalendarioTab({ nichoId }: CalendarioTabProps) {
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
-      <Card>
+      <Card className="border-border/50 shadow-premium">
         <CardHeader>
-          <CardTitle>Calendário</CardTitle>
+          <CardTitle className="text-xl">Calendário</CardTitle>
         </CardHeader>
         <CardContent>
           <Calendar
@@ -81,7 +81,7 @@ export function CalendarioTab({ nichoId }: CalendarioTabProps) {
             selected={selectedDate}
             onSelect={setSelectedDate}
             locale={ptBR}
-            className="rounded-md border"
+            className="rounded-md border-border/50"
           />
         </CardContent>
       </Card>
@@ -121,12 +121,12 @@ export function CalendarioTab({ nichoId }: CalendarioTabProps) {
             conteudosDodia.map((conteudo) => (
               <Card
                 key={conteudo.id}
-                className="cursor-pointer hover:bg-accent transition-colors"
+                className="cursor-pointer hover:bg-surface-hover transition-all duration-200 border-border/50 shadow-premium hover:shadow-premium-lg hover:border-primary/30"
                 onClick={() => handleConteudoClick(conteudo)}
               >
                 <CardContent className="pt-4">
                   <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold">{conteudo.titulo}</h4>
+                    <h4 className="font-semibold text-base">{conteudo.titulo}</h4>
                     {getStatusBadge(conteudo.status)}
                   </div>
                   <p className="text-sm text-muted-foreground capitalize">

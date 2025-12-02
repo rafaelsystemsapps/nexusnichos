@@ -97,9 +97,9 @@ export function NichosTab() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Gerenciar Nichos</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Gerenciar Nichos</h2>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
@@ -150,17 +150,18 @@ export function NichosTab() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {nichos.map((nicho) => (
-          <Card key={nicho.id}>
+          <Card key={nicho.id} className="border-border/50 shadow-premium hover:shadow-premium-lg transition-all duration-200 hover:border-primary/20">
             <CardHeader>
               <CardTitle className="flex justify-between items-start">
-                <span>{nicho.nome}</span>
-                <div className="flex gap-2">
+                <span className="text-lg">{nicho.nome}</span>
+                <div className="flex gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => openEditDialog(nicho)}
+                    className="h-8 w-8 hover:bg-surface-hover"
                   >
                     <Pencil className="w-4 h-4" />
                   </Button>
@@ -168,6 +169,7 @@ export function NichosTab() {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDelete(nicho.id)}
+                    className="h-8 w-8 hover:bg-destructive/20"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -176,7 +178,7 @@ export function NichosTab() {
             </CardHeader>
             <CardContent>
               {nicho.descricao && (
-                <p className="text-sm text-muted-foreground">{nicho.descricao}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{nicho.descricao}</p>
               )}
             </CardContent>
           </Card>

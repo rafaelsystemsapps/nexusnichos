@@ -128,9 +128,9 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Contas de Redes Sociais</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Contas de Redes Sociais</h2>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
@@ -230,36 +230,39 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         </Dialog>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome/Conta</TableHead>
-            <TableHead>Plataforma</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Responsável</TableHead>
-            <TableHead>Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {contas.map((conta) => (
-            <TableRow key={conta.id}>
-              <TableCell className="font-medium">{conta.nome_conta}</TableCell>
-              <TableCell className="capitalize">{conta.plataforma}</TableCell>
-              <TableCell>{getStatusBadge(conta.status)}</TableCell>
-              <TableCell>{conta.profiles?.nome || "-"}</TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => openEditDialog(conta)}
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-              </TableCell>
+      <div className="rounded-lg border border-border/50 shadow-premium overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-surface hover:bg-surface">
+              <TableHead className="font-semibold">Nome/Conta</TableHead>
+              <TableHead className="font-semibold">Plataforma</TableHead>
+              <TableHead className="font-semibold">Status</TableHead>
+              <TableHead className="font-semibold">Responsável</TableHead>
+              <TableHead className="font-semibold">Ações</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {contas.map((conta) => (
+              <TableRow key={conta.id} className="hover:bg-surface-hover transition-colors">
+                <TableCell className="font-medium">{conta.nome_conta}</TableCell>
+                <TableCell className="capitalize text-muted-foreground">{conta.plataforma}</TableCell>
+                <TableCell>{getStatusBadge(conta.status)}</TableCell>
+                <TableCell className="text-muted-foreground">{conta.profiles?.nome || "-"}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => openEditDialog(conta)}
+                    className="hover:bg-primary/20"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

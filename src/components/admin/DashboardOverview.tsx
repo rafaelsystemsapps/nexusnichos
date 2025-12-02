@@ -36,44 +36,44 @@ export function DashboardOverview() {
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total de Nichos</CardTitle>
-          <FolderKanban className="h-4 w-4 text-muted-foreground" />
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <Card className="border-border/50 shadow-premium hover:shadow-premium-lg transition-all duration-300 hover:border-primary/30">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Total de Nichos</CardTitle>
+          <FolderKanban className="h-5 w-5 text-primary" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.nichos}</div>
+          <div className="text-3xl font-bold tracking-tight">{stats.nichos}</div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Usuários</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
+      <Card className="border-border/50 shadow-premium hover:shadow-premium-lg transition-all duration-300 hover:border-primary/30">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Usuários</CardTitle>
+          <Users className="h-5 w-5 text-primary" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.usuarios}</div>
+          <div className="text-3xl font-bold tracking-tight">{stats.usuarios}</div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Conteúdos</CardTitle>
-          <FileText className="h-4 w-4 text-muted-foreground" />
+      <Card className="border-border/50 shadow-premium hover:shadow-premium-lg transition-all duration-300 hover:border-primary/30">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Conteúdos</CardTitle>
+          <FileText className="h-5 w-5 text-primary" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.conteudos}</div>
+          <div className="text-3xl font-bold tracking-tight">{stats.conteudos}</div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Contas Sociais</CardTitle>
-          <Share2 className="h-4 w-4 text-muted-foreground" />
+      <Card className="border-border/50 shadow-premium hover:shadow-premium-lg transition-all duration-300 hover:border-primary/30">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Contas Sociais</CardTitle>
+          <Share2 className="h-5 w-5 text-primary" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.contas}</div>
+          <div className="text-3xl font-bold tracking-tight">{stats.contas}</div>
         </CardContent>
       </Card>
     </div>

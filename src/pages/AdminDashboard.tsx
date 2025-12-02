@@ -17,27 +17,27 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="border-b border-border/50 bg-surface backdrop-blur-sm">
+        <div className="container mx-auto px-6 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Nexus Nichos - Admin</h1>
-            <p className="text-sm text-muted-foreground">Painel Administrativo</p>
+            <h1 className="text-2xl font-bold tracking-tight">Nexus Nichos</h1>
+            <p className="text-sm text-muted-foreground mt-1">Painel Administrativo</p>
           </div>
-          <Button variant="outline" onClick={signOut}>
+          <Button variant="outline" onClick={signOut} className="border-border/50">
             <LogOut className="w-4 h-4 mr-2" />
             Sair
           </Button>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-5 w-full max-w-2xl mb-8">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="nichos">Nichos</TabsTrigger>
-            <TabsTrigger value="usuarios">Usuários</TabsTrigger>
-            <TabsTrigger value="conteudos">Conteúdos</TabsTrigger>
-            <TabsTrigger value="contas">Contas</TabsTrigger>
+          <TabsList className="grid grid-cols-5 w-full max-w-3xl mb-8 bg-card/50 p-1">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Visão Geral</TabsTrigger>
+            <TabsTrigger value="nichos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Nichos</TabsTrigger>
+            <TabsTrigger value="usuarios" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Usuários</TabsTrigger>
+            <TabsTrigger value="conteudos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Conteúdos</TabsTrigger>
+            <TabsTrigger value="contas" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Contas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
