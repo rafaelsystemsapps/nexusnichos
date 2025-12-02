@@ -143,9 +143,9 @@ export function UsuariosTab() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Gerenciar Usuários</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Gerenciar Usuários</h2>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
@@ -238,38 +238,41 @@ export function UsuariosTab() {
         </Dialog>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Tipo</TableHead>
-            <TableHead>Nicho</TableHead>
-            <TableHead>Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {usuarios.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{user.nome}</TableCell>
-              <TableCell>{user.email}</TableCell>
-              <TableCell className="capitalize">
-                {user.user_roles?.[0]?.role || "-"}
-              </TableCell>
-              <TableCell>{user.user_nichos?.[0]?.nichos?.nome || "-"}</TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => openEditDialog(user)}
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-              </TableCell>
+      <div className="rounded-lg border border-border/50 shadow-premium overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-surface hover:bg-surface">
+              <TableHead className="font-semibold">Nome</TableHead>
+              <TableHead className="font-semibold">Email</TableHead>
+              <TableHead className="font-semibold">Tipo</TableHead>
+              <TableHead className="font-semibold">Nicho</TableHead>
+              <TableHead className="font-semibold">Ações</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {usuarios.map((user) => (
+              <TableRow key={user.id} className="hover:bg-surface-hover transition-colors">
+                <TableCell className="font-medium">{user.nome}</TableCell>
+                <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                <TableCell className="capitalize">
+                  {user.user_roles?.[0]?.role || "-"}
+                </TableCell>
+                <TableCell>{user.user_nichos?.[0]?.nichos?.nome || "-"}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => openEditDialog(user)}
+                    className="hover:bg-primary/20"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

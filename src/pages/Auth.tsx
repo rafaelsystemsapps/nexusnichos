@@ -48,17 +48,19 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold">Nexus Nichos</CardTitle>
-          <CardDescription>Sistema de gestão de conteúdo orgânico</CardDescription>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md shadow-premium-lg border-border/50">
+        <CardHeader className="text-center space-y-3 pb-8">
+          <CardTitle className="text-4xl font-bold tracking-tight">Nexus Nichos</CardTitle>
+          <CardDescription className="text-muted-foreground text-base">
+            Sistema de gestão de conteúdo orgânico
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Criar Conta</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+              <TabsTrigger value="login" className="data-[state=active]:bg-card">Login</TabsTrigger>
+              <TabsTrigger value="signup" className="data-[state=active]:bg-card">Criar Conta</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">

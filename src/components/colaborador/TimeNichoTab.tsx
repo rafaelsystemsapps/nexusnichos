@@ -43,19 +43,19 @@ export function TimeNichoTab({ nichoId }: TimeNichoTabProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Users className="w-5 h-5" />
-        <h2 className="text-2xl font-bold">Time do Nicho</h2>
+        <Users className="w-6 h-6 text-primary" />
+        <h2 className="text-3xl font-bold tracking-tight">Time do Nicho</h2>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {membros.map((membro) => (
-          <Card key={membro.id}>
+          <Card key={membro.id} className="border-border/50 shadow-premium hover:shadow-premium-lg transition-all duration-200 hover:border-primary/30">
             <CardHeader>
               <CardTitle className="flex justify-between items-start">
                 <span className="text-lg">{membro.nome}</span>
-                <Badge variant="secondary" className="capitalize">
+                <Badge variant="secondary" className="capitalize bg-primary/20 text-primary border-0">
                   {membro.role}
                 </Badge>
               </CardTitle>

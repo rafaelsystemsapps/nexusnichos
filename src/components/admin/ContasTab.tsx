@@ -64,41 +64,44 @@ export function ContasTab() {
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Todas as Contas de Redes Sociais</h2>
+    <div className="space-y-6">
+      <h2 className="text-3xl font-bold tracking-tight">Todas as Contas de Redes Sociais</h2>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome/Conta</TableHead>
-            <TableHead>Plataforma</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Nicho</TableHead>
-            <TableHead>Responsável</TableHead>
-            <TableHead>Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {contas.map((conta) => (
-            <TableRow key={conta.id}>
-              <TableCell className="font-medium">{conta.nome_conta}</TableCell>
-              <TableCell className="capitalize">{conta.plataforma}</TableCell>
-              <TableCell>{getStatusBadge(conta.status)}</TableCell>
-              <TableCell>{conta.nichos?.nome}</TableCell>
-              <TableCell>{conta.profiles?.nome || "-"}</TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(conta.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </TableCell>
+      <div className="rounded-lg border border-border/50 shadow-premium overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-surface hover:bg-surface">
+              <TableHead className="font-semibold">Nome/Conta</TableHead>
+              <TableHead className="font-semibold">Plataforma</TableHead>
+              <TableHead className="font-semibold">Status</TableHead>
+              <TableHead className="font-semibold">Nicho</TableHead>
+              <TableHead className="font-semibold">Responsável</TableHead>
+              <TableHead className="font-semibold">Ações</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {contas.map((conta) => (
+              <TableRow key={conta.id} className="hover:bg-surface-hover transition-colors">
+                <TableCell className="font-medium">{conta.nome_conta}</TableCell>
+                <TableCell className="capitalize text-muted-foreground">{conta.plataforma}</TableCell>
+                <TableCell>{getStatusBadge(conta.status)}</TableCell>
+                <TableCell>{conta.nichos?.nome}</TableCell>
+                <TableCell className="text-muted-foreground">{conta.profiles?.nome || "-"}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(conta.id)}
+                    className="hover:bg-destructive/20"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

@@ -60,28 +60,28 @@ export default function ColaboradorWorkspace() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="border-b border-border/50 bg-surface backdrop-blur-sm">
+        <div className="container mx-auto px-6 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Nexus Nichos</h1>
-            <p className="text-sm text-muted-foreground">
-              Workspace: <span className="font-semibold">{nicho.nome}</span>
+            <h1 className="text-2xl font-bold tracking-tight">Nexus Nichos</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Workspace: <span className="font-semibold text-primary">{nicho.nome}</span>
             </p>
           </div>
-          <Button variant="outline" onClick={signOut}>
+          <Button variant="outline" onClick={signOut} className="border-border/50">
             <LogOut className="w-4 h-4 mr-2" />
             Sair
           </Button>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-6 py-8">
         <Tabs defaultValue="calendario">
-          <TabsList className="grid grid-cols-4 w-full max-w-2xl mb-8">
-            <TabsTrigger value="calendario">Calendário</TabsTrigger>
-            <TabsTrigger value="conteudos">Conteúdos</TabsTrigger>
-            <TabsTrigger value="contas">Contas</TabsTrigger>
-            <TabsTrigger value="time">Time</TabsTrigger>
+          <TabsList className="grid grid-cols-4 w-full max-w-2xl mb-8 bg-card/50 p-1">
+            <TabsTrigger value="calendario" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Calendário</TabsTrigger>
+            <TabsTrigger value="conteudos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Conteúdos</TabsTrigger>
+            <TabsTrigger value="contas" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Contas</TabsTrigger>
+            <TabsTrigger value="time" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Time</TabsTrigger>
           </TabsList>
 
           <TabsContent value="calendario">
