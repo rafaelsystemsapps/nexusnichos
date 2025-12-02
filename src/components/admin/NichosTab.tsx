@@ -151,38 +151,44 @@ export function NichosTab() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {nichos.map((nicho) => (
-          <Card key={nicho.id} className="border-border/50 shadow-premium hover:shadow-premium-lg transition-all duration-200 hover:border-primary/20">
-            <CardHeader>
-              <CardTitle className="flex justify-between items-start">
-                <span className="text-lg">{nicho.nome}</span>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEditDialog(nicho)}
-                    className="h-8 w-8 hover:bg-surface-hover"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(nicho.id)}
-                    className="h-8 w-8 hover:bg-destructive/20"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {nicho.descricao && (
-                <p className="text-sm text-muted-foreground leading-relaxed">{nicho.descricao}</p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+        {nichos.length === 0 ? (
+          <p className="text-muted-foreground col-span-full text-center py-8">
+            Nenhum nicho encontrado. Crie o primeiro!
+          </p>
+        ) : (
+          nichos.map((nicho) => (
+            <Card key={nicho.id} className="border-border/50 shadow-premium hover:shadow-premium-lg transition-all duration-200 hover:border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex justify-between items-start">
+                  <span className="text-lg">{nicho.nome}</span>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEditDialog(nicho)}
+                      className="h-8 w-8 hover:bg-surface-hover"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(nicho.id)}
+                      className="h-8 w-8 hover:bg-destructive/20"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {nicho.descricao && (
+                  <p className="text-sm text-muted-foreground leading-relaxed">{nicho.descricao}</p>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
