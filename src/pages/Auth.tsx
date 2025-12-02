@@ -18,11 +18,17 @@ export default function Auth() {
 
   // Auto-redirect logged-in users
   useEffect(() => {
-    if (!authLoading && user && role) {
+    if (!authLoading && user) {
       if (role === "admin") {
         navigate("/admin-dashboard", { replace: true });
-      } else if (role === "colaborador" && nichoId) {
-        navigate(`/workspace/${nichoId}`, { replace: true });
+      } else if (role === "colaborador") {
+        if (nichoId) {
+          navigate(`/workspace/${nichoId}`, { replace: true });
+        } else {
+          toast.error("Você ainda não foi atribuído a um nicho. Contate o administrador.");
+        }
+      } else if (role === null) {
+        toast.error("Sua conta ainda não foi configurada. Contate o administrador.");
       }
     }
   }, [user, role, nichoId, authLoading, navigate]);
@@ -38,6 +44,7 @@ export default function Auth() {
       setLoading(false);
     } else {
       toast.success("Login realizado com sucesso!");
+      setLoading(false);
       // Redirect is handled by useEffect
     }
   };
