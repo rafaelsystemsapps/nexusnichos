@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      biblioteca_nicho: {
+        Row: {
+          categoria: string
+          conteudo: string
+          created_at: string
+          id: string
+          nicho_id: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          conteudo: string
+          created_at?: string
+          id?: string
+          nicho_id: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          conteudo?: string
+          created_at?: string
+          id?: string
+          nicho_id?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biblioteca_nicho_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contas_redes_sociais: {
         Row: {
           created_at: string | null
@@ -57,6 +95,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "contas_redes_sociais_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conteudo_bruto: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          nicho_id: string
+          responsavel_id: string | null
+          tipo: string
+          titulo: string | null
+          updated_at: string
+          url_arquivo: string | null
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nicho_id: string
+          responsavel_id?: string | null
+          tipo: string
+          titulo?: string | null
+          updated_at?: string
+          url_arquivo?: string | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nicho_id?: string
+          responsavel_id?: string | null
+          tipo?: string
+          titulo?: string | null
+          updated_at?: string
+          url_arquivo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conteudo_bruto_nicho_id_fkey"
             columns: ["nicho_id"]
             isOneToOne: false
             referencedRelation: "nichos"
@@ -217,6 +299,50 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      subtarefas_conteudo: {
+        Row: {
+          concluida: boolean
+          conteudo_id: string
+          created_at: string
+          id: string
+          observacoes: string | null
+          responsavel_id: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          concluida?: boolean
+          conteudo_id: string
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          responsavel_id?: string | null
+          tipo: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          concluida?: boolean
+          conteudo_id?: string
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          responsavel_id?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subtarefas_conteudo_conteudo_id_fkey"
+            columns: ["conteudo_id"]
+            isOneToOne: false
+            referencedRelation: "conteudos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_nichos: {
         Row: {

@@ -9,6 +9,8 @@ import {
   LogOut,
   LayoutDashboard,
   ChevronLeft,
+  Lightbulb,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -41,9 +43,12 @@ export function AppSidebar({ nichoId, nichoNome }: AppSidebarProps) {
         { title: "Contas", href: "/admin/contas", icon: Share2 },
       ]
     : [
-        { title: "Calendário", href: `/workspace/${nichoId}`, icon: Calendar },
-        { title: "Conteúdos", href: `/workspace/${nichoId}/conteudos`, icon: FileText },
+        { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard },
+        { title: "Ideias", href: `/workspace/${nichoId}/ideias`, icon: Lightbulb },
+        { title: "Calendário", href: `/workspace/${nichoId}/calendario`, icon: Calendar },
+        { title: "Pipeline", href: `/workspace/${nichoId}/conteudos`, icon: FileText },
         { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2 },
+        { title: "Biblioteca", href: `/workspace/${nichoId}/biblioteca`, icon: BookOpen },
         { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users },
       ];
 

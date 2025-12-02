@@ -186,9 +186,9 @@ export function TimeNichoTab({ nichoId }: TimeNichoTabProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Users className="w-6 h-6 text-primary" />
-          <h2 className="text-3xl font-bold tracking-tight">Time do Nicho</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Time</h2>
+          <p className="text-sm text-muted-foreground">Membros organizacionais (sem login no sistema)</p>
         </div>
         <Button onClick={handleOpenCreate} className="gap-2">
           <Plus className="w-4 h-4" />
