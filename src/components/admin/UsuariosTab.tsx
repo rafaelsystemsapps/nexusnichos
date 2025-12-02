@@ -29,18 +29,46 @@ export function UsuariosTab() {
 
   const fetchUsuarios = async () => {
     try {
-      const { data: profiles, error } = await supabase
+      // Buscar profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select(`
-          *,
-          user_roles(role),
-          user_nichos(nicho_id, nichos(nome))
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setUsuarios(profiles || []);
+      if (profilesError) throw profilesError;
+
+      // Buscar roles separadamente
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id, role");
+
+      if (rolesError) throw rolesError;
+
+      // Buscar nichos dos usuários separadamente
+      const { data: userNichos, error: nichosError } = await supabase
+        .from("user_nichos")
+        .select("user_id, nicho_id");
+
+      if (nichosError) throw nichosError;
+
+      // Buscar nomes dos nichos
+      const { data: nichosData } = await supabase
+        .from("nichos")
+        .select("id, nome");
+
+      // Combinar dados
+      const combinedUsers = profiles?.map(profile => ({
+        ...profile,
+        user_roles: roles?.filter(r => r.user_id === profile.id) || [],
+        user_nichos: userNichos?.filter(n => n.user_id === profile.id).map(un => ({
+          ...un,
+          nichos: nichosData?.find(n => n.id === un.nicho_id) || null
+        })) || [],
+      })) || [];
+
+      setUsuarios(combinedUsers);
     } catch (error: any) {
+      console.error("Erro ao carregar usuários:", error);
       toast.error("Erro ao carregar usuários");
     }
   };
