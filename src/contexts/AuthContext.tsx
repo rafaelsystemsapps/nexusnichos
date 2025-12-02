@@ -67,17 +67,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .from("user_roles")
           .select("role")
           .eq("user_id", userId)
-          .single(),
+          .maybeSingle(),
         supabase
           .from("user_nichos")
           .select("nicho_id")
           .eq("user_id", userId)
-          .single()
+          .maybeSingle()
       ]);
 
-      if (roleResult.error) throw roleResult.error;
-      
-      setRole(roleResult.data?.role as UserRole);
+      setRole(roleResult.data?.role as UserRole || null);
       setNichoId(nichoResult.data?.nicho_id || null);
     } catch (error) {
       console.error("Error fetching user data:", error);

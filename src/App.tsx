@@ -9,6 +9,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ColaboradorWorkspace from "./pages/ColaboradorWorkspace";
 import NotFound from "./pages/NotFound";
 import LoadingScreen from "./components/LoadingScreen";
+import NoRoleAssigned from "./components/NoRoleAssigned";
+import NoNichoAssigned from "./components/NoNichoAssigned";
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: "admin" | "colaborador" }) {
   const { user, role, loading } = useAuth();
@@ -25,11 +27,20 @@ function HomePage() {
 
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/auth" replace />;
-  if (role === "admin") return <Navigate to="/admin-dashboard" replace />;
-  if (role === "colaborador" && nichoId) return <Navigate to={`/workspace/${nichoId}`} replace />;
-
-  // User without role or colaborador without nicho
-  return <Navigate to="/auth" replace />;
+  
+  if (role === "admin") {
+    return <Navigate to="/admin-dashboard" replace />;
+  }
+  
+  if (role === "colaborador") {
+    if (nichoId) {
+      return <Navigate to={`/workspace/${nichoId}`} replace />;
+    }
+    return <Navigate to="/no-nicho" replace />;
+  }
+  
+  // User without role
+  return <Navigate to="/no-role" replace />;
 }
 
 const queryClient = new QueryClient();
@@ -44,6 +55,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/no-role" element={<NoRoleAssigned />} />
+            <Route path="/no-nicho" element={<NoNichoAssigned />} />
             <Route 
               path="/admin-dashboard" 
               element={
