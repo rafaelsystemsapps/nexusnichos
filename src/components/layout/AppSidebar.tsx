@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   Lightbulb,
   BookOpen,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ export function AppSidebar({ nichoId, nichoNome }: AppSidebarProps) {
         { title: "Ideias", href: `/workspace/${nichoId}/ideias`, icon: Lightbulb },
         { title: "Calendário", href: `/workspace/${nichoId}/calendario`, icon: Calendar },
         { title: "Pipeline", href: `/workspace/${nichoId}/conteudos`, icon: FileText },
+        { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: ClipboardList },
         { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2 },
         { title: "Biblioteca", href: `/workspace/${nichoId}/biblioteca`, icon: BookOpen },
         { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users },

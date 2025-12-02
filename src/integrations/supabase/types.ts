@@ -300,6 +300,50 @@ export type Database = {
         }
         Relationships: []
       }
+      semana_logistica: {
+        Row: {
+          ano: number
+          created_at: string
+          id: string
+          nicho_id: string
+          semana_fim: string
+          semana_inicio: string
+          semana_numero: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          id?: string
+          nicho_id: string
+          semana_fim: string
+          semana_inicio: string
+          semana_numero: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          id?: string
+          nicho_id?: string
+          semana_fim?: string
+          semana_inicio?: string
+          semana_numero?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "semana_logistica_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subtarefas_conteudo: {
         Row: {
           concluida: boolean
@@ -340,6 +384,105 @@ export type Database = {
             columns: ["conteudo_id"]
             isOneToOne: false
             referencedRelation: "conteudos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefa_diaria: {
+        Row: {
+          created_at: string
+          data: string
+          dia_semana: number
+          id: string
+          responsavel_id: string | null
+          semana_id: string
+          status: Database["public"]["Enums"]["status_tarefa"]
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          dia_semana: number
+          id?: string
+          responsavel_id?: string | null
+          semana_id: string
+          status?: Database["public"]["Enums"]["status_tarefa"]
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          dia_semana?: number
+          id?: string
+          responsavel_id?: string | null
+          semana_id?: string
+          status?: Database["public"]["Enums"]["status_tarefa"]
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefa_diaria_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefa_diaria_semana_id_fkey"
+            columns: ["semana_id"]
+            isOneToOne: false
+            referencedRelation: "semana_logistica"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefa_diaria_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "tarefa_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefa_templates: {
+        Row: {
+          ativa: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nicho_id: string
+          ordem: number
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nicho_id: string
+          ordem?: number
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nicho_id?: string
+          ordem?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefa_templates_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
             referencedColumns: ["id"]
           },
         ]
@@ -420,6 +563,7 @@ export type Database = {
         | "outros"
       status_conta: "ativa" | "pausada" | "banida" | "limitada"
       status_conteudo: "planejado" | "em_producao" | "publicado"
+      status_tarefa: "pendente" | "em_andamento" | "concluida" | "nao_concluida"
       tipo_midia: "video" | "imagem" | "carrossel" | "texto"
     }
     CompositeTypes: {
@@ -560,6 +704,7 @@ export const Constants = {
       ],
       status_conta: ["ativa", "pausada", "banida", "limitada"],
       status_conteudo: ["planejado", "em_producao", "publicado"],
+      status_tarefa: ["pendente", "em_andamento", "concluida", "nao_concluida"],
       tipo_midia: ["video", "imagem", "carrossel", "texto"],
     },
   },
