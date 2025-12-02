@@ -10,6 +10,7 @@ import { ConteudosListTab } from "@/components/colaborador/ConteudosListTab";
 import { ContasNichoTab } from "@/components/colaborador/ContasNichoTab";
 import { BibliotecaNichoTab } from "@/components/colaborador/BibliotecaNichoTab";
 import { TimeNichoTab } from "@/components/colaborador/TimeNichoTab";
+import { LogisticaSemanalTab } from "@/components/colaborador/LogisticaSemanalTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
 
@@ -74,6 +75,7 @@ export default function ColaboradorWorkspace() {
     if (subPath === "contas") return "Contas do Nicho";
     if (subPath === "biblioteca") return "Biblioteca do Nicho";
     if (subPath === "time") return "Time";
+    if (subPath === "logistica") return "Logística Semanal";
     return "Workspace";
   };
 
@@ -98,6 +100,9 @@ export default function ColaboradorWorkspace() {
     }
     if (subPath === "time") {
       return <TimeNichoTab nichoId={nichoId!} />;
+    }
+    if (subPath === "logistica") {
+      return <LogisticaSemanalTab nichoId={nichoId!} />;
     }
     return <DashboardNichoTab nichoId={nichoId!} />;
   };
