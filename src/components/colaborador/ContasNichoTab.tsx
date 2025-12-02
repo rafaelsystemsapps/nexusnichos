@@ -3,22 +3,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Instagram, Youtube, Twitter } from "lucide-react";
 import { toast } from "sonner";
 
 interface ContasNichoTabProps {
   nichoId: string;
 }
 
+const plataformaIcons: Record<string, React.ReactNode> = {
+  instagram: <Instagram className="h-5 w-5" />,
+  youtube: <Youtube className="h-5 w-5" />,
+  twitter: <Twitter className="h-5 w-5" />,
+};
+
 export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const { user } = useAuth();
   const [contas, setContas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingConta, setEditingConta] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -27,7 +34,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     url_conta: "",
     status: "ativa",
     observacoes: "",
-    data_criacao_conta: "",
   });
 
   useEffect(() => {
@@ -38,7 +44,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     try {
       const { data, error } = await supabase
         .from("contas_redes_sociais")
-        .select("*, profiles:responsavel_id(nome)")
+        .select("*")
         .eq("nicho_id", nichoId)
         .order("created_at", { ascending: false });
 
@@ -46,6 +52,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       setContas(data || []);
     } catch (error: any) {
       toast.error("Erro ao carregar contas");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,7 +67,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         url_conta: formData.url_conta || null,
         status: formData.status as any,
         observacoes: formData.observacoes || null,
-        data_criacao_conta: formData.data_criacao_conta || null,
         nicho_id: nichoId,
         responsavel_id: user?.id || null,
       };
@@ -94,7 +101,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       url_conta: "",
       status: "ativa",
       observacoes: "",
-      data_criacao_conta: "",
     });
     setEditingConta(null);
   };
@@ -107,35 +113,42 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       url_conta: conta.url_conta || "",
       status: conta.status,
       observacoes: conta.observacoes || "",
-      data_criacao_conta: conta.data_criacao_conta || "",
     });
     setDialogOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: any = {
-      ativa: "default",
-      pausada: "secondary",
-      banida: "destructive",
-      limitada: "outline",
+    const config: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
+      ativa: { variant: "default", label: "Ativa" },
+      pausada: { variant: "secondary", label: "Pausada" },
+      banida: { variant: "destructive", label: "Banida" },
+      limitada: { variant: "outline", label: "Limitada" },
     };
 
-    return (
-      <Badge variant={variants[status] || "default"} className="capitalize">
-        {status}
-      </Badge>
-    );
+    const { variant, label } = config[status] || { variant: "default", label: status };
+    return <Badge variant={variant}>{label}</Badge>;
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold tracking-tight">Contas de Redes Sociais</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Contas do Nicho</h2>
+          <p className="text-sm text-muted-foreground">Gerencie as contas de redes sociais</p>
+        </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
               <Plus className="w-4 h-4 mr-2" />
-              Adicionar Conta
+              Nova Conta
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -167,21 +180,12 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
               </div>
 
               <div>
-                <Label>Nome da Conta *</Label>
+                <Label>@ da Conta *</Label>
                 <Input
                   value={formData.nome_conta}
                   onChange={(e) => setFormData({ ...formData, nome_conta: e.target.value })}
                   placeholder="@usuario"
                   required
-                />
-              </div>
-
-              <div>
-                <Label>URL da Conta</Label>
-                <Input
-                  value={formData.url_conta}
-                  onChange={(e) => setFormData({ ...formData, url_conta: e.target.value })}
-                  placeholder="https://..."
                 />
               </div>
 
@@ -204,21 +208,11 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
               </div>
 
               <div>
-                <Label>Data de Criação</Label>
-                <Input
-                  type="date"
-                  value={formData.data_criacao_conta}
-                  onChange={(e) =>
-                    setFormData({ ...formData, data_criacao_conta: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label>Observações</Label>
+                <Label>Notas</Label>
                 <Textarea
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                  placeholder="Observações sobre a conta..."
                 />
               </div>
 
@@ -230,47 +224,46 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         </Dialog>
       </div>
 
-      <div className="rounded-lg border border-border/50 shadow-premium overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-surface hover:bg-surface">
-              <TableHead className="font-semibold">Nome/Conta</TableHead>
-              <TableHead className="font-semibold">Plataforma</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold">Responsável</TableHead>
-              <TableHead className="font-semibold">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {contas.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  Nenhuma conta encontrada. Adicione a primeira!
-                </TableCell>
-              </TableRow>
-            ) : (
-              contas.map((conta) => (
-                <TableRow key={conta.id} className="hover:bg-surface-hover transition-colors">
-                  <TableCell className="font-medium">{conta.nome_conta || "-"}</TableCell>
-                  <TableCell className="capitalize text-muted-foreground">{conta.plataforma || "-"}</TableCell>
-                  <TableCell>{getStatusBadge(conta.status)}</TableCell>
-                  <TableCell className="text-muted-foreground">{conta.profiles?.nome || "-"}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEditDialog(conta)}
-                      className="hover:bg-primary/20"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {contas.length === 0 ? (
+        <Card className="border-border/50 shadow-premium">
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">Nenhuma conta cadastrada.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {contas.map((conta) => (
+            <Card key={conta.id} className="border-border/50 shadow-premium hover:shadow-premium-lg transition-all">
+              <CardContent className="pt-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-surface">
+                      {plataformaIcons[conta.plataforma] || (
+                        <span className="text-xs font-medium capitalize">{conta.plataforma}</span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">{conta.nome_conta}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{conta.plataforma}</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(conta)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  {getStatusBadge(conta.status)}
+                </div>
+
+                {conta.observacoes && (
+                  <p className="text-xs text-muted-foreground mt-3 line-clamp-2">{conta.observacoes}</p>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

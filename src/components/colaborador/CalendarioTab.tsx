@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ConteudoForm } from "./ConteudoForm";
+import { ConteudoFluxoModal } from "./ConteudoFluxoModal";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -20,6 +21,8 @@ export function CalendarioTab({ nichoId }: CalendarioTabProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedConteudo, setSelectedConteudo] = useState<any>(null);
+  const [fluxoModalOpen, setFluxoModalOpen] = useState(false);
+  const [fluxoConteudo, setFluxoConteudo] = useState<any>(null);
 
   useEffect(() => {
     fetchConteudos();
@@ -45,8 +48,8 @@ export function CalendarioTab({ nichoId }: CalendarioTabProps) {
     : [];
 
   const handleConteudoClick = (conteudo: any) => {
-    setSelectedConteudo(conteudo);
-    setDialogOpen(true);
+    setFluxoConteudo(conteudo);
+    setFluxoModalOpen(true);
   };
 
   const handleDialogClose = () => {
@@ -56,7 +59,7 @@ export function CalendarioTab({ nichoId }: CalendarioTabProps) {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: any = {
+    const variants: Record<string, "default" | "secondary" | "outline"> = {
       planejado: "secondary",
       em_producao: "default",
       publicado: "outline",
@@ -69,11 +72,14 @@ export function CalendarioTab({ nichoId }: CalendarioTabProps) {
     );
   };
 
+  // Get dates that have content
+  const datesWithContent = conteudos.map((c) => new Date(c.data_postagem));
+
   return (
     <div className="grid md:grid-cols-2 gap-6">
       <Card className="border-border/50 shadow-premium">
         <CardHeader>
-          <CardTitle className="text-xl">Calendário</CardTitle>
+          <CardTitle className="text-xl">Calendário Editorial</CardTitle>
         </CardHeader>
         <CardContent>
           <Calendar
@@ -82,6 +88,16 @@ export function CalendarioTab({ nichoId }: CalendarioTabProps) {
             onSelect={setSelectedDate}
             locale={ptBR}
             className="rounded-md border-border/50"
+            modifiers={{
+              hasContent: datesWithContent,
+            }}
+            modifiersStyles={{
+              hasContent: {
+                fontWeight: "bold",
+                backgroundColor: "hsl(var(--primary) / 0.1)",
+                borderRadius: "50%",
+              },
+            }}
           />
         </CardContent>
       </Card>
@@ -132,12 +148,25 @@ export function CalendarioTab({ nichoId }: CalendarioTabProps) {
                   <p className="text-sm text-muted-foreground capitalize">
                     {conteudo.canal} • {conteudo.tipo_midia}
                   </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {conteudo.profiles?.nome || "Sem responsável"}
+                  </p>
                 </CardContent>
               </Card>
             ))
           )}
         </div>
       </div>
+
+      <ConteudoFluxoModal
+        conteudo={fluxoConteudo}
+        open={fluxoModalOpen}
+        onClose={() => {
+          setFluxoModalOpen(false);
+          setFluxoConteudo(null);
+          fetchConteudos();
+        }}
+      />
     </div>
   );
 }
