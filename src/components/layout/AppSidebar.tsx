@@ -43,6 +43,13 @@ export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado }: AppSide
     });
   }
 
+  // Sempre adiciona Configurações no final
+  colaboradorNavItems.push({
+    title: "Configurações",
+    href: `/workspace/${nichoId}/configuracoes`,
+    icon: Settings,
+  });
+
   const navItems: NavItem[] = isAdmin
     ? [
         { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
