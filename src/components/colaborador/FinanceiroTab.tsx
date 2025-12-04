@@ -21,7 +21,7 @@ interface Transacao {
   produto_nome: string;
   preco_custo: number;
   preco_venda: number;
-  created_at: string;
+  data_transacao: string;
   membro_time: MembroTime | null;
 }
 
@@ -45,7 +45,7 @@ export function FinanceiroTab({ nichoId }: FinanceiroTabProps) {
           produto_nome,
           preco_custo,
           preco_venda,
-          created_at,
+          data_transacao,
           membro_time:membro_time_id (
             id,
             nome,
@@ -53,7 +53,7 @@ export function FinanceiroTab({ nichoId }: FinanceiroTabProps) {
           )
         `)
         .eq("nicho_id", nichoId)
-        .order("created_at", { ascending: false });
+        .order("data_transacao", { ascending: false });
 
       if (error) throw error;
 
@@ -66,7 +66,7 @@ export function FinanceiroTab({ nichoId }: FinanceiroTabProps) {
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
       const transacoesMes = todasTransacoes.filter((t) => {
-        const data = new Date(t.created_at);
+        const data = new Date(t.data_transacao + "T00:00:00");
         return data >= startOfMonth && data <= endOfMonth;
       });
 

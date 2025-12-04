@@ -20,7 +20,7 @@ interface Transacao {
   produto_nome: string;
   preco_custo: number;
   preco_venda: number;
-  created_at: string;
+  data_transacao: string;
   membro_time?: MembroTime | null;
 }
 
@@ -63,7 +63,7 @@ export function TransacoesTable({ transacoes }: TransacoesTableProps) {
             return (
               <TableRow key={transacao.id}>
                 <TableCell className="text-muted-foreground">
-                  {format(new Date(transacao.created_at), "dd/MM/yyyy HH:mm", {
+                  {format(new Date(transacao.data_transacao + "T00:00:00"), "dd/MM/yyyy", {
                     locale: ptBR,
                   })}
                 </TableCell>
