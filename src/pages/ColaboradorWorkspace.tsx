@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { DashboardNichoTab } from "@/components/colaborador/DashboardNichoTab";
 import { ContasNichoTab } from "@/components/colaborador/ContasNichoTab";
-import { BibliotecaNichoTab } from "@/components/colaborador/BibliotecaNichoTab";
 import { TimeNichoTab } from "@/components/colaborador/TimeNichoTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
@@ -66,7 +65,6 @@ export default function ColaboradorWorkspace() {
   const getPageTitle = () => {
     if (!subPath || subPath === "") return "Dashboard";
     if (subPath === "contas") return "Contas do Nicho";
-    if (subPath === "biblioteca") return "Biblioteca do Nicho";
     if (subPath === "time") return "Time";
     return "Workspace";
   };
@@ -77,9 +75,6 @@ export default function ColaboradorWorkspace() {
     }
     if (subPath === "contas") {
       return <ContasNichoTab nichoId={nichoId!} />;
-    }
-    if (subPath === "biblioteca") {
-      return <BibliotecaNichoTab nichoId={nichoId!} />;
     }
     if (subPath === "time") {
       return <TimeNichoTab nichoId={nichoId!} />;
