@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -10,13 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, History, ClipboardList } from "lucide-react";
-import { format, startOfWeek, endOfWeek, addDays, getWeek, getYear } from "date-fns";
+import { Plus, History, Settings, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, startOfWeek, endOfWeek, addDays, getWeek, getYear, subWeeks, addWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TarefaTemplateDialog } from "./TarefaTemplateDialog";
 import { LogisticaHistoricoDialog } from "./LogisticaHistoricoDialog";
+import { cn } from "@/lib/utils";
 
 interface LogisticaSemanalTabProps {
   nichoId: string;
@@ -48,14 +47,44 @@ interface TarefaDiaria {
   status: "pendente" | "em_andamento" | "concluida" | "nao_concluida";
 }
 
-const DIAS_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-
-const STATUS_OPTIONS = [
-  { value: "pendente", label: "Pendente", color: "bg-muted text-muted-foreground" },
-  { value: "em_andamento", label: "Em andamento", color: "bg-primary/20 text-primary" },
-  { value: "concluida", label: "Concluída", color: "bg-green-500/20 text-green-500" },
-  { value: "nao_concluida", label: "Não concluída", color: "bg-destructive/20 text-destructive" },
+const DIAS_SEMANA = [
+  { short: "DOM", full: "DOMINGO" },
+  { short: "SEG", full: "SEGUNDA" },
+  { short: "TER", full: "TERÇA" },
+  { short: "QUA", full: "QUARTA" },
+  { short: "QUI", full: "QUINTA" },
+  { short: "SEX", full: "SEXTA" },
+  { short: "SAB", full: "SÁBADO" },
 ];
+
+const STATUS_CONFIG = {
+  pendente: { 
+    label: "Não iniciada", 
+    bgColor: "bg-zinc-700/80", 
+    textColor: "text-zinc-300",
+    dotColor: "bg-zinc-400"
+  },
+  em_andamento: { 
+    label: "Em andamento", 
+    bgColor: "bg-amber-500/20", 
+    textColor: "text-amber-400",
+    dotColor: "bg-amber-400"
+  },
+  concluida: { 
+    label: "Concluído", 
+    bgColor: "bg-emerald-500/20", 
+    textColor: "text-emerald-400",
+    dotColor: "bg-emerald-400"
+  },
+  nao_concluida: { 
+    label: "Não concluída", 
+    bgColor: "bg-red-500/20", 
+    textColor: "text-red-400",
+    dotColor: "bg-red-400"
+  },
+};
+
+type StatusKey = keyof typeof STATUS_CONFIG;
 
 export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
   const { role } = useAuth();
@@ -77,7 +106,6 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch templates
       const { data: templatesData } = await supabase
         .from("tarefa_templates")
         .select("*")
@@ -87,7 +115,6 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
 
       setTemplates(templatesData || []);
 
-      // Fetch all weeks for this niche
       const { data: semanasData } = await supabase
         .from("semana_logistica")
         .select("*")
@@ -96,11 +123,10 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
 
       setSemanas(semanasData || []);
 
-      // Check if current week exists, if not create it
       const today = new Date();
-      const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-      const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
-      const weekNumber = getWeek(today, { weekStartsOn: 1 });
+      const weekStart = startOfWeek(today, { weekStartsOn: 0 }); // Start on Sunday
+      const weekEnd = endOfWeek(today, { weekStartsOn: 0 });
+      const weekNumber = getWeek(today, { weekStartsOn: 0 });
       const year = getYear(today);
 
       let currentWeek = semanasData?.find(
@@ -108,7 +134,6 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
       );
 
       if (!currentWeek) {
-        // Create current week
         const { data: newWeek, error: weekError } = await supabase
           .from("semana_logistica")
           .insert({
@@ -125,7 +150,6 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
         if (weekError) throw weekError;
         currentWeek = newWeek;
 
-        // Create daily tasks for each template
         if (templatesData && templatesData.length > 0 && currentWeek) {
           const dailyTasks = [];
           for (const template of templatesData) {
@@ -148,7 +172,6 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
 
       setSemanaAtual(currentWeek || null);
 
-      // Fetch tasks for current week
       if (currentWeek) {
         await fetchTarefas(currentWeek.id);
       }
@@ -182,7 +205,7 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
 
   const handleStatusChange = async (
     tarefaId: string,
-    newStatus: "pendente" | "em_andamento" | "concluida" | "nao_concluida"
+    newStatus: StatusKey
   ) => {
     try {
       const { error } = await supabase
@@ -210,9 +233,13 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
     );
   };
 
-  const getStatusBadge = (status: string) => {
-    const option = STATUS_OPTIONS.find((o) => o.value === status);
-    return option || STATUS_OPTIONS[0];
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    if (!semanaAtual) return;
+    const currentIndex = semanas.findIndex(s => s.id === semanaAtual.id);
+    const newIndex = direction === 'prev' ? currentIndex + 1 : currentIndex - 1;
+    if (newIndex >= 0 && newIndex < semanas.length) {
+      handleSemanaChange(semanas[newIndex].id);
+    }
   };
 
   if (loading) {
@@ -224,180 +251,176 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <ClipboardList className="h-6 w-6 text-primary" />
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">Logística Semanal</h2>
-            <p className="text-sm text-muted-foreground">
-              Acompanhe as tarefas diárias do time
-            </p>
+    <div className="space-y-4">
+      {/* Header Bar */}
+      <div className="flex items-center justify-between border-b border-border pb-3">
+        <div className="flex items-center gap-4">
+          {/* Week Navigation */}
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={() => navigateWeek('prev')}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-medium min-w-[160px] text-center">
+              Semana {semanaAtual?.semana_numero} • {semanaAtual?.ano}
+            </span>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={() => navigateWeek('next')}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
+          
+          <span className="text-xs text-muted-foreground">
+            {semanaAtual &&
+              `${format(new Date(semanaAtual.semana_inicio), "dd MMM", { locale: ptBR })} - ${format(new Date(semanaAtual.semana_fim), "dd MMM", { locale: ptBR })}`}
+          </span>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setHistoricoDialogOpen(true)}
+            className="text-muted-foreground hover:text-foreground"
           >
-            <History className="h-4 w-4 mr-2" />
-            Histórico
+            <History className="h-4 w-4" />
           </Button>
           {isAdmin && (
-            <Button size="sm" onClick={() => setTemplateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Gerenciar Tarefas
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTemplateDialogOpen(true)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Settings className="h-4 w-4" />
             </Button>
           )}
         </div>
       </div>
 
-      {/* Week Selector */}
-      <Card className="bg-card border-border">
-        <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <CardTitle className="text-lg">
-                Semana {semanaAtual?.semana_numero} • {semanaAtual?.ano}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {semanaAtual &&
-                  `${format(new Date(semanaAtual.semana_inicio), "dd/MM", { locale: ptBR })} - ${format(new Date(semanaAtual.semana_fim), "dd/MM/yyyy", { locale: ptBR })}`}
-              </p>
-            </div>
-
-            <Select
-              value={semanaAtual?.id || ""}
-              onValueChange={handleSemanaChange}
+      {/* Tasks Grid */}
+      {templates.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <p className="mb-4">Nenhuma tarefa cadastrada</p>
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTemplateDialogOpen(true)}
             >
-              <SelectTrigger className="w-[200px] bg-background">
-                <SelectValue placeholder="Selecionar semana" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border">
-                {semanas.map((semana) => (
-                  <SelectItem key={semana.id} value={semana.id}>
-                    Semana {semana.semana_numero}/{semana.ano}
-                    {semana.status === "ativa" && " (Atual)"}
-                  </SelectItem>
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar tarefa
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[200px]">
+                  Nome da Tarefa
+                </th>
+                {DIAS_SEMANA.map((dia, index) => (
+                  <th
+                    key={dia.short}
+                    className="text-center py-3 px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[130px]"
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span className="opacity-50">✦</span>
+                      {dia.full}
+                    </div>
+                  </th>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          {templates.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <ClipboardList className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhuma tarefa cadastrada</p>
-              {isAdmin && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4"
-                  onClick={() => setTemplateDialogOpen(true)}
+                <th className="w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {templates.map((template) => (
+                <tr 
+                  key={template.id} 
+                  className="border-b border-border/50 hover:bg-muted/20 transition-colors"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar primeira tarefa
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground min-w-[150px]">
-                      Tarefa
-                    </th>
-                    {DIAS_SEMANA.map((dia, index) => {
-                      const date = semanaAtual
-                        ? addDays(new Date(semanaAtual.semana_inicio), index)
-                        : new Date();
-                      return (
-                        <th
-                          key={dia}
-                          className="text-center py-3 px-1 text-sm font-medium text-muted-foreground min-w-[100px]"
-                        >
-                          <div>{dia}</div>
-                          <div className="text-xs opacity-70">
-                            {format(date, "dd/MM")}
-                          </div>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {templates.map((template) => (
-                    <tr key={template.id} className="border-b border-border/50">
-                      <td className="py-3 px-2">
-                        <span className="text-sm font-medium text-foreground">
-                          {template.titulo}
-                        </span>
-                        {template.descricao && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {template.descricao}
-                          </p>
+                  <td className="py-3 px-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-primary text-sm">▸</span>
+                      <span className="text-sm font-medium text-foreground uppercase">
+                        {template.titulo}
+                      </span>
+                    </div>
+                  </td>
+                  {DIAS_SEMANA.map((_, dayIndex) => {
+                    const tarefa = getTarefa(template.id, dayIndex);
+                    const status = (tarefa?.status || "pendente") as StatusKey;
+                    const config = STATUS_CONFIG[status];
+
+                    return (
+                      <td key={dayIndex} className="py-2 px-2 text-center">
+                        {tarefa ? (
+                          <Select
+                            value={tarefa.status}
+                            onValueChange={(value) =>
+                              handleStatusChange(tarefa.id, value as StatusKey)
+                            }
+                          >
+                            <SelectTrigger 
+                              className={cn(
+                                "h-7 text-xs border-0 justify-center gap-1.5 px-2.5 rounded-md",
+                                config.bgColor,
+                                config.textColor,
+                                "hover:opacity-80 transition-opacity"
+                              )}
+                            >
+                              <span className={cn("w-1.5 h-1.5 rounded-full", config.dotColor)} />
+                              <span className="font-medium">{config.label}</span>
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover border-border min-w-[140px]">
+                              {(Object.entries(STATUS_CONFIG) as [StatusKey, typeof STATUS_CONFIG[StatusKey]][]).map(([key, cfg]) => (
+                                <SelectItem key={key} value={key}>
+                                  <div className="flex items-center gap-2">
+                                    <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dotColor)} />
+                                    <span>{cfg.label}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </td>
-                      {DIAS_SEMANA.map((_, dayIndex) => {
-                        const tarefa = getTarefa(template.id, dayIndex);
-                        const statusOption = getStatusBadge(tarefa?.status || "pendente");
+                    );
+                  })}
+                  <td className="py-2 px-2">
+                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-                        return (
-                          <td key={dayIndex} className="py-2 px-1 text-center">
-                            {tarefa ? (
-                              <Select
-                                value={tarefa.status}
-                                onValueChange={(value) =>
-                                  handleStatusChange(
-                                    tarefa.id,
-                                    value as TarefaDiaria["status"]
-                                  )
-                                }
-                              >
-                                <SelectTrigger className="h-8 text-xs border-0 bg-transparent">
-                                  <Badge
-                                    variant="secondary"
-                                    className={`${statusOption.color} text-xs`}
-                                  >
-                                    {statusOption.label.split(" ")[0]}
-                                  </Badge>
-                                </SelectTrigger>
-                                <SelectContent className="bg-popover border-border">
-                                  {STATUS_OPTIONS.map((option) => (
-                                    <SelectItem
-                                      key={option.value}
-                                      value={option.value}
-                                    >
-                                      <Badge
-                                        variant="secondary"
-                                        className={`${option.color} text-xs`}
-                                      >
-                                        {option.label}
-                                      </Badge>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">-</span>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Add Task Row */}
+      {isAdmin && templates.length > 0 && (
+        <button
+          onClick={() => setTemplateDialogOpen(true)}
+          className="w-full py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-colors flex items-center gap-2 px-3 rounded-md"
+        >
+          <Plus className="h-4 w-4" />
+          Nova tarefa
+        </button>
+      )}
 
       {/* Dialogs */}
       <TarefaTemplateDialog
