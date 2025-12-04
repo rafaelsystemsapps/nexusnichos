@@ -11,6 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { format, startOfWeek, endOfWeek, addDays, getWeek, getYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -67,6 +77,7 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
   const [contas, setContas] = useState<any[]>([]);
   const [contaFiltro, setContaFiltro] = useState<string>("todas");
   const [weekOffset, setWeekOffset] = useState(0);
+  const [templateParaDeletar, setTemplateParaDeletar] = useState<TarefaTemplate | null>(null);
 
   const getWeekDates = useCallback(() => {
     const hoje = new Date();
@@ -229,6 +240,28 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
     }
   };
 
+  const deletarTemplate = async () => {
+    if (!templateParaDeletar) return;
+    
+    try {
+      // Deletar template (as tarefas diárias serão deletadas pela constraint ou manualmente)
+      const { error } = await supabase
+        .from("tarefa_templates")
+        .delete()
+        .eq("id", templateParaDeletar.id);
+
+      if (error) throw error;
+      
+      setTemplates((prev) => prev.filter((t) => t.id !== templateParaDeletar.id));
+      setTarefas((prev) => prev.filter((t) => t.template_id !== templateParaDeletar.id));
+      toast.success("Template removido com sucesso");
+    } catch (error: any) {
+      toast.error("Erro ao remover template: " + error.message);
+    } finally {
+      setTemplateParaDeletar(null);
+    }
+  };
+
   const deletarTarefa = async (tarefaId: string) => {
     try {
       const { error } = await supabase
@@ -338,14 +371,26 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
               </thead>
               <tbody>
                 {templatesFiltrados.map((template) => (
-                  <tr key={template.id} className="border-b border-border/30 hover:bg-muted/30">
+                  <tr key={template.id} className="border-b border-border/30 hover:bg-muted/30 group">
                     <td className="p-4">
-                      <div className="font-medium">{template.titulo}</div>
-                      {template.conta && (
-                        <Badge variant="outline" className="mt-1 text-xs">
-                          @{template.conta.nome_conta}
-                        </Badge>
-                      )}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">{template.titulo}</div>
+                          {template.conta && (
+                            <Badge variant="outline" className="mt-1 text-xs">
+                              @{template.conta.nome_conta}
+                            </Badge>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                          onClick={() => setTemplateParaDeletar(template)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </td>
                     {DIAS_SEMANA.map((_, diaIndex) => {
                       const tarefa = getTarefaParaDia(template.id, diaIndex);
@@ -397,6 +442,25 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Dialog de confirmação para deletar template */}
+      <AlertDialog open={!!templateParaDeletar} onOpenChange={(open) => !open && setTemplateParaDeletar(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover template de tarefa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover o template "{templateParaDeletar?.titulo}"? 
+              Isso também removerá todas as tarefas associadas desta semana.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={deletarTemplate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
