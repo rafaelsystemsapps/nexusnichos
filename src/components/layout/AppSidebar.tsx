@@ -1,16 +1,13 @@
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  Calendar,
   FileText,
   Share2,
   Users,
   Settings,
   LogOut,
   LayoutDashboard,
-  Lightbulb,
   BookOpen,
-  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,10 +37,6 @@ export function AppSidebar({ nichoId, nichoNome }: AppSidebarProps) {
       ]
     : [
         { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard },
-        { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: ClipboardList },
-        { title: "Ideias", href: `/workspace/${nichoId}/ideias`, icon: Lightbulb },
-        { title: "Calendário", href: `/workspace/${nichoId}/calendario`, icon: Calendar },
-        { title: "Pipeline", href: `/workspace/${nichoId}/conteudos`, icon: FileText },
         { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2 },
         { title: "Biblioteca", href: `/workspace/${nichoId}/biblioteca`, icon: BookOpen },
         { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users },
