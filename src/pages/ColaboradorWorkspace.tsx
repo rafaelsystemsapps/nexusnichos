@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { DashboardNichoTab } from "@/components/colaborador/DashboardNichoTab";
 import { ContasNichoTab } from "@/components/colaborador/ContasNichoTab";
 import { TimeNichoTab } from "@/components/colaborador/TimeNichoTab";
 import { FinanceiroTab } from "@/components/colaborador/FinanceiroTab";
+import { ConfiguracoesNichoTab } from "@/components/colaborador/ConfiguracoesNichoTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
 
@@ -26,7 +27,7 @@ export default function ColaboradorWorkspace() {
     fetchNicho();
   }, [nichoId]);
 
-  const fetchNicho = async () => {
+  const fetchNicho = useCallback(async () => {
     if (!nichoId) return;
 
     try {
@@ -43,7 +44,7 @@ export default function ColaboradorWorkspace() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [nichoId]);
 
   if (userNichoId && nichoId && userNichoId !== nichoId) {
     return <Navigate to={`/workspace/${userNichoId}`} replace />;
@@ -68,6 +69,7 @@ export default function ColaboradorWorkspace() {
     if (subPath === "contas") return "Contas do Nicho";
     if (subPath === "time") return "Time";
     if (subPath === "financeiro") return "Financeiro";
+    if (subPath === "configuracoes") return "Configurações";
     return "Workspace";
   };
 
@@ -83,6 +85,15 @@ export default function ColaboradorWorkspace() {
     }
     if (subPath === "financeiro" && nicho.financeiro_habilitado) {
       return <FinanceiroTab nichoId={nichoId!} />;
+    }
+    if (subPath === "configuracoes") {
+      return (
+        <ConfiguracoesNichoTab 
+          nichoId={nichoId!} 
+          nicho={nicho} 
+          onConfigUpdate={fetchNicho} 
+        />
+      );
     }
     return <DashboardNichoTab nichoId={nichoId!} />;
   };
