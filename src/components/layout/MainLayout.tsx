@@ -7,12 +7,13 @@ interface MainLayoutProps {
   nichoNome?: string;
   title?: string;
   subtitle?: string;
+  financeiroHabilitado?: boolean;
 }
 
-export function MainLayout({ children, nichoId, nichoNome, title, subtitle }: MainLayoutProps) {
+export function MainLayout({ children, nichoId, nichoNome, title, subtitle, financeiroHabilitado }: MainLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} />
+      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} financeiroHabilitado={financeiroHabilitado} />
       
       <main className="pt-14 min-h-screen">
         {(title || subtitle) && (

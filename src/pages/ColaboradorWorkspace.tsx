@@ -6,6 +6,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { DashboardNichoTab } from "@/components/colaborador/DashboardNichoTab";
 import { ContasNichoTab } from "@/components/colaborador/ContasNichoTab";
 import { TimeNichoTab } from "@/components/colaborador/TimeNichoTab";
+import { FinanceiroTab } from "@/components/colaborador/FinanceiroTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
 
@@ -66,6 +67,7 @@ export default function ColaboradorWorkspace() {
     if (!subPath || subPath === "") return "Dashboard";
     if (subPath === "contas") return "Contas do Nicho";
     if (subPath === "time") return "Time";
+    if (subPath === "financeiro") return "Financeiro";
     return "Workspace";
   };
 
@@ -79,6 +81,9 @@ export default function ColaboradorWorkspace() {
     if (subPath === "time") {
       return <TimeNichoTab nichoId={nichoId!} />;
     }
+    if (subPath === "financeiro" && nicho.financeiro_habilitado) {
+      return <FinanceiroTab nichoId={nichoId!} />;
+    }
     return <DashboardNichoTab nichoId={nichoId!} />;
   };
 
@@ -88,6 +93,7 @@ export default function ColaboradorWorkspace() {
       nichoNome={nicho.nome}
       title={getPageTitle()}
       subtitle={`Workspace: ${nicho.nome}`}
+      financeiroHabilitado={nicho.financeiro_habilitado}
     >
       {renderContent()}
     </MainLayout>
