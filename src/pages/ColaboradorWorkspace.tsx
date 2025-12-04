@@ -8,6 +8,7 @@ import { ContasNichoTab } from "@/components/colaborador/ContasNichoTab";
 import { TimeNichoTab } from "@/components/colaborador/TimeNichoTab";
 import { FinanceiroTab } from "@/components/colaborador/FinanceiroTab";
 import { ConfiguracoesNichoTab } from "@/components/colaborador/ConfiguracoesNichoTab";
+import { LogisticaSemanalTab } from "@/components/colaborador/LogisticaSemanalTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
 
@@ -67,6 +68,7 @@ export default function ColaboradorWorkspace() {
   const getPageTitle = () => {
     if (!subPath || subPath === "") return "Dashboard";
     if (subPath === "contas") return "Contas do Nicho";
+    if (subPath === "logistica") return "Logística Semanal";
     if (subPath === "time") return "Time";
     if (subPath === "financeiro") return "Financeiro";
     if (subPath === "configuracoes") return "Configurações";
@@ -79,6 +81,9 @@ export default function ColaboradorWorkspace() {
     }
     if (subPath === "contas") {
       return <ContasNichoTab nichoId={nichoId!} />;
+    }
+    if (subPath === "logistica") {
+      return <LogisticaSemanalTab nichoId={nichoId!} />;
     }
     if (subPath === "time") {
       return <TimeNichoTab nichoId={nichoId!} />;

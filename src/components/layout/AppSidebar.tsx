@@ -8,6 +8,7 @@ import {
   LogOut,
   LayoutDashboard,
   DollarSign,
+  CalendarCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado }: AppSide
   const colaboradorNavItems: NavItem[] = [
     { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard },
     { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2 },
+    { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck },
     { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users },
   ];
 
