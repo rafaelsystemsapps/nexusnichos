@@ -8,20 +8,16 @@ import {
   Settings,
   LogOut,
   LayoutDashboard,
-  ChevronLeft,
   Lightbulb,
   BookOpen,
   ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
 
 interface NavItem {
   title: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  adminOnly?: boolean;
 }
 
 interface AppSidebarProps {
@@ -32,7 +28,6 @@ interface AppSidebarProps {
 export function AppSidebar({ nichoId, nichoNome }: AppSidebarProps) {
   const location = useLocation();
   const { role, signOut } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
   const isAdmin = role === "admin";
 
   const navItems: NavItem[] = isAdmin
@@ -62,77 +57,53 @@ export function AppSidebar({ nichoId, nichoNome }: AppSidebarProps) {
   };
 
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-black border-r border-border/30 transition-all duration-300 flex flex-col",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border/30">
-        {!collapsed && (
-          <div className="flex flex-col">
-            <span className="text-lg font-bold text-foreground">Nexus Nichos</span>
-            {nichoNome && (
-              <span className="text-xs text-primary truncate max-w-[180px]">{nichoNome}</span>
-            )}
-            {isAdmin && (
-              <span className="text-xs text-primary">Administrador</span>
-            )}
-          </div>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCollapsed(!collapsed)}
-          className="h-8 w-8 hover:bg-surface-hover"
-        >
-          <ChevronLeft
-            className={cn(
-              "h-4 w-4 transition-transform duration-300",
-              collapsed && "rotate-180"
-            )}
-          />
-        </Button>
-      </div>
+    <header className="fixed top-0 left-0 right-0 z-40 bg-black border-b border-border/30">
+      <div className="flex items-center justify-between px-6 h-14">
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <span className="text-lg font-bold text-foreground">Nexus Nichos</span>
+          {nichoNome && (
+            <>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-sm text-primary">{nichoNome}</span>
+            </>
+          )}
+          {isAdmin && (
+            <>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-sm text-primary">Admin</span>
+            </>
+          )}
+        </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            to={item.href}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
-              isActive(item.href)
-                ? "bg-primary/15 text-primary border border-primary/30"
-                : "text-muted-foreground hover:bg-surface-hover hover:text-foreground"
-            )}
-          >
-            <item.icon
+        {/* Navigation */}
+        <nav className="flex items-center gap-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              to={item.href}
               className={cn(
-                "h-5 w-5 flex-shrink-0",
-                isActive(item.href) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200",
+                isActive(item.href)
+                  ? "bg-primary/15 text-primary"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               )}
-            />
-            {!collapsed && <span className="text-sm font-medium">{item.title}</span>}
-          </Link>
-        ))}
-      </nav>
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.title}</span>
+            </Link>
+          ))}
+        </nav>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-border/30">
+        {/* Logout */}
         <button
           onClick={signOut}
-          className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-all duration-200",
-            "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-          )}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
         >
-          <LogOut className="h-5 w-5 flex-shrink-0" />
-          {!collapsed && <span className="text-sm font-medium">Sair</span>}
+          <LogOut className="h-4 w-4" />
+          <span>Sair</span>
         </button>
       </div>
-    </aside>
+    </header>
   );
 }
