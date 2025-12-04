@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FinanceiroResumoCards } from "./FinanceiroResumoCards";
 import { TransacaoForm } from "./TransacaoForm";
 import { TransacoesTable } from "./TransacoesTable";
+import { LucroPorMembroTable } from "./LucroPorMembroTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -23,6 +24,14 @@ interface Transacao {
   preco_venda: number;
   data_transacao: string;
   membro_time: MembroTime | null;
+}
+
+interface LucroMembro {
+  membroId: string | null;
+  nome: string;
+  funcao: string;
+  transacoes: number;
+  lucroLiquido: number;
 }
 
 export function FinanceiroTab({ nichoId }: FinanceiroTabProps) {
@@ -102,6 +111,42 @@ export function FinanceiroTab({ nichoId }: FinanceiroTabProps) {
     fetchData();
   }, [fetchData]);
 
+  // Calcular lucro por membro
+  const lucroPorMembro = useMemo((): LucroMembro[] => {
+    const agrupamento = new Map<string | null, {
+      nome: string;
+      funcao: string;
+      transacoes: number;
+      lucroLiquido: number;
+    }>();
+
+    transacoes.forEach((t) => {
+      const membroId = t.membro_time?.id || null;
+      const existing = agrupamento.get(membroId);
+
+      const lucro = Number(t.preco_venda) - Number(t.preco_custo);
+
+      if (existing) {
+        existing.transacoes += 1;
+        existing.lucroLiquido += lucro;
+      } else {
+        agrupamento.set(membroId, {
+          nome: t.membro_time?.nome || "(Sem responsável)",
+          funcao: t.membro_time?.funcao || "-",
+          transacoes: 1,
+          lucroLiquido: lucro,
+        });
+      }
+    });
+
+    return Array.from(agrupamento.entries())
+      .map(([membroId, dados]) => ({
+        membroId,
+        ...dados,
+      }))
+      .sort((a, b) => b.lucroLiquido - a.lucroLiquido);
+  }, [transacoes]);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -123,6 +168,8 @@ export function FinanceiroTab({ nichoId }: FinanceiroTabProps) {
       </div>
 
       <FinanceiroResumoCards {...resumo} />
+
+      <LucroPorMembroTable dados={lucroPorMembro} />
 
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Transações Recentes</h3>
