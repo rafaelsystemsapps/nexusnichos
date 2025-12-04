@@ -513,6 +513,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          membro_time_id: string | null
           nicho_id: string
           preco_custo: number
           preco_venda: number
@@ -522,6 +523,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          membro_time_id?: string | null
           nicho_id: string
           preco_custo: number
           preco_venda: number
@@ -531,6 +533,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          membro_time_id?: string | null
           nicho_id?: string
           preco_custo?: number
           preco_venda?: number
@@ -538,6 +541,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "transacoes_financeiras_membro_time_id_fkey"
+            columns: ["membro_time_id"]
+            isOneToOne: false
+            referencedRelation: "membros_time"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transacoes_financeiras_nicho_id_fkey"
             columns: ["nicho_id"]

@@ -9,12 +9,19 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+interface MembroTime {
+  id: string;
+  nome: string;
+  funcao: string;
+}
+
 interface Transacao {
   id: string;
   produto_nome: string;
   preco_custo: number;
   preco_venda: number;
   created_at: string;
+  membro_time?: MembroTime | null;
 }
 
 interface TransacoesTableProps {
@@ -44,6 +51,7 @@ export function TransacoesTable({ transacoes }: TransacoesTableProps) {
           <TableRow>
             <TableHead>Data</TableHead>
             <TableHead>Produto/Serviço</TableHead>
+            <TableHead>Responsável</TableHead>
             <TableHead className="text-right">Preço Venda</TableHead>
             <TableHead className="text-right">Preço Custo</TableHead>
             <TableHead className="text-right">Lucro Líquido</TableHead>
@@ -61,6 +69,9 @@ export function TransacoesTable({ transacoes }: TransacoesTableProps) {
                 </TableCell>
                 <TableCell className="font-medium">
                   {transacao.produto_nome}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {transacao.membro_time?.nome || "-"}
                 </TableCell>
                 <TableCell className="text-right">
                   {formatCurrency(transacao.preco_venda)}
