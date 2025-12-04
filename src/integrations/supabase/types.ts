@@ -57,12 +57,15 @@ export type Database = {
           created_at: string | null
           data_criacao_conta: string | null
           id: string
+          media_videos: number | null
           nicho_id: string
           nome_conta: string
           observacoes: string | null
           plataforma: Database["public"]["Enums"]["plataforma_social"]
           responsavel_id: string | null
           status: Database["public"]["Enums"]["status_conta"] | null
+          status_aquecimento: string | null
+          tipo_conteudo: string | null
           updated_at: string | null
           url_conta: string | null
         }
@@ -70,12 +73,15 @@ export type Database = {
           created_at?: string | null
           data_criacao_conta?: string | null
           id?: string
+          media_videos?: number | null
           nicho_id: string
           nome_conta: string
           observacoes?: string | null
           plataforma: Database["public"]["Enums"]["plataforma_social"]
           responsavel_id?: string | null
           status?: Database["public"]["Enums"]["status_conta"] | null
+          status_aquecimento?: string | null
+          tipo_conteudo?: string | null
           updated_at?: string | null
           url_conta?: string | null
         }
@@ -83,12 +89,15 @@ export type Database = {
           created_at?: string | null
           data_criacao_conta?: string | null
           id?: string
+          media_videos?: number | null
           nicho_id?: string
           nome_conta?: string
           observacoes?: string | null
           plataforma?: Database["public"]["Enums"]["plataforma_social"]
           responsavel_id?: string | null
           status?: Database["public"]["Enums"]["status_conta"] | null
+          status_aquecimento?: string | null
+          tipo_conteudo?: string | null
           updated_at?: string | null
           url_conta?: string | null
         }
@@ -449,6 +458,7 @@ export type Database = {
       tarefa_templates: {
         Row: {
           ativa: boolean
+          conta_id: string | null
           created_at: string
           descricao: string | null
           id: string
@@ -459,6 +469,7 @@ export type Database = {
         }
         Insert: {
           ativa?: boolean
+          conta_id?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
@@ -469,6 +480,7 @@ export type Database = {
         }
         Update: {
           ativa?: boolean
+          conta_id?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
@@ -478,6 +490,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tarefa_templates_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_redes_sociais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tarefa_templates_nicho_id_fkey"
             columns: ["nicho_id"]

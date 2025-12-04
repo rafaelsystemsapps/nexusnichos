@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, History, Settings, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, History, ChevronLeft, ChevronRight, Instagram, Youtube, Twitter, Music2, Hash, MessageCircle, Filter } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addDays, getWeek, getYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TarefaTemplateDialog } from "./TarefaTemplateDialog";
@@ -27,6 +27,7 @@ interface TarefaTemplate {
   descricao: string | null;
   ativa: boolean;
   ordem: number;
+  conta_id: string | null;
 }
 
 interface SemanaLogistica {
@@ -45,6 +46,12 @@ interface TarefaDiaria {
   dia_semana: number;
   data: string;
   status: "pendente" | "em_andamento" | "concluida" | "nao_concluida";
+}
+
+interface Conta {
+  id: string;
+  nome_conta: string;
+  plataforma: string;
 }
 
 const DIAS_SEMANA = [
@@ -84,6 +91,15 @@ const STATUS_CONFIG = {
   },
 };
 
+const plataformaIcons: Record<string, React.ReactNode> = {
+  instagram: <Instagram className="h-4 w-4" />,
+  youtube: <Youtube className="h-4 w-4" />,
+  twitter: <Twitter className="h-4 w-4" />,
+  tiktok: <Music2 className="h-4 w-4" />,
+  threads: <Hash className="h-4 w-4" />,
+  facebook: <MessageCircle className="h-4 w-4" />,
+};
+
 type StatusKey = keyof typeof STATUS_CONFIG;
 
 export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
@@ -92,12 +108,14 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
   const isAdmin = role === "admin";
 
   const [templates, setTemplates] = useState<TarefaTemplate[]>([]);
+  const [contas, setContas] = useState<Conta[]>([]);
   const [semanas, setSemanas] = useState<SemanaLogistica[]>([]);
   const [semanaAtual, setSemanaAtual] = useState<SemanaLogistica | null>(null);
   const [tarefas, setTarefas] = useState<TarefaDiaria[]>([]);
   const [loading, setLoading] = useState(true);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [historicoDialogOpen, setHistoricoDialogOpen] = useState(false);
+  const [filtroContaId, setFiltroContaId] = useState<string>("todas");
 
   useEffect(() => {
     fetchData();
@@ -106,6 +124,15 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Fetch contas
+      const { data: contasData } = await supabase
+        .from("contas_redes_sociais")
+        .select("id, nome_conta, plataforma")
+        .eq("nicho_id", nichoId)
+        .order("nome_conta");
+
+      setContas(contasData || []);
+
       const { data: templatesData } = await supabase
         .from("tarefa_templates")
         .select("*")
@@ -243,6 +270,18 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
     }
   };
 
+  // Filter templates based on selected conta
+  const filteredTemplates = templates.filter(template => {
+    if (filtroContaId === "todas") return true;
+    if (filtroContaId === "geral") return template.conta_id === null;
+    return template.conta_id === filtroContaId;
+  });
+
+  const getContaInfo = (contaId: string | null) => {
+    if (!contaId) return null;
+    return contas.find(c => c.id === contaId);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -286,6 +325,30 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Filtro por conta */}
+          <Select value={filtroContaId} onValueChange={setFiltroContaId}>
+            <SelectTrigger className="w-[180px] h-8 text-xs">
+              <Filter className="h-3 w-3 mr-1" />
+              <SelectValue placeholder="Filtrar por conta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">
+                <span>📊 Todas as tarefas</span>
+              </SelectItem>
+              <SelectItem value="geral">
+                <span>📋 Apenas gerais</span>
+              </SelectItem>
+              {contas.map((conta) => (
+                <SelectItem key={conta.id} value={conta.id}>
+                  <div className="flex items-center gap-2">
+                    {plataformaIcons[conta.plataforma]}
+                    <span>{conta.nome_conta}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Button
             variant="ghost"
             size="sm"
@@ -327,11 +390,15 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
             </tr>
           </thead>
           <tbody>
-            {templates.length === 0 ? (
+            {filteredTemplates.length === 0 ? (
               <tr>
                 <td colSpan={8} className="py-12 text-center">
                   <div className="text-muted-foreground">
-                    <p className="mb-2">Nenhuma tarefa cadastrada</p>
+                    <p className="mb-2">
+                      {filtroContaId !== "todas" 
+                        ? "Nenhuma tarefa encontrada para este filtro" 
+                        : "Nenhuma tarefa cadastrada"}
+                    </p>
                     <Button
                       size="sm"
                       onClick={() => setTemplateDialogOpen(true)}
@@ -344,77 +411,88 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                 </td>
               </tr>
             ) : (
-              templates.map((template) => (
-                <tr 
-                  key={template.id} 
-                  className="border-b border-border/50 hover:bg-muted/20 transition-colors group"
-                >
-                  <td className="py-3 px-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-primary text-sm">▸</span>
-                      <span className="text-sm font-medium text-foreground uppercase">
-                        {template.titulo}
-                      </span>
-                    </div>
-                  </td>
-                  {DIAS_SEMANA.map((_, dayIndex) => {
-                    const tarefa = getTarefa(template.id, dayIndex);
-                    const status = (tarefa?.status || "pendente") as StatusKey;
-                    const config = STATUS_CONFIG[status];
-
-                    return (
-                      <td key={dayIndex} className="py-2 px-2 text-center">
-                        {tarefa ? (
-                          <Select
-                            value={tarefa.status}
-                            onValueChange={(value) =>
-                              handleStatusChange(tarefa.id, value as StatusKey)
-                            }
-                          >
-                            <SelectTrigger 
-                              className={cn(
-                                "h-7 text-xs border-0 justify-center gap-1.5 px-2.5 rounded-md",
-                                config.bgColor,
-                                config.textColor,
-                                "hover:opacity-80 transition-opacity"
-                              )}
-                            >
-                              <span className={cn("w-1.5 h-1.5 rounded-full", config.dotColor)} />
-                              <span className="font-medium">{config.label}</span>
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover border-border min-w-[140px]">
-                              {(Object.entries(STATUS_CONFIG) as [StatusKey, typeof STATUS_CONFIG[StatusKey]][]).map(([key, cfg]) => (
-                                <SelectItem key={key} value={key}>
-                                  <div className="flex items-center gap-2">
-                                    <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dotColor)} />
-                                    <span>{cfg.label}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <span className={cn(
-                            "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs",
-                            STATUS_CONFIG.pendente.bgColor,
-                            STATUS_CONFIG.pendente.textColor
-                          )}>
-                            <span className={cn("w-1.5 h-1.5 rounded-full", STATUS_CONFIG.pendente.dotColor)} />
-                            <span className="font-medium">{STATUS_CONFIG.pendente.label}</span>
+              filteredTemplates.map((template) => {
+                const contaInfo = getContaInfo(template.conta_id);
+                return (
+                  <tr 
+                    key={template.id} 
+                    className="border-b border-border/50 hover:bg-muted/20 transition-colors group"
+                  >
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-primary text-sm">▸</span>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-foreground uppercase">
+                            {template.titulo}
                           </span>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))
+                          {contaInfo && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              {plataformaIcons[contaInfo.plataforma]}
+                              <span>{contaInfo.nome_conta}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    {DIAS_SEMANA.map((_, dayIndex) => {
+                      const tarefa = getTarefa(template.id, dayIndex);
+                      const status = (tarefa?.status || "pendente") as StatusKey;
+                      const config = STATUS_CONFIG[status];
+
+                      return (
+                        <td key={dayIndex} className="py-2 px-2 text-center">
+                          {tarefa ? (
+                            <Select
+                              value={tarefa.status}
+                              onValueChange={(value) =>
+                                handleStatusChange(tarefa.id, value as StatusKey)
+                              }
+                            >
+                              <SelectTrigger 
+                                className={cn(
+                                  "h-7 text-xs border-0 justify-center gap-1.5 px-2.5 rounded-md",
+                                  config.bgColor,
+                                  config.textColor,
+                                  "hover:opacity-80 transition-opacity"
+                                )}
+                              >
+                                <span className={cn("w-1.5 h-1.5 rounded-full", config.dotColor)} />
+                                <span className="font-medium">{config.label}</span>
+                              </SelectTrigger>
+                              <SelectContent className="bg-popover border-border min-w-[140px]">
+                                {(Object.entries(STATUS_CONFIG) as [StatusKey, typeof STATUS_CONFIG[StatusKey]][]).map(([key, cfg]) => (
+                                  <SelectItem key={key} value={key}>
+                                    <div className="flex items-center gap-2">
+                                      <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dotColor)} />
+                                      <span>{cfg.label}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <span className={cn(
+                              "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs",
+                              STATUS_CONFIG.pendente.bgColor,
+                              STATUS_CONFIG.pendente.textColor
+                            )}>
+                              <span className={cn("w-1.5 h-1.5 rounded-full", STATUS_CONFIG.pendente.dotColor)} />
+                              <span className="font-medium">{STATUS_CONFIG.pendente.label}</span>
+                            </span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
 
       {/* Add Task Row */}
-      {templates.length > 0 && (
+      {filteredTemplates.length > 0 && (
         <button
           onClick={() => setTemplateDialogOpen(true)}
           className="w-full py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-colors flex items-center gap-2 px-3 rounded-md"
