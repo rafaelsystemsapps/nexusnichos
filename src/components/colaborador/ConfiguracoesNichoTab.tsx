@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -17,6 +17,11 @@ interface ConfiguracoesNichoTabProps {
 export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: ConfiguracoesNichoTabProps) {
   const [financeiroHabilitado, setFinanceiroHabilitado] = useState(nicho.financeiro_habilitado);
   const [saving, setSaving] = useState(false);
+
+  // Sincroniza estado local quando o nicho é atualizado
+  useEffect(() => {
+    setFinanceiroHabilitado(nicho.financeiro_habilitado);
+  }, [nicho.financeiro_habilitado]);
 
   const handleToggleFinanceiro = async (enabled: boolean) => {
     setSaving(true);
