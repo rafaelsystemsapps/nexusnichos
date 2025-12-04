@@ -14,7 +14,7 @@ import {
 import { toast } from "sonner";
 import { format, startOfWeek, endOfWeek, addDays, getWeek, getYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Clock, XCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Clock, XCircle, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LogisticaSemanalTabProps {
@@ -229,6 +229,22 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
     }
   };
 
+  const deletarTarefa = async (tarefaId: string) => {
+    try {
+      const { error } = await supabase
+        .from("tarefa_diaria")
+        .delete()
+        .eq("id", tarefaId);
+
+      if (error) throw error;
+      
+      setTarefas((prev) => prev.filter((t) => t.id !== tarefaId));
+      toast.success("Tarefa removida");
+    } catch (error: any) {
+      toast.error("Erro ao remover: " + error.message);
+    }
+  };
+
   const getTarefaParaDia = (templateId: string, diaSemana: number) => {
     return tarefas.find((t) => t.template_id === templateId && t.dia_semana === diaSemana);
   };
@@ -355,6 +371,15 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                                     </div>
                                   </SelectItem>
                                 ))}
+                                <div
+                                  className="relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm text-destructive hover:bg-destructive/10 outline-none"
+                                  onClick={() => deletarTarefa(tarefa.id)}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Trash2 className="h-4 w-4" />
+                                    Remover
+                                  </div>
+                                </div>
                               </SelectContent>
                             </Select>
                           ) : (
