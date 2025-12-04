@@ -294,16 +294,14 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
           >
             <History className="h-4 w-4" />
           </Button>
-          {isAdmin && (
-            <Button
-              size="sm"
-              onClick={() => setTemplateDialogOpen(true)}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Nova Tarefa
-            </Button>
-          )}
+          <Button
+            size="sm"
+            onClick={() => setTemplateDialogOpen(true)}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Nova Tarefa
+          </Button>
         </div>
       </div>
 
@@ -334,18 +332,14 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                 <td colSpan={8} className="py-12 text-center">
                   <div className="text-muted-foreground">
                     <p className="mb-2">Nenhuma tarefa cadastrada</p>
-                    {isAdmin ? (
-                      <Button
-                        size="sm"
-                        onClick={() => setTemplateDialogOpen(true)}
-                        className="gap-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Adicionar primeira tarefa
-                      </Button>
-                    ) : (
-                      <p className="text-xs">Aguardando admin cadastrar as tarefas</p>
-                    )}
+                    <Button
+                      size="sm"
+                      onClick={() => setTemplateDialogOpen(true)}
+                      className="gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Adicionar primeira tarefa
+                    </Button>
                   </div>
                 </td>
               </tr>
@@ -419,8 +413,8 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
         </table>
       </div>
 
-      {/* Add Task Row - Only for admin */}
-      {isAdmin && templates.length > 0 && (
+      {/* Add Task Row */}
+      {templates.length > 0 && (
         <button
           onClick={() => setTemplateDialogOpen(true)}
           className="w-full py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-colors flex items-center gap-2 px-3 rounded-md"
