@@ -67,6 +67,9 @@ const STATUS_CONFIG = {
   nao_concluida: { icon: XCircle, label: "Não Concluída", color: "bg-destructive/20 text-destructive" },
 };
 
+// Status que podem ser selecionados manualmente (sem "nao_concluida" que é automático)
+const STATUS_SELECIONAVEIS = ["pendente", "em_andamento", "concluida"] as const;
+
 const DIAS_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
 export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
@@ -408,23 +411,17 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                                 <StatusIcon className="h-4 w-4" />
                               </SelectTrigger>
                               <SelectContent>
-                                {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                                  <SelectItem key={key} value={key}>
-                                    <div className="flex items-center gap-2">
-                                      <config.icon className="h-4 w-4" />
-                                      {config.label}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                                <div
-                                  className="relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm text-destructive hover:bg-destructive/10 outline-none"
-                                  onClick={() => deletarTarefa(tarefa.id)}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <Trash2 className="h-4 w-4" />
-                                    Remover
-                                  </div>
-                                </div>
+                                {STATUS_SELECIONAVEIS.map((key) => {
+                                  const config = STATUS_CONFIG[key];
+                                  return (
+                                    <SelectItem key={key} value={key}>
+                                      <div className="flex items-center gap-2">
+                                        <config.icon className="h-4 w-4" />
+                                        {config.label}
+                                      </div>
+                                    </SelectItem>
+                                  );
+                                })}
                               </SelectContent>
                             </Select>
                           ) : (
