@@ -9,8 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Instagram, Youtube, Twitter, Music2, MessageCircle, Hash } from "lucide-react";
+import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, Hash } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ContasNichoTabProps {
   nichoId: string;
@@ -59,6 +69,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     media_videos: 0,
     status_aquecimento: "media",
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [contaToDelete, setContaToDelete] = useState<any>(null);
 
   useEffect(() => {
     fetchContas();
@@ -170,6 +182,31 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         {config.label}
       </span>
     );
+  };
+
+  const handleDelete = async () => {
+    if (!contaToDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from("contas_redes_sociais")
+        .delete()
+        .eq("id", contaToDelete.id);
+
+      if (error) throw error;
+      toast.success("Conta excluída!");
+      fetchContas();
+    } catch (error: any) {
+      toast.error("Erro ao excluir: " + error.message);
+    } finally {
+      setDeleteDialogOpen(false);
+      setContaToDelete(null);
+    }
+  };
+
+  const openDeleteDialog = (conta: any) => {
+    setContaToDelete(conta);
+    setDeleteDialogOpen(true);
   };
 
   if (loading) {
@@ -342,9 +379,19 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                       <p className="text-xs text-muted-foreground capitalize">{conta.plataforma}</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(conta)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(conta)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" 
+                      onClick={() => openDeleteDialog(conta)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
@@ -369,6 +416,25 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a conta <strong>{contaToDelete?.nome_conta}</strong>? 
+              Esta ação não pode ser desfeita e as tarefas vinculadas perderão a referência.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
