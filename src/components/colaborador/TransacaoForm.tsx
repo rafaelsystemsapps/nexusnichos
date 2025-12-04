@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -21,8 +23,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Plus, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const transacaoSchema = z.object({
   produto_nome: z
@@ -57,6 +66,7 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
   const [loading, setLoading] = useState(false);
   const [membros, setMembros] = useState<MembroTime[]>([]);
   const [selectedMembro, setSelectedMembro] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const { user } = useAuth();
 
   const {
@@ -101,6 +111,7 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
         preco_custo: data.preco_custo,
         preco_venda: data.preco_venda,
         membro_time_id: selectedMembro && selectedMembro !== "none" ? selectedMembro : null,
+        data_transacao: format(selectedDate, "yyyy-MM-dd"),
       });
 
       if (error) throw error;
@@ -108,6 +119,7 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
       toast.success("Transação registrada!");
       reset();
       setSelectedMembro("");
+      setSelectedDate(new Date());
       setOpen(false);
       onSuccess();
     } catch (error: any) {
@@ -142,6 +154,34 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
                 {errors.produto_nome.message}
               </p>
             )}
+          </div>
+
+          <div>
+            <Label>Data da Venda *</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !selectedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecione a data"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  initialFocus
+                  className="pointer-events-auto"
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div>

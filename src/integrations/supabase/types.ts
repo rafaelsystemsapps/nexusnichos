@@ -512,6 +512,7 @@ export type Database = {
       transacoes_financeiras: {
         Row: {
           created_at: string
+          data_transacao: string
           id: string
           membro_time_id: string | null
           nicho_id: string
@@ -522,6 +523,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          data_transacao?: string
           id?: string
           membro_time_id?: string | null
           nicho_id: string
@@ -532,6 +534,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          data_transacao?: string
           id?: string
           membro_time_id?: string | null
           nicho_id?: string
