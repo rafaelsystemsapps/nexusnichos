@@ -4,13 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { DashboardNichoTab } from "@/components/colaborador/DashboardNichoTab";
-import { ConteudoBrutoTab } from "@/components/colaborador/ConteudoBrutoTab";
-import { CalendarioTab } from "@/components/colaborador/CalendarioTab";
-import { ConteudosListTab } from "@/components/colaborador/ConteudosListTab";
 import { ContasNichoTab } from "@/components/colaborador/ContasNichoTab";
 import { BibliotecaNichoTab } from "@/components/colaborador/BibliotecaNichoTab";
 import { TimeNichoTab } from "@/components/colaborador/TimeNichoTab";
-import { LogisticaSemanalTab } from "@/components/colaborador/LogisticaSemanalTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
 
@@ -69,28 +65,15 @@ export default function ColaboradorWorkspace() {
 
   const getPageTitle = () => {
     if (!subPath || subPath === "") return "Dashboard";
-    if (subPath === "ideias") return "Conteúdo Bruto / Ideias";
-    if (subPath === "calendario") return "Calendário Editorial";
-    if (subPath === "conteudos") return "Pipeline de Conteúdos";
     if (subPath === "contas") return "Contas do Nicho";
     if (subPath === "biblioteca") return "Biblioteca do Nicho";
     if (subPath === "time") return "Time";
-    if (subPath === "logistica") return "Logística Semanal";
     return "Workspace";
   };
 
   const renderContent = () => {
     if (!subPath || subPath === "") {
       return <DashboardNichoTab nichoId={nichoId!} />;
-    }
-    if (subPath === "ideias") {
-      return <ConteudoBrutoTab nichoId={nichoId!} />;
-    }
-    if (subPath === "calendario") {
-      return <CalendarioTab nichoId={nichoId!} />;
-    }
-    if (subPath === "conteudos") {
-      return <ConteudosListTab nichoId={nichoId!} />;
     }
     if (subPath === "contas") {
       return <ContasNichoTab nichoId={nichoId!} />;
@@ -100,9 +83,6 @@ export default function ColaboradorWorkspace() {
     }
     if (subPath === "time") {
       return <TimeNichoTab nichoId={nichoId!} />;
-    }
-    if (subPath === "logistica") {
-      return <LogisticaSemanalTab nichoId={nichoId!} />;
     }
     return <DashboardNichoTab nichoId={nichoId!} />;
   };

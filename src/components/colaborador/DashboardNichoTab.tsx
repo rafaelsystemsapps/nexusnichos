@@ -2,19 +2,30 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, AlertTriangle, CheckCircle } from "lucide-react";
-import { format, isAfter, isBefore, startOfWeek, endOfWeek, addDays } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { CheckCircle, PauseCircle, AlertTriangle, Share2 } from "lucide-react";
 
 interface DashboardNichoTabProps {
   nichoId: string;
 }
 
+interface ContaResumo {
+  id: string;
+  nome_conta: string;
+  plataforma: string;
+  status: string;
+  status_aquecimento: string;
+  media_videos: number;
+}
+
 export function DashboardNichoTab({ nichoId }: DashboardNichoTabProps) {
-  const [conteudosSemana, setConteudosSemana] = useState<any[]>([]);
-  const [conteudosAtrasados, setConteudosAtrasados] = useState<any[]>([]);
-  const [proximosPrazos, setProximosPrazos] = useState<any[]>([]);
-  const [contasStats, setContasStats] = useState({ ativas: 0, pausadas: 0 });
+  const [contas, setContas] = useState<ContaResumo[]>([]);
+  const [contasStats, setContasStats] = useState({
+    ativas: 0,
+    pausadas: 0,
+    banidas: 0,
+    limitadas: 0,
+    total: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,55 +34,27 @@ export function DashboardNichoTab({ nichoId }: DashboardNichoTabProps) {
 
   const fetchDashboardData = async () => {
     try {
-      const hoje = new Date();
-      const inicioSemana = startOfWeek(hoje, { weekStartsOn: 1 });
-      const fimSemana = endOfWeek(hoje, { weekStartsOn: 1 });
-      const proximosDias = addDays(hoje, 7);
-
-      // Conteúdos da semana
-      const { data: semanaData } = await supabase
-        .from("conteudos")
-        .select("*, profiles:responsavel_id(nome)")
-        .eq("nicho_id", nichoId)
-        .gte("data_postagem", format(inicioSemana, "yyyy-MM-dd"))
-        .lte("data_postagem", format(fimSemana, "yyyy-MM-dd"))
-        .order("data_postagem", { ascending: true });
-
-      setConteudosSemana(semanaData || []);
-
-      // Conteúdos atrasados
-      const { data: atrasadosData } = await supabase
-        .from("conteudos")
-        .select("*, profiles:responsavel_id(nome)")
-        .eq("nicho_id", nichoId)
-        .lt("data_postagem", format(hoje, "yyyy-MM-dd"))
-        .neq("status", "publicado")
-        .order("data_postagem", { ascending: true });
-
-      setConteudosAtrasados(atrasadosData || []);
-
-      // Próximos prazos
-      const { data: prazosData } = await supabase
-        .from("conteudos")
-        .select("*, profiles:responsavel_id(nome)")
-        .eq("nicho_id", nichoId)
-        .gte("data_postagem", format(hoje, "yyyy-MM-dd"))
-        .lte("data_postagem", format(proximosDias, "yyyy-MM-dd"))
-        .neq("status", "publicado")
-        .order("data_postagem", { ascending: true })
-        .limit(5);
-
-      setProximosPrazos(prazosData || []);
-
-      // Contas stats
       const { data: contasData } = await supabase
         .from("contas_redes_sociais")
-        .select("status")
-        .eq("nicho_id", nichoId);
+        .select("id, nome_conta, plataforma, status, status_aquecimento, media_videos")
+        .eq("nicho_id", nichoId)
+        .order("nome_conta");
 
-      const ativas = contasData?.filter((c) => c.status === "ativa").length || 0;
-      const pausadas = contasData?.filter((c) => c.status !== "ativa").length || 0;
-      setContasStats({ ativas, pausadas });
+      const contasList = contasData || [];
+      setContas(contasList);
+
+      const ativas = contasList.filter((c) => c.status === "ativa").length;
+      const pausadas = contasList.filter((c) => c.status === "pausada").length;
+      const banidas = contasList.filter((c) => c.status === "banida").length;
+      const limitadas = contasList.filter((c) => c.status === "limitada").length;
+
+      setContasStats({
+        ativas,
+        pausadas,
+        banidas,
+        limitadas,
+        total: contasList.length,
+      });
     } catch (error) {
       console.error("Erro ao carregar dashboard:", error);
     } finally {
@@ -80,16 +63,36 @@ export function DashboardNichoTab({ nichoId }: DashboardNichoTabProps) {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-      planejado: "secondary",
-      em_producao: "default",
-      publicado: "outline",
+    const config: Record<string, { variant: "default" | "secondary" | "outline" | "destructive"; label: string }> = {
+      ativa: { variant: "default", label: "Ativa" },
+      pausada: { variant: "secondary", label: "Pausada" },
+      banida: { variant: "destructive", label: "Banida" },
+      limitada: { variant: "outline", label: "Limitada" },
+    };
+
+    const { variant, label } = config[status] || { variant: "secondary", label: status };
+
+    return (
+      <Badge variant={variant} className="text-xs">
+        {label}
+      </Badge>
+    );
+  };
+
+  const getAquecimentoBadge = (status: string | null) => {
+    if (!status) return null;
+    
+    const config: Record<string, string> = {
+      aquecida: "bg-green-500/10 text-green-500",
+      media: "bg-yellow-500/10 text-yellow-500",
+      fria: "bg-blue-500/10 text-blue-500",
+      inativa: "bg-muted text-muted-foreground",
     };
 
     return (
-      <Badge variant={variants[status] || "default"} className="capitalize text-xs">
-        {status.replace("_", " ")}
-      </Badge>
+      <span className={`px-2 py-0.5 rounded text-xs ${config[status] || config.media}`}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
     );
   };
 
@@ -104,30 +107,16 @@ export function DashboardNichoTab({ nichoId }: DashboardNichoTabProps) {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="border-border/50 shadow-premium">
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
-                <Calendar className="h-5 w-5 text-primary" />
+                <Share2 className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{conteudosSemana.length}</p>
-                <p className="text-xs text-muted-foreground">Esta semana</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 shadow-premium">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-destructive/10">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{conteudosAtrasados.length}</p>
-                <p className="text-xs text-muted-foreground">Atrasados</p>
+                <p className="text-2xl font-bold">{contasStats.total}</p>
+                <p className="text-xs text-muted-foreground">Total de contas</p>
               </div>
             </div>
           </CardContent>
@@ -141,7 +130,7 @@ export function DashboardNichoTab({ nichoId }: DashboardNichoTabProps) {
               </div>
               <div>
                 <p className="text-2xl font-bold">{contasStats.ativas}</p>
-                <p className="text-xs text-muted-foreground">Contas ativas</p>
+                <p className="text-xs text-muted-foreground">Ativas</p>
               </div>
             </div>
           </CardContent>
@@ -151,111 +140,76 @@ export function DashboardNichoTab({ nichoId }: DashboardNichoTabProps) {
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-yellow-500/10">
-                <Clock className="h-5 w-5 text-yellow-500" />
+                <PauseCircle className="h-5 w-5 text-yellow-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{contasStats.pausadas}</p>
-                <p className="text-xs text-muted-foreground">Contas pausadas</p>
+                <p className="text-xs text-muted-foreground">Pausadas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50 shadow-premium">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-destructive/10">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{contasStats.banidas}</p>
+                <p className="text-xs text-muted-foreground">Banidas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50 shadow-premium">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-orange-500/10">
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{contasStats.limitadas}</p>
+                <p className="text-xs text-muted-foreground">Limitadas</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Conteúdos Atrasados */}
-        <Card className="border-border/50 shadow-premium">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Conteúdos Atrasados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {conteudosAtrasados.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum conteúdo atrasado!</p>
-            ) : (
-              <div className="space-y-3">
-                {conteudosAtrasados.slice(0, 5).map((conteudo) => (
-                  <div
-                    key={conteudo.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-surface hover:bg-surface-hover transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{conteudo.titulo}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(conteudo.data_postagem), "dd/MM", { locale: ptBR })} • {conteudo.canal}
-                      </p>
-                    </div>
-                    {getStatusBadge(conteudo.status)}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Próximos Prazos */}
-        <Card className="border-border/50 shadow-premium">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Clock className="h-5 w-5 text-primary" />
-              Próximos Prazos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {proximosPrazos.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum prazo próximo.</p>
-            ) : (
-              <div className="space-y-3">
-                {proximosPrazos.map((conteudo) => (
-                  <div
-                    key={conteudo.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-surface hover:bg-surface-hover transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{conteudo.titulo}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(conteudo.data_postagem), "dd/MM", { locale: ptBR })} • {conteudo.canal}
-                      </p>
-                    </div>
-                    {getStatusBadge(conteudo.status)}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Conteúdos da Semana */}
+      {/* Lista de Contas */}
       <Card className="border-border/50 shadow-premium">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            Conteúdos da Semana
+            <Share2 className="h-5 w-5 text-primary" />
+            Visão Geral das Contas
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {conteudosSemana.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum conteúdo planejado para esta semana.</p>
+          {contas.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma conta cadastrada ainda.</p>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {conteudosSemana.map((conteudo) => (
+              {contas.map((conta) => (
                 <div
-                  key={conteudo.id}
+                  key={conta.id}
                   className="p-3 rounded-lg bg-surface hover:bg-surface-hover transition-colors border border-border/30"
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="font-medium text-sm truncate flex-1">{conteudo.titulo}</p>
-                    {getStatusBadge(conteudo.status)}
+                    <p className="font-medium text-sm truncate flex-1">@{conta.nome_conta}</p>
+                    {getStatusBadge(conta.status)}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {format(new Date(conteudo.data_postagem), "EEEE, dd/MM", { locale: ptBR })}
-                  </p>
-                  <p className="text-xs text-muted-foreground capitalize mt-1">
-                    {conteudo.canal} • {conteudo.profiles?.nome || "Sem responsável"}
-                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-muted-foreground capitalize">{conta.plataforma}</span>
+                    {getAquecimentoBadge(conta.status_aquecimento)}
+                    {conta.media_videos > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {conta.media_videos} vídeos/sem
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
