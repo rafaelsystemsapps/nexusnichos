@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Instagram, Youtube, Twitter } from "lucide-react";
+import { Plus, Pencil, Instagram, Youtube, Twitter, Music2, MessageCircle, Hash } from "lucide-react";
 import { toast } from "sonner";
 
 interface ContasNichoTabProps {
@@ -20,7 +20,28 @@ const plataformaIcons: Record<string, React.ReactNode> = {
   instagram: <Instagram className="h-5 w-5" />,
   youtube: <Youtube className="h-5 w-5" />,
   twitter: <Twitter className="h-5 w-5" />,
+  tiktok: <Music2 className="h-5 w-5" />,
+  threads: <Hash className="h-5 w-5" />,
+  facebook: <MessageCircle className="h-5 w-5" />,
 };
+
+const TIPOS_CONTEUDO = [
+  "Dark",
+  "Achadinhos", 
+  "Humor",
+  "Lifestyle",
+  "Educacional",
+  "Reviews",
+  "Trends",
+  "Outro"
+];
+
+const STATUS_AQUECIMENTO = [
+  { value: "aquecida", label: "Aquecida", color: "bg-emerald-500/20 text-emerald-400" },
+  { value: "media", label: "Média", color: "bg-amber-500/20 text-amber-400" },
+  { value: "fria", label: "Fria", color: "bg-blue-500/20 text-blue-400" },
+  { value: "inativa", label: "Inativa", color: "bg-zinc-500/20 text-zinc-400" },
+];
 
 export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const { user } = useAuth();
@@ -34,6 +55,9 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     url_conta: "",
     status: "ativa",
     observacoes: "",
+    tipo_conteudo: "",
+    media_videos: 0,
+    status_aquecimento: "media",
   });
 
   useEffect(() => {
@@ -69,6 +93,9 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         observacoes: formData.observacoes || null,
         nicho_id: nichoId,
         responsavel_id: user?.id || null,
+        tipo_conteudo: formData.tipo_conteudo || null,
+        media_videos: formData.media_videos || 0,
+        status_aquecimento: formData.status_aquecimento || "media",
       };
 
       if (editingConta) {
@@ -101,6 +128,9 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       url_conta: "",
       status: "ativa",
       observacoes: "",
+      tipo_conteudo: "",
+      media_videos: 0,
+      status_aquecimento: "media",
     });
     setEditingConta(null);
   };
@@ -113,6 +143,9 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       url_conta: conta.url_conta || "",
       status: conta.status,
       observacoes: conta.observacoes || "",
+      tipo_conteudo: conta.tipo_conteudo || "",
+      media_videos: conta.media_videos || 0,
+      status_aquecimento: conta.status_aquecimento || "media",
     });
     setDialogOpen(true);
   };
@@ -127,6 +160,16 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
 
     const { variant, label } = config[status] || { variant: "default", label: status };
     return <Badge variant={variant}>{label}</Badge>;
+  };
+
+  const getAquecimentoBadge = (status: string) => {
+    const config = STATUS_AQUECIMENTO.find(s => s.value === status);
+    if (!config) return null;
+    return (
+      <span className={`text-xs px-2 py-0.5 rounded-full ${config.color}`}>
+        {config.label}
+      </span>
+    );
   };
 
   if (loading) {
@@ -151,64 +194,116 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
               Nova Conta
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>
                 {editingConta ? "Editar Conta" : "Nova Conta"}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label>Plataforma *</Label>
-                <Select
-                  value={formData.plataforma}
-                  onValueChange={(value) => setFormData({ ...formData, plataforma: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="instagram">Instagram</SelectItem>
-                    <SelectItem value="tiktok">TikTok</SelectItem>
-                    <SelectItem value="youtube">YouTube</SelectItem>
-                    <SelectItem value="facebook">Facebook</SelectItem>
-                    <SelectItem value="twitter">Twitter</SelectItem>
-                    <SelectItem value="linkedin">LinkedIn</SelectItem>
-                    <SelectItem value="outros">Outros</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Plataforma *</Label>
+                  <Select
+                    value={formData.plataforma}
+                    onValueChange={(value) => setFormData({ ...formData, plataforma: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="instagram">Instagram</SelectItem>
+                      <SelectItem value="tiktok">TikTok</SelectItem>
+                      <SelectItem value="youtube">YouTube</SelectItem>
+                      <SelectItem value="facebook">Facebook</SelectItem>
+                      <SelectItem value="twitter">Twitter/X</SelectItem>
+                      <SelectItem value="threads">Threads</SelectItem>
+                      <SelectItem value="linkedin">LinkedIn</SelectItem>
+                      <SelectItem value="outros">Outros</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>@ da Conta *</Label>
+                  <Input
+                    value={formData.nome_conta}
+                    onChange={(e) => setFormData({ ...formData, nome_conta: e.target.value })}
+                    placeholder="@usuario"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Status da Conta *</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => setFormData({ ...formData, status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ativa">Ativa</SelectItem>
+                      <SelectItem value="pausada">Pausada</SelectItem>
+                      <SelectItem value="banida">Banida</SelectItem>
+                      <SelectItem value="limitada">Limitada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Status Aquecimento</Label>
+                  <Select
+                    value={formData.status_aquecimento}
+                    onValueChange={(value) => setFormData({ ...formData, status_aquecimento: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_AQUECIMENTO.map(s => (
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Tipo de Conteúdo</Label>
+                  <Select
+                    value={formData.tipo_conteudo}
+                    onValueChange={(value) => setFormData({ ...formData, tipo_conteudo: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIPOS_CONTEUDO.map(tipo => (
+                        <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Média de Vídeos/Semana</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={formData.media_videos}
+                    onChange={(e) => setFormData({ ...formData, media_videos: parseInt(e.target.value) || 0 })}
+                    placeholder="0"
+                  />
+                </div>
               </div>
 
               <div>
-                <Label>@ da Conta *</Label>
-                <Input
-                  value={formData.nome_conta}
-                  onChange={(e) => setFormData({ ...formData, nome_conta: e.target.value })}
-                  placeholder="@usuario"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label>Status *</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => setFormData({ ...formData, status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ativa">Ativa</SelectItem>
-                    <SelectItem value="pausada">Pausada</SelectItem>
-                    <SelectItem value="banida">Banida</SelectItem>
-                    <SelectItem value="limitada">Limitada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Notas</Label>
+                <Label>Observações</Label>
                 <Textarea
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
@@ -252,8 +347,18 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   </Button>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 flex-wrap">
                   {getStatusBadge(conta.status)}
+                  {conta.status_aquecimento && getAquecimentoBadge(conta.status_aquecimento)}
+                </div>
+
+                <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+                  {conta.tipo_conteudo && (
+                    <span className="px-2 py-0.5 rounded bg-muted">{conta.tipo_conteudo}</span>
+                  )}
+                  {conta.media_videos > 0 && (
+                    <span>{conta.media_videos} vídeos/sem</span>
+                  )}
                 </div>
 
                 {conta.observacoes && (
