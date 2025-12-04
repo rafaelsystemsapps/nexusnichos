@@ -7,7 +7,6 @@ import {
   Settings,
   LogOut,
   LayoutDashboard,
-  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +37,6 @@ export function AppSidebar({ nichoId, nichoNome }: AppSidebarProps) {
     : [
         { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard },
         { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2 },
-        { title: "Biblioteca", href: `/workspace/${nichoId}/biblioteca`, icon: BookOpen },
         { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users },
       ];
 
