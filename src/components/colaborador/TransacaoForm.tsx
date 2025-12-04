@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,6 +14,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -34,6 +41,12 @@ const transacaoSchema = z.object({
 
 type TransacaoFormData = z.infer<typeof transacaoSchema>;
 
+interface MembroTime {
+  id: string;
+  nome: string;
+  funcao: string;
+}
+
 interface TransacaoFormProps {
   nichoId: string;
   onSuccess: () => void;
@@ -42,6 +55,8 @@ interface TransacaoFormProps {
 export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [membros, setMembros] = useState<MembroTime[]>([]);
+  const [selectedMembro, setSelectedMembro] = useState<string>("");
   const { user } = useAuth();
 
   const {
@@ -52,6 +67,24 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
   } = useForm<TransacaoFormData>({
     resolver: zodResolver(transacaoSchema),
   });
+
+  useEffect(() => {
+    if (open) {
+      fetchMembros();
+    }
+  }, [open, nichoId]);
+
+  const fetchMembros = async () => {
+    const { data, error } = await supabase
+      .from("membros_time")
+      .select("id, nome, funcao")
+      .eq("nicho_id", nichoId)
+      .order("nome");
+
+    if (!error && data) {
+      setMembros(data);
+    }
+  };
 
   const onSubmit = async (data: TransacaoFormData) => {
     if (!user) {
@@ -67,12 +100,14 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
         produto_nome: data.produto_nome,
         preco_custo: data.preco_custo,
         preco_venda: data.preco_venda,
+        membro_time_id: selectedMembro && selectedMembro !== "none" ? selectedMembro : null,
       });
 
       if (error) throw error;
 
       toast.success("Transação registrada!");
       reset();
+      setSelectedMembro("");
       setOpen(false);
       onSuccess();
     } catch (error: any) {
@@ -107,6 +142,23 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
                 {errors.produto_nome.message}
               </p>
             )}
+          </div>
+
+          <div>
+            <Label htmlFor="membro_responsavel">Responsável pela Venda</Label>
+            <Select value={selectedMembro} onValueChange={setSelectedMembro}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um membro (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum (venda automática)</SelectItem>
+                {membros.map((membro) => (
+                  <SelectItem key={membro.id} value={membro.id}>
+                    {membro.nome} - {membro.funcao}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>

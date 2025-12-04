@@ -10,12 +10,19 @@ interface FinanceiroTabProps {
   nichoId: string;
 }
 
+interface MembroTime {
+  id: string;
+  nome: string;
+  funcao: string;
+}
+
 interface Transacao {
   id: string;
   produto_nome: string;
   preco_custo: number;
   preco_venda: number;
   created_at: string;
+  membro_time: MembroTime | null;
 }
 
 export function FinanceiroTab({ nichoId }: FinanceiroTabProps) {
@@ -30,10 +37,21 @@ export function FinanceiroTab({ nichoId }: FinanceiroTabProps) {
 
   const fetchData = useCallback(async () => {
     try {
-      // Buscar todas as transações do nicho
+      // Buscar todas as transações do nicho com dados do membro responsável
       const { data, error } = await supabase
         .from("transacoes_financeiras")
-        .select("*")
+        .select(`
+          id,
+          produto_nome,
+          preco_custo,
+          preco_venda,
+          created_at,
+          membro_time:membro_time_id (
+            id,
+            nome,
+            funcao
+          )
+        `)
         .eq("nicho_id", nichoId)
         .order("created_at", { ascending: false });
 
