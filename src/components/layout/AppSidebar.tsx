@@ -7,6 +7,7 @@ import {
   Settings,
   LogOut,
   LayoutDashboard,
+  DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,12 +20,28 @@ interface NavItem {
 interface AppSidebarProps {
   nichoId?: string;
   nichoNome?: string;
+  financeiroHabilitado?: boolean;
 }
 
-export function AppSidebar({ nichoId, nichoNome }: AppSidebarProps) {
+export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado }: AppSidebarProps) {
   const location = useLocation();
   const { role, signOut } = useAuth();
   const isAdmin = role === "admin";
+
+  const colaboradorNavItems: NavItem[] = [
+    { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard },
+    { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2 },
+    { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users },
+  ];
+
+  // Adiciona Financeiro se habilitado
+  if (financeiroHabilitado) {
+    colaboradorNavItems.push({
+      title: "Financeiro",
+      href: `/workspace/${nichoId}/financeiro`,
+      icon: DollarSign,
+    });
+  }
 
   const navItems: NavItem[] = isAdmin
     ? [
@@ -34,11 +51,7 @@ export function AppSidebar({ nichoId, nichoNome }: AppSidebarProps) {
         { title: "Conteúdos", href: "/admin/conteudos", icon: FileText },
         { title: "Contas", href: "/admin/contas", icon: Share2 },
       ]
-    : [
-        { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard },
-        { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2 },
-        { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users },
-      ];
+    : colaboradorNavItems;
 
   const isActive = (href: string) => {
     if (href === `/workspace/${nichoId}` || href === "/admin") {

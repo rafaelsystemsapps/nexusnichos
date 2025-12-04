@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Pencil, Trash2, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
 export function NichosTab() {
@@ -18,6 +19,7 @@ export function NichosTab() {
     nome: "",
     descricao: "",
     observacoes: "",
+    financeiro_habilitado: false,
   });
 
   useEffect(() => {
@@ -82,7 +84,7 @@ export function NichosTab() {
   };
 
   const resetForm = () => {
-    setFormData({ nome: "", descricao: "", observacoes: "" });
+    setFormData({ nome: "", descricao: "", observacoes: "", financeiro_habilitado: false });
     setEditingNicho(null);
   };
 
@@ -92,6 +94,7 @@ export function NichosTab() {
       nome: nicho.nome,
       descricao: nicho.descricao || "",
       observacoes: nicho.observacoes || "",
+      financeiro_habilitado: nicho.financeiro_habilitado || false,
     });
     setDialogOpen(true);
   };
@@ -142,6 +145,22 @@ export function NichosTab() {
                 />
               </div>
 
+              <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="financeiro">Módulo Financeiro</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Habilitar controle de transações e faturamento
+                  </p>
+                </div>
+                <Switch
+                  id="financeiro"
+                  checked={formData.financeiro_habilitado}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, financeiro_habilitado: checked })
+                  }
+                />
+              </div>
+
               <Button type="submit" className="w-full">
                 {editingNicho ? "Atualizar" : "Criar"}
               </Button>
@@ -184,6 +203,12 @@ export function NichosTab() {
               <CardContent>
                 {nicho.descricao && (
                   <p className="text-sm text-muted-foreground leading-relaxed">{nicho.descricao}</p>
+                )}
+                {nicho.financeiro_habilitado && (
+                  <div className="mt-3 flex items-center gap-2 text-xs text-primary">
+                    <DollarSign className="h-3 w-3" />
+                    <span>Módulo Financeiro Ativo</span>
+                  </div>
                 )}
               </CardContent>
             </Card>
