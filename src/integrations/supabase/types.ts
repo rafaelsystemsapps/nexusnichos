@@ -623,6 +623,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      marcar_tarefas_nao_concluidas: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "colaborador"
