@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, History, Settings, ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfWeek, endOfWeek, addDays, getWeek, getYear, subWeeks, addWeeks } from "date-fns";
+import { format, startOfWeek, endOfWeek, addDays, getWeek, getYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TarefaTemplateDialog } from "./TarefaTemplateDialog";
 import { LogisticaHistoricoDialog } from "./LogisticaHistoricoDialog";
@@ -124,7 +124,7 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
       setSemanas(semanasData || []);
 
       const today = new Date();
-      const weekStart = startOfWeek(today, { weekStartsOn: 0 }); // Start on Sunday
+      const weekStart = startOfWeek(today, { weekStartsOn: 0 });
       const weekEnd = endOfWeek(today, { weekStartsOn: 0 });
       const weekNumber = getWeek(today, { weekStartsOn: 0 });
       const year = getYear(today);
@@ -150,6 +150,7 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
         if (weekError) throw weekError;
         currentWeek = newWeek;
 
+        // Create daily tasks for each template
         if (templatesData && templatesData.length > 0 && currentWeek) {
           const dailyTasks = [];
           for (const template of templatesData) {
@@ -295,59 +296,64 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
           </Button>
           {isAdmin && (
             <Button
-              variant="ghost"
               size="sm"
               onClick={() => setTemplateDialogOpen(true)}
-              className="text-muted-foreground hover:text-foreground"
+              className="gap-2"
             >
-              <Settings className="h-4 w-4" />
+              <Plus className="h-4 w-4" />
+              Nova Tarefa
             </Button>
           )}
         </div>
       </div>
 
-      {/* Tasks Grid */}
-      {templates.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
-          <p className="mb-4">Nenhuma tarefa cadastrada</p>
-          {isAdmin && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTemplateDialogOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar tarefa
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[200px]">
-                  Nome da Tarefa
+      {/* Tasks Grid - Always show table structure */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="text-left py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[200px]">
+                Nome da Tarefa
+              </th>
+              {DIAS_SEMANA.map((dia) => (
+                <th
+                  key={dia.short}
+                  className="text-center py-3 px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[130px]"
+                >
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span className="opacity-50">✦</span>
+                    {dia.full}
+                  </div>
                 </th>
-                {DIAS_SEMANA.map((dia, index) => (
-                  <th
-                    key={dia.short}
-                    className="text-center py-3 px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[130px]"
-                  >
-                    <div className="flex items-center justify-center gap-1.5">
-                      <span className="opacity-50">✦</span>
-                      {dia.full}
-                    </div>
-                  </th>
-                ))}
-                <th className="w-10"></th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {templates.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="py-12 text-center">
+                  <div className="text-muted-foreground">
+                    <p className="mb-2">Nenhuma tarefa cadastrada</p>
+                    {isAdmin ? (
+                      <Button
+                        size="sm"
+                        onClick={() => setTemplateDialogOpen(true)}
+                        className="gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Adicionar primeira tarefa
+                      </Button>
+                    ) : (
+                      <p className="text-xs">Aguardando admin cadastrar as tarefas</p>
+                    )}
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {templates.map((template) => (
+            ) : (
+              templates.map((template) => (
                 <tr 
                   key={template.id} 
-                  className="border-b border-border/50 hover:bg-muted/20 transition-colors"
+                  className="border-b border-border/50 hover:bg-muted/20 transition-colors group"
                 >
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2">
@@ -394,24 +400,26 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                             </SelectContent>
                           </Select>
                         ) : (
-                          <span className="text-xs text-muted-foreground">-</span>
+                          <span className={cn(
+                            "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs",
+                            STATUS_CONFIG.pendente.bgColor,
+                            STATUS_CONFIG.pendente.textColor
+                          )}>
+                            <span className={cn("w-1.5 h-1.5 rounded-full", STATUS_CONFIG.pendente.dotColor)} />
+                            <span className="font-medium">{STATUS_CONFIG.pendente.label}</span>
+                          </span>
                         )}
                       </td>
                     );
                   })}
-                  <td className="py-2 px-2">
-                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
-      {/* Add Task Row */}
+      {/* Add Task Row - Only for admin */}
       {isAdmin && templates.length > 0 && (
         <button
           onClick={() => setTemplateDialogOpen(true)}
