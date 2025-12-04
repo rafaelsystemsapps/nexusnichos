@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 import { AppSidebar } from "./AppSidebar";
-import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -15,9 +14,9 @@ export function MainLayout({ children, nichoId, nichoNome, title, subtitle }: Ma
     <div className="min-h-screen bg-background">
       <AppSidebar nichoId={nichoId} nichoNome={nichoNome} />
       
-      <main className="ml-64 min-h-screen transition-all duration-300">
+      <main className="pt-14 min-h-screen">
         {(title || subtitle) && (
-          <header className="border-b border-border/30 bg-surface/50 backdrop-blur-sm sticky top-0 z-30">
+          <header className="border-b border-border/30 bg-surface/50 backdrop-blur-sm sticky top-14 z-30">
             <div className="px-8 py-6">
               {title && <h1 className="text-2xl font-bold tracking-tight">{title}</h1>}
               {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
