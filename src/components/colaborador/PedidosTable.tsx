@@ -24,6 +24,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+interface MembroTime {
+  id: string;
+  nome: string;
+}
+
 interface Pedido {
   id: string;
   pedido_id: string;
@@ -34,6 +39,8 @@ interface Pedido {
   observacoes: string | null;
   data_pedido: string;
   data_envio: string | null;
+  processado_por_id: string | null;
+  processado_por?: MembroTime | null;
 }
 
 interface PedidosTableProps {
@@ -118,6 +125,7 @@ export function PedidosTable({ pedidos, nichoId, onUpdate }: PedidosTableProps) 
             <TableHead>Valor</TableHead>
             <TableHead>Data</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Processado Por</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -130,6 +138,7 @@ export function PedidosTable({ pedidos, nichoId, onUpdate }: PedidosTableProps) 
               <TableCell>{formatCurrency(pedido.valor)}</TableCell>
               <TableCell>{formatDate(pedido.data_pedido)}</TableCell>
               <TableCell>{getStatusBadge(pedido.status)}</TableCell>
+              <TableCell>{pedido.processado_por?.nome || "-"}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
                   {pedido.status === "pendente" && (
