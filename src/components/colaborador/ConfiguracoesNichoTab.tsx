@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { DollarSign, Settings, ListChecks, Plus, Pencil, Trash2 } from "lucide-react";
+import { DollarSign, Settings, ListChecks, Plus, Pencil, Trash2, Package } from "lucide-react";
 import { TemplateForm } from "./TemplateForm";
 import {
   AlertDialog,
@@ -38,12 +38,14 @@ interface ConfiguracoesNichoTabProps {
   nichoId: string;
   nicho: {
     financeiro_habilitado: boolean;
+    pedidos_habilitado?: boolean;
   };
   onConfigUpdate: () => void;
 }
 
 export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: ConfiguracoesNichoTabProps) {
   const [financeiroHabilitado, setFinanceiroHabilitado] = useState(nicho.financeiro_habilitado);
+  const [pedidosHabilitado, setPedidosHabilitado] = useState(nicho.pedidos_habilitado ?? false);
   const [saving, setSaving] = useState(false);
   
   // Templates state
@@ -57,7 +59,8 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
 
   useEffect(() => {
     setFinanceiroHabilitado(nicho.financeiro_habilitado);
-  }, [nicho.financeiro_habilitado]);
+    setPedidosHabilitado(nicho.pedidos_habilitado ?? false);
+  }, [nicho.financeiro_habilitado, nicho.pedidos_habilitado]);
 
   useEffect(() => {
     fetchTemplatesAndContas();
@@ -113,6 +116,28 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
       onConfigUpdate();
     } catch (error: any) {
       setFinanceiroHabilitado(!enabled);
+      toast.error("Erro ao salvar configuração: " + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTogglePedidos = async (enabled: boolean) => {
+    setSaving(true);
+    setPedidosHabilitado(enabled);
+
+    try {
+      const { error } = await supabase
+        .from("nichos")
+        .update({ pedidos_habilitado: enabled })
+        .eq("id", nichoId);
+
+      if (error) throw error;
+
+      toast.success(enabled ? "Módulo Pedidos ativado!" : "Módulo Pedidos desativado!");
+      onConfigUpdate();
+    } catch (error: any) {
+      setPedidosHabilitado(!enabled);
       toast.error("Erro ao salvar configuração: " + error.message);
     } finally {
       setSaving(false);
@@ -217,6 +242,28 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
               id="financeiro"
               checked={financeiroHabilitado}
               onCheckedChange={handleToggleFinanceiro}
+              disabled={saving}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-lg bg-surface/50 border border-border/30">
+            <div className="flex items-center gap-4">
+              <div className="p-2 rounded-lg bg-orange-500/10">
+                <Package className="h-5 w-5 text-orange-500" />
+              </div>
+              <div>
+                <Label htmlFor="pedidos" className="text-base font-medium cursor-pointer">
+                  Módulo Pedidos
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Gerencie pedidos e acompanhe envios
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="pedidos"
+              checked={pedidosHabilitado}
+              onCheckedChange={handleTogglePedidos}
               disabled={saving}
             />
           </div>
