@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   DollarSign,
   CalendarCheck,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,9 +23,10 @@ interface AppSidebarProps {
   nichoId?: string;
   nichoNome?: string;
   financeiroHabilitado?: boolean;
+  pedidosHabilitado?: boolean;
 }
 
-export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado }: AppSidebarProps) {
+export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHabilitado }: AppSidebarProps) {
   const location = useLocation();
   const { role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -42,6 +44,15 @@ export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado }: AppSide
       title: "Financeiro",
       href: `/workspace/${nichoId}/financeiro`,
       icon: DollarSign,
+    });
+  }
+
+  // Adiciona Pedidos se habilitado
+  if (pedidosHabilitado) {
+    colaboradorNavItems.push({
+      title: "Pedidos",
+      href: `/workspace/${nichoId}/pedidos`,
+      icon: Package,
     });
   }
 

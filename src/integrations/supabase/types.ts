@@ -260,6 +260,7 @@ export type Database = {
           id: string
           nome: string
           observacoes: string | null
+          pedidos_habilitado: boolean
           updated_at: string | null
         }
         Insert: {
@@ -269,6 +270,7 @@ export type Database = {
           id?: string
           nome: string
           observacoes?: string | null
+          pedidos_habilitado?: boolean
           updated_at?: string | null
         }
         Update: {
@@ -278,9 +280,63 @@ export type Database = {
           id?: string
           nome?: string
           observacoes?: string | null
+          pedidos_habilitado?: boolean
           updated_at?: string | null
         }
         Relationships: []
+      }
+      pedidos: {
+        Row: {
+          cliente_nome: string | null
+          created_at: string
+          data_envio: string | null
+          data_pedido: string
+          id: string
+          nicho_id: string
+          observacoes: string | null
+          pedido_id: string
+          produto: string | null
+          status: Database["public"]["Enums"]["status_pedido"]
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          cliente_nome?: string | null
+          created_at?: string
+          data_envio?: string | null
+          data_pedido?: string
+          id?: string
+          nicho_id: string
+          observacoes?: string | null
+          pedido_id: string
+          produto?: string | null
+          status?: Database["public"]["Enums"]["status_pedido"]
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          cliente_nome?: string | null
+          created_at?: string
+          data_envio?: string | null
+          data_pedido?: string
+          id?: string
+          nicho_id?: string
+          observacoes?: string | null
+          pedido_id?: string
+          produto?: string | null
+          status?: Database["public"]["Enums"]["status_pedido"]
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -637,6 +693,7 @@ export type Database = {
         | "outros"
       status_conta: "ativa" | "pausada" | "banida" | "limitada"
       status_conteudo: "planejado" | "em_producao" | "publicado"
+      status_pedido: "pendente" | "enviado" | "cancelado"
       status_tarefa: "pendente" | "em_andamento" | "concluida" | "nao_concluida"
       tipo_midia: "video" | "imagem" | "carrossel" | "texto"
     }
@@ -778,6 +835,7 @@ export const Constants = {
       ],
       status_conta: ["ativa", "pausada", "banida", "limitada"],
       status_conteudo: ["planejado", "em_producao", "publicado"],
+      status_pedido: ["pendente", "enviado", "cancelado"],
       status_tarefa: ["pendente", "em_andamento", "concluida", "nao_concluida"],
       tipo_midia: ["video", "imagem", "carrossel", "texto"],
     },
