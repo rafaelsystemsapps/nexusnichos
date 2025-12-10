@@ -19,8 +19,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { Plus } from "lucide-react";
+
+interface MembroTime {
+  id: string;
+  nome: string;
+  funcao: string;
+}
 
 interface Pedido {
   id: string;
@@ -31,6 +36,7 @@ interface Pedido {
   status: "pendente" | "enviado" | "cancelado";
   observacoes: string | null;
   data_pedido: string;
+  processado_por_id: string | null;
 }
 
 interface PedidoFormProps {
@@ -41,9 +47,9 @@ interface PedidoFormProps {
 }
 
 export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormProps) {
-  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [membros, setMembros] = useState<MembroTime[]>([]);
   const [formData, setFormData] = useState({
     pedido_id: "",
     cliente_nome: "",
@@ -52,7 +58,14 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
     status: "pendente" as "pendente" | "enviado" | "cancelado",
     observacoes: "",
     data_pedido: new Date().toISOString().split("T")[0],
+    processado_por_id: "",
   });
+
+  useEffect(() => {
+    if (open) {
+      fetchMembros();
+    }
+  }, [open, nichoId]);
 
   useEffect(() => {
     if (pedido) {
@@ -64,6 +77,7 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
         status: pedido.status,
         observacoes: pedido.observacoes || "",
         data_pedido: pedido.data_pedido,
+        processado_por_id: pedido.processado_por_id || "",
       });
     } else {
       setFormData({
@@ -74,9 +88,19 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
         status: "pendente",
         observacoes: "",
         data_pedido: new Date().toISOString().split("T")[0],
+        processado_por_id: "",
       });
     }
   }, [pedido, open]);
+
+  const fetchMembros = async () => {
+    const { data } = await supabase
+      .from("membros_time")
+      .select("id, nome, funcao")
+      .eq("nicho_id", nichoId)
+      .order("nome");
+    if (data) setMembros(data);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +121,7 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
         observacoes: formData.observacoes.trim() || null,
         data_pedido: formData.data_pedido,
         data_envio: formData.status === "enviado" ? new Date().toISOString() : null,
+        processado_por_id: formData.processado_por_id || null,
       };
 
       if (pedido) {
@@ -219,6 +244,28 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
                 <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="enviado">Enviado</SelectItem>
                 <SelectItem value="cancelado">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="processado_por">Processado Por</Label>
+            <Select
+              value={formData.processado_por_id}
+              onValueChange={(value) =>
+                setFormData({ ...formData, processado_por_id: value === "none" ? "" : value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um membro" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum</SelectItem>
+                {membros.map((membro) => (
+                  <SelectItem key={membro.id} value={membro.id}>
+                    {membro.nome} - {membro.funcao}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

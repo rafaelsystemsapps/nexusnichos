@@ -295,6 +295,7 @@ export type Database = {
           nicho_id: string
           observacoes: string | null
           pedido_id: string
+          processado_por_id: string | null
           produto: string | null
           status: Database["public"]["Enums"]["status_pedido"]
           updated_at: string
@@ -309,6 +310,7 @@ export type Database = {
           nicho_id: string
           observacoes?: string | null
           pedido_id: string
+          processado_por_id?: string | null
           produto?: string | null
           status?: Database["public"]["Enums"]["status_pedido"]
           updated_at?: string
@@ -323,6 +325,7 @@ export type Database = {
           nicho_id?: string
           observacoes?: string | null
           pedido_id?: string
+          processado_por_id?: string | null
           produto?: string | null
           status?: Database["public"]["Enums"]["status_pedido"]
           updated_at?: string
@@ -334,6 +337,13 @@ export type Database = {
             columns: ["nicho_id"]
             isOneToOne: false
             referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_processado_por_id_fkey"
+            columns: ["processado_por_id"]
+            isOneToOne: false
+            referencedRelation: "membros_time"
             referencedColumns: ["id"]
           },
         ]

@@ -17,6 +17,11 @@ interface PedidosTabProps {
   nichoId: string;
 }
 
+interface MembroTime {
+  id: string;
+  nome: string;
+}
+
 interface Pedido {
   id: string;
   pedido_id: string;
@@ -27,6 +32,8 @@ interface Pedido {
   observacoes: string | null;
   data_pedido: string;
   data_envio: string | null;
+  processado_por_id: string | null;
+  processado_por?: MembroTime | null;
 }
 
 export function PedidosTab({ nichoId }: PedidosTabProps) {
@@ -38,7 +45,10 @@ export function PedidosTab({ nichoId }: PedidosTabProps) {
     try {
       const { data, error } = await supabase
         .from("pedidos")
-        .select("*")
+        .select(`
+          *,
+          processado_por:membros_time!processado_por_id(id, nome)
+        `)
         .eq("nicho_id", nichoId)
         .order("data_pedido", { ascending: false });
 
