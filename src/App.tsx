@@ -4,9 +4,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
 import ColaboradorWorkspace from "./pages/ColaboradorWorkspace";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 import LoadingScreen from "./components/LoadingScreen";
 import NoRoleAssigned from "./components/NoRoleAssigned";
@@ -47,6 +49,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <UpdatePrompt />
       <Toaster />
       <Sonner />
       <BrowserRouter>
@@ -54,6 +57,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/install" element={<Install />} />
             <Route path="/no-role" element={<NoRoleAssigned />} />
             <Route path="/no-nicho" element={<NoNichoAssigned />} />
             <Route 
