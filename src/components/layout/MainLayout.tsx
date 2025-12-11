@@ -1,5 +1,7 @@
 import { ReactNode } from "react";
 import { AppSidebar } from "./AppSidebar";
+import { useIsIOSMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -12,21 +14,48 @@ interface MainLayoutProps {
 }
 
 export function MainLayout({ children, nichoId, nichoNome, title, subtitle, financeiroHabilitado, pedidosHabilitado }: MainLayoutProps) {
+  const isIOSMobile = useIsIOSMobile();
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className={cn(
+      "min-h-screen bg-background",
+      isIOSMobile && "ios-safe-area"
+    )}>
       <AppSidebar nichoId={nichoId} nichoNome={nichoNome} financeiroHabilitado={financeiroHabilitado} pedidosHabilitado={pedidosHabilitado} />
       
-      <main className="pt-14 min-h-screen">
+      <main className={cn(
+        "min-h-screen",
+        isIOSMobile ? "pt-4 pb-24" : "pt-14"
+      )}>
         {(title || subtitle) && (
-          <header className="border-b border-border/30 bg-surface/50 backdrop-blur-sm sticky top-14 z-30">
-            <div className="px-8 py-6">
-              {title && <h1 className="text-2xl font-bold tracking-tight">{title}</h1>}
-              {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
-            </div>
+          <header className={cn(
+            "border-b border-border/30 bg-surface/50 backdrop-blur-sm z-30",
+            isIOSMobile 
+              ? "px-4 py-3" 
+              : "sticky top-14 px-8 py-6"
+          )}>
+            {title && (
+              <h1 className={cn(
+                "font-bold tracking-tight",
+                isIOSMobile ? "text-lg" : "text-2xl"
+              )}>
+                {title}
+              </h1>
+            )}
+            {subtitle && (
+              <p className={cn(
+                "text-muted-foreground mt-0.5",
+                isIOSMobile ? "text-xs" : "text-sm"
+              )}>
+                {subtitle}
+              </p>
+            )}
           </header>
         )}
         
-        <div className="p-8">
+        <div className={cn(
+          isIOSMobile ? "p-4" : "p-8"
+        )}>
           {children}
         </div>
       </main>

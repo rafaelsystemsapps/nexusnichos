@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, PauseCircle, AlertTriangle, Share2 } from "lucide-react";
+import { useIsIOSMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface DashboardNichoTabProps {
   nichoId: string;
@@ -27,6 +29,7 @@ export function DashboardNichoTab({ nichoId }: DashboardNichoTabProps) {
     total: 0,
   });
   const [loading, setLoading] = useState(true);
+  const isIOSMobile = useIsIOSMobile();
 
   useEffect(() => {
     fetchDashboardData();
@@ -104,108 +107,137 @@ export function DashboardNichoTab({ nichoId }: DashboardNichoTabProps) {
     );
   }
 
+  const statsCards = [
+    { key: "total", value: contasStats.total, label: "Total de contas", icon: Share2, bgColor: "bg-primary/10", iconColor: "text-primary" },
+    { key: "ativas", value: contasStats.ativas, label: "Ativas", icon: CheckCircle, bgColor: "bg-green-500/10", iconColor: "text-green-500" },
+    { key: "pausadas", value: contasStats.pausadas, label: "Pausadas", icon: PauseCircle, bgColor: "bg-yellow-500/10", iconColor: "text-yellow-500" },
+    { key: "banidas", value: contasStats.banidas, label: "Banidas", icon: AlertTriangle, bgColor: "bg-destructive/10", iconColor: "text-destructive" },
+    { key: "limitadas", value: contasStats.limitadas, label: "Limitadas", icon: AlertTriangle, bgColor: "bg-orange-500/10", iconColor: "text-orange-500" },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className={cn(
+      isIOSMobile ? "space-y-4" : "space-y-6"
+    )}>
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="border-border/50 shadow-premium">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Share2 className="h-5 w-5 text-primary" />
+      <div className={cn(
+        "grid gap-3",
+        isIOSMobile ? "grid-cols-2" : "grid-cols-2 md:grid-cols-5 gap-4"
+      )}>
+        {statsCards.map((card) => (
+          <Card 
+            key={card.key} 
+            className={cn(
+              "border-border/50",
+              isIOSMobile 
+                ? "ios-card p-3 ios-animate-fade-in" 
+                : "shadow-premium"
+            )}
+          >
+            <CardContent className={cn(
+              isIOSMobile ? "p-0" : "pt-4"
+            )}>
+              <div className={cn(
+                "flex items-center",
+                isIOSMobile ? "gap-2" : "gap-3"
+              )}>
+                <div className={cn(
+                  "rounded-lg",
+                  card.bgColor,
+                  isIOSMobile ? "p-1.5" : "p-2"
+                )}>
+                  <card.icon className={cn(
+                    card.iconColor,
+                    isIOSMobile ? "h-4 w-4" : "h-5 w-5"
+                  )} />
+                </div>
+                <div>
+                  <p className={cn(
+                    "font-bold",
+                    isIOSMobile ? "ios-value" : "text-2xl"
+                  )}>
+                    {card.value}
+                  </p>
+                  <p className={cn(
+                    "text-muted-foreground",
+                    isIOSMobile ? "ios-subtitle" : "text-xs"
+                  )}>
+                    {card.label}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold">{contasStats.total}</p>
-                <p className="text-xs text-muted-foreground">Total de contas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 shadow-premium">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{contasStats.ativas}</p>
-                <p className="text-xs text-muted-foreground">Ativas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 shadow-premium">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/10">
-                <PauseCircle className="h-5 w-5 text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{contasStats.pausadas}</p>
-                <p className="text-xs text-muted-foreground">Pausadas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 shadow-premium">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-destructive/10">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{contasStats.banidas}</p>
-                <p className="text-xs text-muted-foreground">Banidas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 shadow-premium">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/10">
-                <AlertTriangle className="h-5 w-5 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{contasStats.limitadas}</p>
-                <p className="text-xs text-muted-foreground">Limitadas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Lista de Contas */}
-      <Card className="border-border/50 shadow-premium">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Share2 className="h-5 w-5 text-primary" />
+      <Card className={cn(
+        "border-border/50",
+        isIOSMobile ? "ios-card" : "shadow-premium"
+      )}>
+        <CardHeader className={cn(
+          isIOSMobile ? "p-3 pb-2" : "pb-3"
+        )}>
+          <CardTitle className={cn(
+            "flex items-center gap-2",
+            isIOSMobile ? "text-base" : "text-lg"
+          )}>
+            <Share2 className={cn(
+              "text-primary",
+              isIOSMobile ? "h-4 w-4" : "h-5 w-5"
+            )} />
             Visão Geral das Contas
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className={isIOSMobile ? "p-3 pt-0" : undefined}>
           {contas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma conta cadastrada ainda.</p>
+            <p className={cn(
+              "text-muted-foreground",
+              isIOSMobile ? "ios-subtitle" : "text-sm"
+            )}>
+              Nenhuma conta cadastrada ainda.
+            </p>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className={cn(
+              "grid gap-2",
+              isIOSMobile ? "grid-cols-1" : "sm:grid-cols-2 lg:grid-cols-3 gap-3"
+            )}>
               {contas.map((conta) => (
                 <div
                   key={conta.id}
-                  className="p-3 rounded-lg bg-surface hover:bg-surface-hover transition-colors border border-border/30"
+                  className={cn(
+                    "rounded-lg bg-surface hover:bg-surface-hover transition-colors border border-border/30",
+                    isIOSMobile 
+                      ? "p-2.5 ios-animate-fade-in" 
+                      : "p-3"
+                  )}
                 >
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="font-medium text-sm truncate flex-1">@{conta.nome_conta}</p>
+                  <div className={cn(
+                    "flex items-start justify-between gap-2",
+                    isIOSMobile ? "mb-1" : "mb-2"
+                  )}>
+                    <p className={cn(
+                      "font-medium truncate flex-1",
+                      isIOSMobile ? "text-sm" : "text-sm"
+                    )}>
+                      @{conta.nome_conta}
+                    </p>
                     {getStatusBadge(conta.status)}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-muted-foreground capitalize">{conta.plataforma}</span>
+                    <span className={cn(
+                      "text-muted-foreground capitalize",
+                      isIOSMobile ? "text-[11px]" : "text-xs"
+                    )}>
+                      {conta.plataforma}
+                    </span>
                     {getAquecimentoBadge(conta.status_aquecimento)}
                     {conta.media_videos > 0 && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className={cn(
+                        "text-muted-foreground",
+                        isIOSMobile ? "text-[11px]" : "text-xs"
+                      )}>
                         {conta.media_videos} vídeos/sem
                       </span>
                     )}
