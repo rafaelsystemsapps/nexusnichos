@@ -46,6 +46,38 @@ All colors MUST be HSL.
   }
 }
 
+/* iOS Mobile Design System - Viewport < 600px */
+@media (max-width: 599px) {
+  :root {
+    /* iOS-like spacing */
+    --ios-spacing-xs: 8px;
+    --ios-spacing-sm: 12px;
+    --ios-spacing-md: 16px;
+    --ios-spacing-lg: 20px;
+    
+    /* iOS typography */
+    --ios-text-title: 13px;
+    --ios-text-value: 20px;
+    --ios-text-subtitle: 11px;
+    --ios-text-body: 15px;
+    
+    /* iOS radius */
+    --ios-radius: 16px;
+    --ios-radius-lg: 20px;
+    --ios-radius-xl: 24px;
+    
+    /* iOS shadows */
+    --ios-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    --ios-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.35);
+    
+    /* Safe areas */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -53,7 +85,9 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Custom scrollbar for premium look */
@@ -79,6 +113,174 @@ All colors MUST be HSL.
   ::selection {
     background: hsl(var(--primary) / 0.2);
     color: hsl(var(--foreground));
+  }
+}
+
+/* iOS Mobile Components */
+@media (max-width: 599px) {
+  /* Mobile safe area padding */
+  .ios-safe-area {
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+
+  /* iOS Card Style */
+  .ios-card {
+    background: hsl(var(--card));
+    border-radius: var(--ios-radius-lg);
+    padding: var(--ios-spacing-sm);
+    box-shadow: var(--ios-shadow);
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  /* iOS Button Base */
+  .ios-button {
+    min-height: 54px;
+    border-radius: var(--ios-radius);
+    font-size: var(--ios-text-body);
+    font-weight: 600;
+    padding: var(--ios-spacing-sm) var(--ios-spacing-lg);
+    transition: all 0.2s ease;
+  }
+
+  .ios-button:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  /* iOS Input Style */
+  .ios-input {
+    height: 50px;
+    border-radius: 14px;
+    font-size: var(--ios-text-body);
+    padding: 0 var(--ios-spacing-md);
+    background: hsl(var(--input));
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .ios-input:focus {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
+  }
+
+  /* iOS Typography */
+  .ios-title {
+    font-size: var(--ios-text-title);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .ios-value {
+    font-size: var(--ios-text-value);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .ios-subtitle {
+    font-size: var(--ios-text-subtitle);
+    font-weight: 400;
+    line-height: 1.3;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Glassmorphism effect */
+  .ios-glass {
+    background: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--border) / 0.2);
+  }
+
+  /* iOS Animation */
+  @keyframes ios-slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes ios-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes ios-scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .ios-animate-slide-up {
+    animation: ios-slide-up 0.2s ease-out;
+  }
+
+  .ios-animate-fade-in {
+    animation: ios-fade-in 0.15s ease-out;
+  }
+
+  .ios-animate-scale-in {
+    animation: ios-scale-in 0.2s ease-out;
+  }
+
+  /* Bottom Tab Bar */
+  .ios-tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(60px + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
+    background: hsl(var(--card) / 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid hsl(var(--border) / 0.3);
+    border-radius: var(--ios-radius-lg) var(--ios-radius-lg) 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 50;
+  }
+
+  .ios-tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
+    height: 60px;
+    color: hsl(var(--muted-foreground));
+    transition: color 0.2s ease;
+  }
+
+  .ios-tab-item.active {
+    color: hsl(var(--primary));
+  }
+
+  .ios-tab-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .ios-tab-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
   }
 }
 

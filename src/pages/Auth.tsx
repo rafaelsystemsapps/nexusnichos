@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsIOSMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -13,6 +15,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const { user, role, nichoId, loading: authLoading, signIn } = useAuth();
   const navigate = useNavigate();
+  const isIOSMobile = useIsIOSMobile();
 
   // Auto-redirect logged-in users
   useEffect(() => {
@@ -49,7 +52,10 @@ export default function Auth() {
   // Show loading while checking auth state
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className={cn(
+        "min-h-screen flex items-center justify-center bg-background",
+        isIOSMobile && "ios-safe-area"
+      )}>
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-4"></div>
           <p className="text-muted-foreground">Carregando...</p>
@@ -59,18 +65,43 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md shadow-premium-lg border-border/50">
-        <CardHeader className="text-center space-y-3 pb-8">
-          <CardTitle className="text-4xl font-bold tracking-tight">Nexus Nichos</CardTitle>
-          <CardDescription className="text-muted-foreground text-base">
+    <div className={cn(
+      "min-h-screen flex items-center justify-center bg-background",
+      isIOSMobile ? "p-4 ios-safe-area" : "p-4"
+    )}>
+      <Card className={cn(
+        "w-full border-border/50",
+        isIOSMobile 
+          ? "max-w-full rounded-[20px] shadow-lg ios-animate-scale-in" 
+          : "max-w-md shadow-premium-lg"
+      )}>
+        <CardHeader className={cn(
+          "text-center",
+          isIOSMobile ? "space-y-2 pb-6 pt-6" : "space-y-3 pb-8"
+        )}>
+          <CardTitle className={cn(
+            "font-bold tracking-tight",
+            isIOSMobile ? "text-2xl" : "text-4xl"
+          )}>
+            Nexus Nichos
+          </CardTitle>
+          <CardDescription className={cn(
+            "text-muted-foreground",
+            isIOSMobile ? "text-sm" : "text-base"
+          )}>
             Sistema de gestão de conteúdo orgânico
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignIn} className="space-y-4">
+        <CardContent className={isIOSMobile ? "px-5 pb-6" : undefined}>
+          <form onSubmit={handleSignIn} className={cn(
+            isIOSMobile ? "space-y-5" : "space-y-4"
+          )}>
             <div className="space-y-2">
-              <Label htmlFor="login-email">Email</Label>
+              <Label htmlFor="login-email" className={cn(
+                isIOSMobile && "ios-title"
+              )}>
+                Email
+              </Label>
               <Input
                 id="login-email"
                 type="email"
@@ -78,11 +109,18 @@ export default function Auth() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className={cn(
+                  isIOSMobile && "ios-input"
+                )}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="login-password">Senha</Label>
+              <Label htmlFor="login-password" className={cn(
+                isIOSMobile && "ios-title"
+              )}>
+                Senha
+              </Label>
               <Input
                 id="login-password"
                 type="password"
@@ -90,10 +128,20 @@ export default function Auth() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className={cn(
+                  isIOSMobile && "ios-input"
+                )}
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button 
+              type="submit" 
+              className={cn(
+                "w-full",
+                isIOSMobile && "ios-button mt-6"
+              )} 
+              disabled={loading}
+            >
               {loading ? "Entrando..." : "Entrar"}
             </Button>
           </form>

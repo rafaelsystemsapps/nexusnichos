@@ -1,5 +1,6 @@
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsIOSMobile } from "@/hooks/use-mobile";
 import {
   FileText,
   Share2,
@@ -30,6 +31,7 @@ export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHa
   const location = useLocation();
   const { role, signOut } = useAuth();
   const isAdmin = role === "admin";
+  const isIOSMobile = useIsIOSMobile();
 
   const colaboradorNavItems: NavItem[] = [
     { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard },
@@ -73,6 +75,9 @@ export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHa
       ]
     : colaboradorNavItems;
 
+  // Limita itens na tab bar mobile (máximo 5)
+  const mobileNavItems = navItems.slice(0, 5);
+
   const isActive = (href: string) => {
     if (href === `/workspace/${nichoId}` || href === "/admin") {
       return location.pathname === href;
@@ -80,6 +85,35 @@ export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHa
     return location.pathname.startsWith(href);
   };
 
+  // iOS Mobile Bottom Tab Bar
+  if (isIOSMobile) {
+    return (
+      <nav className="ios-tab-bar flex items-center justify-around px-2">
+        {mobileNavItems.map((item) => (
+          <Link
+            key={item.href}
+            to={item.href}
+            className={cn(
+              "ios-tab-item",
+              isActive(item.href) && "active"
+            )}
+          >
+            <item.icon className="ios-tab-icon" />
+            <span className="ios-tab-label">{item.title}</span>
+          </Link>
+        ))}
+        <button
+          onClick={signOut}
+          className="ios-tab-item"
+        >
+          <LogOut className="ios-tab-icon" />
+          <span className="ios-tab-label">Sair</span>
+        </button>
+      </nav>
+    );
+  }
+
+  // Desktop Header Navigation
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-black border-b border-border/30">
       <div className="flex items-center justify-between px-6 h-14">
