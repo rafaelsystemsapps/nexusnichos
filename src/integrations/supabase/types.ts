@@ -348,6 +348,50 @@ export type Database = {
           },
         ]
       }
+      produtos: {
+        Row: {
+          ativa: boolean | null
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nicho_id: string
+          nome: string
+          preco_custo_padrao: number | null
+          preco_venda_padrao: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativa?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nicho_id: string
+          nome: string
+          preco_custo_padrao?: number | null
+          preco_venda_padrao?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativa?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nicho_id?: string
+          nome?: string
+          preco_custo_padrao?: number | null
+          preco_venda_padrao?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null

@@ -56,6 +56,14 @@ interface MembroTime {
   funcao: string;
 }
 
+interface Produto {
+  id: string;
+  nome: string;
+  preco_custo_padrao: number;
+  preco_venda_padrao: number;
+  ativa: boolean;
+}
+
 interface TransacaoFormProps {
   nichoId: string;
   onSuccess: () => void;
@@ -65,7 +73,9 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [membros, setMembros] = useState<MembroTime[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
   const [selectedMembro, setSelectedMembro] = useState<string>("");
+  const [selectedProduto, setSelectedProduto] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const { user } = useAuth();
 
@@ -73,6 +83,7 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<TransacaoFormData>({
     resolver: zodResolver(transacaoSchema),
@@ -81,6 +92,7 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
   useEffect(() => {
     if (open) {
       fetchMembros();
+      fetchProdutos();
     }
   }, [open, nichoId]);
 
@@ -93,6 +105,36 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
 
     if (!error && data) {
       setMembros(data);
+    }
+  };
+
+  const fetchProdutos = async () => {
+    const { data, error } = await supabase
+      .from("produtos")
+      .select("id, nome, preco_custo_padrao, preco_venda_padrao, ativa")
+      .eq("nicho_id", nichoId)
+      .eq("ativa", true)
+      .order("nome");
+
+    if (!error && data) {
+      setProdutos(data);
+    }
+  };
+
+  const handleProdutoChange = (produtoId: string) => {
+    setSelectedProduto(produtoId);
+    
+    if (produtoId && produtoId !== "manual") {
+      const produto = produtos.find(p => p.id === produtoId);
+      if (produto) {
+        setValue("produto_nome", produto.nome);
+        setValue("preco_custo", produto.preco_custo_padrao.toString() as any);
+        setValue("preco_venda", produto.preco_venda_padrao.toString() as any);
+      }
+    } else {
+      setValue("produto_nome", "");
+      setValue("preco_custo", "" as any);
+      setValue("preco_venda", "" as any);
     }
   };
 
@@ -119,6 +161,7 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
       toast.success("Transação registrada!");
       reset();
       setSelectedMembro("");
+      setSelectedProduto("");
       setSelectedDate(new Date());
       setOpen(false);
       onSuccess();
@@ -142,6 +185,26 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
           <DialogTitle>Nova Transação</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Seleção de Produto Cadastrado */}
+          {produtos.length > 0 && (
+            <div>
+              <Label>Produto Cadastrado</Label>
+              <Select value={selectedProduto} onValueChange={handleProdutoChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione ou digite manualmente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">Digitar manualmente</SelectItem>
+                  {produtos.map((produto) => (
+                    <SelectItem key={produto.id} value={produto.id}>
+                      {produto.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div>
             <Label htmlFor="produto_nome">Nome do Produto/Serviço *</Label>
             <Input
