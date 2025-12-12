@@ -13,13 +13,13 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { user, role, nichoId, loading: authLoading, signIn } = useAuth();
+  const { user, role, nichoId, loading: authLoading, roleChecked, signIn } = useAuth();
   const navigate = useNavigate();
   const isIOSMobile = useIsIOSMobile();
 
   // Auto-redirect logged-in users
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && roleChecked) {
       if (role === "admin") {
         navigate("/admin", { replace: true });
       } else if (role === "colaborador") {
@@ -32,7 +32,7 @@ export default function Auth() {
         toast.error("Sua conta ainda não foi configurada. Contate o administrador.");
       }
     }
-  }, [user, role, nichoId, authLoading, navigate]);
+  }, [user, role, nichoId, authLoading, roleChecked, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
