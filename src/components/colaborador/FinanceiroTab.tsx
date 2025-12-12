@@ -31,6 +31,8 @@ interface LucroMembro {
   nome: string;
   funcao: string;
   transacoes: number;
+  custoTotal: number;
+  faturamentoTotal: number;
   lucroLiquido: number;
 }
 
@@ -117,6 +119,8 @@ export function FinanceiroTab({ nichoId }: FinanceiroTabProps) {
       nome: string;
       funcao: string;
       transacoes: number;
+      custoTotal: number;
+      faturamentoTotal: number;
       lucroLiquido: number;
     }>();
 
@@ -124,16 +128,22 @@ export function FinanceiroTab({ nichoId }: FinanceiroTabProps) {
       const membroId = t.membro_time?.id || null;
       const existing = agrupamento.get(membroId);
 
-      const lucro = Number(t.preco_venda) - Number(t.preco_custo);
+      const custo = Number(t.preco_custo);
+      const venda = Number(t.preco_venda);
+      const lucro = venda - custo;
 
       if (existing) {
         existing.transacoes += 1;
+        existing.custoTotal += custo;
+        existing.faturamentoTotal += venda;
         existing.lucroLiquido += lucro;
       } else {
         agrupamento.set(membroId, {
           nome: t.membro_time?.nome || "(Sem responsável)",
           funcao: t.membro_time?.funcao || "-",
           transacoes: 1,
+          custoTotal: custo,
+          faturamentoTotal: venda,
           lucroLiquido: lucro,
         });
       }
@@ -173,7 +183,7 @@ export function FinanceiroTab({ nichoId }: FinanceiroTabProps) {
 
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Transações Recentes</h3>
-        <TransacoesTable transacoes={transacoes.slice(0, 20)} />
+        <TransacoesTable transacoes={transacoes.slice(0, 20)} onDelete={fetchData} />
       </div>
     </div>
   );

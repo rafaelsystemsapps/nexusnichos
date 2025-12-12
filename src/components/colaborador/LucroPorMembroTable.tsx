@@ -14,6 +14,8 @@ interface LucroMembro {
   nome: string;
   funcao: string;
   transacoes: number;
+  custoTotal: number;
+  faturamentoTotal: number;
   lucroLiquido: number;
 }
 
@@ -42,38 +44,48 @@ export function LucroPorMembroTable({ dados }: LucroPorMembroTableProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Membro</TableHead>
-              <TableHead>Função</TableHead>
-              <TableHead className="text-center">Transações</TableHead>
-              <TableHead className="text-right">Lucro Líquido</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {dados.map((membro) => (
-              <TableRow key={membro.membroId || "sem-responsavel"}>
-                <TableCell className="font-medium">
-                  {membro.nome}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {membro.funcao}
-                </TableCell>
-                <TableCell className="text-center">
-                  {membro.transacoes}
-                </TableCell>
-                <TableCell
-                  className={`text-right font-semibold ${
-                    membro.lucroLiquido >= 0 ? "text-green-500" : "text-red-500"
-                  }`}
-                >
-                  {formatCurrency(membro.lucroLiquido)}
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Membro</TableHead>
+                <TableHead>Função</TableHead>
+                <TableHead className="text-center">Transações</TableHead>
+                <TableHead className="text-right">Investimento</TableHead>
+                <TableHead className="text-right">Faturamento</TableHead>
+                <TableHead className="text-right">Lucro Líquido</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {dados.map((membro) => (
+                <TableRow key={membro.membroId || "sem-responsavel"}>
+                  <TableCell className="font-medium">
+                    {membro.nome}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {membro.funcao}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {membro.transacoes}
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {formatCurrency(membro.custoTotal)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(membro.faturamentoTotal)}
+                  </TableCell>
+                  <TableCell
+                    className={`text-right font-semibold ${
+                      membro.lucroLiquido >= 0 ? "text-green-500" : "text-red-500"
+                    }`}
+                  >
+                    {formatCurrency(membro.lucroLiquido)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

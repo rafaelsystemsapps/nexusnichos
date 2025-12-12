@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { DollarSign, Settings, ListChecks, Plus, Pencil, Trash2, Package } from "lucide-react";
 import { TemplateForm } from "./TemplateForm";
+import { ProdutosList } from "./ProdutosList";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -372,6 +373,8 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
         </CardContent>
       </Card>
 
+      {/* Produtos Cadastrados */}
+      <ProdutosList nichoId={nichoId} />
       {/* Template Form Modal */}
       <TemplateForm
         open={formOpen}

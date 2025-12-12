@@ -27,6 +27,13 @@ interface MembroTime {
   funcao: string;
 }
 
+interface Produto {
+  id: string;
+  nome: string;
+  preco_venda_padrao: number;
+  ativa: boolean;
+}
+
 interface Pedido {
   id: string;
   pedido_id: string;
@@ -50,6 +57,8 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [membros, setMembros] = useState<MembroTime[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [selectedProduto, setSelectedProduto] = useState<string>("");
   const [formData, setFormData] = useState({
     pedido_id: "",
     cliente_nome: "",
@@ -64,6 +73,7 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
   useEffect(() => {
     if (open) {
       fetchMembros();
+      fetchProdutos();
     }
   }, [open, nichoId]);
 
@@ -79,6 +89,7 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
         data_pedido: pedido.data_pedido,
         processado_por_id: pedido.processado_por_id || "",
       });
+      setSelectedProduto("");
     } else {
       setFormData({
         pedido_id: "",
@@ -90,6 +101,7 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
         data_pedido: new Date().toISOString().split("T")[0],
         processado_por_id: "",
       });
+      setSelectedProduto("");
     }
   }, [pedido, open]);
 
@@ -100,6 +112,31 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
       .eq("nicho_id", nichoId)
       .order("nome");
     if (data) setMembros(data);
+  };
+
+  const fetchProdutos = async () => {
+    const { data } = await supabase
+      .from("produtos")
+      .select("id, nome, preco_venda_padrao, ativa")
+      .eq("nicho_id", nichoId)
+      .eq("ativa", true)
+      .order("nome");
+    if (data) setProdutos(data);
+  };
+
+  const handleProdutoChange = (produtoId: string) => {
+    setSelectedProduto(produtoId);
+    
+    if (produtoId && produtoId !== "manual") {
+      const produto = produtos.find(p => p.id === produtoId);
+      if (produto) {
+        setFormData(prev => ({
+          ...prev,
+          produto: produto.nome,
+          valor: produto.preco_venda_padrao.toString(),
+        }));
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -204,6 +241,21 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="produto">Produto</Label>
+              {produtos.length > 0 && (
+                <Select value={selectedProduto} onValueChange={handleProdutoChange}>
+                  <SelectTrigger className="mb-2">
+                    <SelectValue placeholder="Selecionar cadastrado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">Digitar manualmente</SelectItem>
+                    {produtos.map((produto) => (
+                      <SelectItem key={produto.id} value={produto.id}>
+                        {produto.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Input
                 id="produto"
                 value={formData.produto}
@@ -225,6 +277,7 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
                   setFormData({ ...formData, valor: e.target.value })
                 }
                 placeholder="0,00"
+                className={produtos.length > 0 ? "mt-[52px]" : ""}
               />
             </div>
           </div>
