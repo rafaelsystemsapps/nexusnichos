@@ -78,8 +78,11 @@ export function UsuariosTab() {
     setNichos(data || []);
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     try {
       if (editingUser) {
@@ -94,13 +97,14 @@ export function UsuariosTab() {
           role: formData.role as "admin" | "colaborador",
         }]);
 
-        // Update nicho if colaborador
-        if (formData.role === "colaborador" && formData.nicho_id) {
-          await supabase
-            .from("user_nichos")
-            .delete()
-            .eq("user_id", editingUser.id);
+        // Update nicho - primeiro remove existente
+        await supabase
+          .from("user_nichos")
+          .delete()
+          .eq("user_id", editingUser.id);
 
+        // Se colaborador, adiciona novo nicho
+        if (formData.role === "colaborador" && formData.nicho_id) {
           await supabase.from("user_nichos").insert({
             user_id: editingUser.id,
             nicho_id: formData.nicho_id,
@@ -109,41 +113,36 @@ export function UsuariosTab() {
 
         toast.success("Usuário atualizado!");
       } else {
-        // Create new user
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            data: { nome: formData.nome },
+        // Criar novo usuário via Edge Function
+        const { data, error } = await supabase.functions.invoke("create-user", {
+          body: {
+            email: formData.email,
+            password: formData.password,
+            nome: formData.nome,
+            role: formData.role,
+            nicho_id: formData.role === "colaborador" ? formData.nicho_id : undefined,
           },
         });
 
-        if (authError) throw authError;
-
-        if (authData.user) {
-          // Add role
-          await supabase.from("user_roles").insert([{
-            user_id: authData.user.id,
-            role: formData.role as "admin" | "colaborador",
-          }]);
-
-          // Add nicho if colaborador
-          if (formData.role === "colaborador" && formData.nicho_id) {
-            await supabase.from("user_nichos").insert({
-              user_id: authData.user.id,
-              nicho_id: formData.nicho_id,
-            });
-          }
+        if (error) {
+          throw new Error(error.message || "Erro ao criar usuário");
         }
 
-        toast.success("Usuário criado!");
+        if (data?.error) {
+          throw new Error(data.error);
+        }
+
+        toast.success("Usuário criado com sucesso!");
       }
 
       setDialogOpen(false);
       resetForm();
       fetchUsuarios();
     } catch (error: any) {
+      console.error("Erro ao salvar usuário:", error);
       toast.error("Erro: " + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -258,8 +257,8 @@ export function UsuariosTab() {
                 </div>
               )}
 
-              <Button type="submit" className="w-full">
-                {editingUser ? "Atualizar" : "Criar"}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Salvando..." : editingUser ? "Atualizar" : "Criar"}
               </Button>
             </form>
           </DialogContent>
