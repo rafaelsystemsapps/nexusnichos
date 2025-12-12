@@ -44,7 +44,23 @@ interface Pedido {
   observacoes: string | null;
   data_pedido: string;
   processado_por_id: string | null;
+  cor: string | null;
 }
+
+const CORES_PREDEFINIDAS = [
+  "Preto",
+  "Branco",
+  "Azul",
+  "Vermelho",
+  "Rosa",
+  "Verde",
+  "Amarelo",
+  "Marrom",
+  "Cinza",
+  "Bege",
+  "Roxo",
+  "Laranja",
+];
 
 interface PedidoFormProps {
   nichoId: string;
@@ -59,6 +75,8 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
   const [membros, setMembros] = useState<MembroTime[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [selectedProduto, setSelectedProduto] = useState<string>("");
+  const [selectedCor, setSelectedCor] = useState<string>("");
+  const [corCustomizada, setCorCustomizada] = useState<string>("");
   const [formData, setFormData] = useState({
     pedido_id: "",
     cliente_nome: "",
@@ -68,6 +86,7 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
     observacoes: "",
     data_pedido: new Date().toISOString().split("T")[0],
     processado_por_id: "",
+    cor: "",
   });
 
   useEffect(() => {
@@ -79,6 +98,9 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
 
   useEffect(() => {
     if (pedido) {
+      const corExistente = pedido.cor || "";
+      const isCorPredefinida = CORES_PREDEFINIDAS.includes(corExistente);
+      
       setFormData({
         pedido_id: pedido.pedido_id,
         cliente_nome: pedido.cliente_nome || "",
@@ -88,8 +110,11 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
         observacoes: pedido.observacoes || "",
         data_pedido: pedido.data_pedido,
         processado_por_id: pedido.processado_por_id || "",
+        cor: corExistente,
       });
       setSelectedProduto("");
+      setSelectedCor(isCorPredefinida ? corExistente : (corExistente ? "outra" : ""));
+      setCorCustomizada(isCorPredefinida ? "" : corExistente);
     } else {
       setFormData({
         pedido_id: "",
@@ -100,8 +125,11 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
         observacoes: "",
         data_pedido: new Date().toISOString().split("T")[0],
         processado_por_id: "",
+        cor: "",
       });
       setSelectedProduto("");
+      setSelectedCor("");
+      setCorCustomizada("");
     }
   }, [pedido, open]);
 
@@ -139,6 +167,24 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
     }
   };
 
+  const handleCorChange = (value: string) => {
+    setSelectedCor(value);
+    if (value === "outra") {
+      setFormData(prev => ({ ...prev, cor: corCustomizada }));
+    } else if (value === "none") {
+      setFormData(prev => ({ ...prev, cor: "" }));
+      setCorCustomizada("");
+    } else {
+      setFormData(prev => ({ ...prev, cor: value }));
+      setCorCustomizada("");
+    }
+  };
+
+  const handleCorCustomizadaChange = (value: string) => {
+    setCorCustomizada(value);
+    setFormData(prev => ({ ...prev, cor: value }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.pedido_id.trim()) {
@@ -159,6 +205,7 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
         data_pedido: formData.data_pedido,
         data_envio: formData.status === "enviado" ? new Date().toISOString() : null,
         processado_por_id: formData.processado_por_id || null,
+        cor: formData.cor.trim() || null,
       };
 
       if (pedido) {
@@ -280,6 +327,32 @@ export function PedidoForm({ nichoId, pedido, onSuccess, trigger }: PedidoFormPr
                 className={produtos.length > 0 ? "mt-[52px]" : ""}
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cor">Cor</Label>
+            <Select value={selectedCor} onValueChange={handleCorChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a cor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem cor</SelectItem>
+                {CORES_PREDEFINIDAS.map((cor) => (
+                  <SelectItem key={cor} value={cor}>
+                    {cor}
+                  </SelectItem>
+                ))}
+                <SelectItem value="outra">Outra cor...</SelectItem>
+              </SelectContent>
+            </Select>
+            {selectedCor === "outra" && (
+              <Input
+                placeholder="Digite a cor"
+                value={corCustomizada}
+                onChange={(e) => handleCorCustomizadaChange(e.target.value)}
+                className="mt-2"
+              />
+            )}
           </div>
 
           <div className="space-y-2">

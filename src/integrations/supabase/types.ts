@@ -288,6 +288,7 @@ export type Database = {
       pedidos: {
         Row: {
           cliente_nome: string | null
+          cor: string | null
           created_at: string
           data_envio: string | null
           data_pedido: string
@@ -303,6 +304,7 @@ export type Database = {
         }
         Insert: {
           cliente_nome?: string | null
+          cor?: string | null
           created_at?: string
           data_envio?: string | null
           data_pedido?: string
@@ -318,6 +320,7 @@ export type Database = {
         }
         Update: {
           cliente_nome?: string | null
+          cor?: string | null
           created_at?: string
           data_envio?: string | null
           data_pedido?: string

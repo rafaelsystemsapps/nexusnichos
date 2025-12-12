@@ -34,6 +34,7 @@ interface Pedido {
   data_envio: string | null;
   processado_por_id: string | null;
   processado_por?: MembroTime | null;
+  cor: string | null;
 }
 
 export function PedidosTab({ nichoId }: PedidosTabProps) {

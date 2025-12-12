@@ -41,6 +41,7 @@ interface Pedido {
   data_envio: string | null;
   processado_por_id: string | null;
   processado_por?: MembroTime | null;
+  cor: string | null;
 }
 
 interface PedidosTableProps {
@@ -122,6 +123,7 @@ export function PedidosTable({ pedidos, nichoId, onUpdate }: PedidosTableProps) 
             <TableHead>ID</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Produto</TableHead>
+            <TableHead>Cor</TableHead>
             <TableHead>Valor</TableHead>
             <TableHead>Data</TableHead>
             <TableHead>Status</TableHead>
@@ -135,6 +137,7 @@ export function PedidosTable({ pedidos, nichoId, onUpdate }: PedidosTableProps) 
               <TableCell className="font-medium">#{pedido.pedido_id}</TableCell>
               <TableCell>{pedido.cliente_nome || "-"}</TableCell>
               <TableCell>{pedido.produto || "-"}</TableCell>
+              <TableCell>{pedido.cor || "-"}</TableCell>
               <TableCell>{formatCurrency(pedido.valor)}</TableCell>
               <TableCell>{formatDate(pedido.data_pedido)}</TableCell>
               <TableCell>{getStatusBadge(pedido.status)}</TableCell>
