@@ -11,6 +11,7 @@ interface AuthContextType {
   role: UserRole;
   nichoId: string | null;
   loading: boolean;
+  roleChecked: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, nome: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<UserRole>(null);
   const [nichoId, setNichoId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleChecked, setRoleChecked] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }, 0);
       } else {
         setRole(null);
+        setRoleChecked(false);
         setLoading(false);
       }
     });
@@ -60,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
+    setRoleChecked(false);
     try {
       // Fetch role and nicho simultaneously
       const [roleResult, nichoResult] = await Promise.all([
@@ -82,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setRole(null);
       setNichoId(null);
     } finally {
+      setRoleChecked(true);
       setLoading(false);
     }
   };
@@ -119,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, role, nichoId, loading, signIn, signUp, signOut }}
+      value={{ user, session, role, nichoId, loading, roleChecked, signIn, signUp, signOut }}
     >
       {children}
     </AuthContext.Provider>
