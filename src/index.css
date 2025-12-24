@@ -2,47 +2,232 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Hubla Design System - All colors MUST be HSL */
 
 @layer base {
   :root {
-    /* Premium Dark Theme - Forced Dark Mode */
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 100%;
-
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 100%;
-
-    --primary: 213 100% 65%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 80%;
-
-    --accent: 0 0% 12%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 15%;
-    --input: 0 0% 7%;
-    --ring: 213 100% 65%;
-
+    /* Hubla Primary */
+    --hubla-primary: 75 65% 48%;
+    
+    /* Light Theme */
+    --background: 0 0% 100%;
+    --container-background: 0 0% 98%;
+    --foreground: 240 10% 3.9%;
+    
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    
+    --border: 240 5.9% 93%;
+    --input: 240 5.9% 90%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --ring: 240 5% 64.9%;
     --radius: 0.5rem;
+    
+    /* Chart Colors */
+    --chart-1: 75 70% 50%;
+    --chart-1-faded: 75 25% 88%;
+    --chart-2: 170 65% 45%;
+    --chart-3: 45 85% 55%;
+    --chart-4: 330 60% 55%;
+    --chart-5: 270 60% 60%;
+    --chart-6: 195 80% 45%;
+    --chart-7: 75 65% 75%;
+    --chart-8: 210 70% 50%;
+    --chart-9: 15 75% 50%;
+    
+    /* Sidebar */
+    --sidebar-background: 240 5% 96%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 90%;
+    --sidebar-primary-foreground: 240 5.9% 10%;
+    --sidebar-accent: 240 5.9% 85%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Highlight */
+    --highlight-button: 240 5% 96%;
+    
+    /* Members Area */
+    --members-area-highlight: #dc2626;
+    --members-area-menu: 220 14% 96%;
+    --members-area-background-variant: 0 0% 98%;
+    --members-area-information-foreground: 213 94% 68%;
+    --members-area-silver-light: 0 0% 88%;
+    --members-area-silver-dark: 0 0% 42%;
+    --members-area-gold-light: 39 89% 50%;
+    --members-area-gold-dark: 39 93% 30%;
+    --members-area-bronze-light: 22 78% 49%;
+    --members-area-bronze-dark: 22 78% 26%;
+    
+    /* Player */
+    --player-background: 240 10% 4%;
+    --player-border: 0 0% 90%;
+    
+    /* Error */
+    --error: 0 75% 15%;
+    --error-foreground: 0 91% 71%;
+    --error-border: 0 63% 31%;
+  }
 
-    /* Additional premium colors */
-    --surface: 0 0% 5%;
-    --surface-hover: 0 0% 12%;
-    --highlight: 213 100% 65%;
+  .dark {
+    --hubla-primary: 75 65% 48%;
+    
+    --background: 240 6% 12%;
+    --container-background: 240 6% 9%;
+    --foreground: 0 0% 98%;
+    
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 65%;
+    
+    --card: 240 6% 12%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 240 6% 10%;
+    --popover-foreground: 0 0% 98%;
+    
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --ring: 240 4.9% 83.9%;
+    --radius: 0.5rem;
+    
+    /* Chart Colors - Dark */
+    --chart-1: 75 80% 55%;
+    --chart-1-faded: 75 30% 20%;
+    --chart-2: 170 75% 60%;
+    --chart-3: 40 90% 65%;
+    --chart-4: 330 75% 65%;
+    --chart-5: 265 70% 70%;
+    --chart-6: 195 85% 65%;
+    --chart-7: 75 90% 80%;
+    --chart-8: 210 80% 65%;
+    --chart-9: 15 85% 65%;
+    
+    /* Sidebar - Dark */
+    --sidebar-background: 240 6% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 240 3.7% 15.9%;
+    --sidebar-primary-foreground: 240 4.8% 95.9%;
+    --sidebar-accent: 240 3.7% 25.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Members Area - Dark */
+    --members-area-menu: 0 0% 7%;
+    --members-area-background-variant: 240 6% 10%;
+  }
+}
+
+/* Hubla Tabs Styles */
+.tabs-list[data-variant=underlined] {
+  border-bottom-width: 1px;
+  border-color: hsl(var(--primary) / 0.1);
+  position: relative;
+}
+
+.tabs-trigger[data-state=active][data-variant=default] {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.tabs-trigger[data-variant=underlined] {
+  color: hsl(var(--muted-foreground));
+  position: relative;
+  margin-bottom: -1px;
+}
+
+.tabs-trigger[data-state=active][data-variant=underlined] {
+  font-weight: 600;
+  color: hsl(var(--primary));
+}
+
+.tabs-trigger[data-variant=underlined]:after {
+  background-color: hsl(var(--secondary));
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform: scaleX(0);
+  transition: transform 0.2s ease-in-out;
+}
+
+.tabs-trigger[data-state=active][data-variant=underlined]:after {
+  background-color: hsl(var(--secondary-foreground));
+  transform: scaleX(1);
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--container-background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted));
+  }
+
+  /* Selection color */
+  ::selection {
+    background: hsl(var(--hubla-primary) / 0.2);
+    color: hsl(var(--foreground));
   }
 }
 
@@ -67,8 +252,8 @@ All colors MUST be HSL.
     --ios-radius-xl: 24px;
     
     /* iOS shadows */
-    --ios-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-    --ios-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.35);
+    --ios-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    --ios-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.2);
     
     /* Safe areas */
     --safe-top: env(safe-area-inset-top, 0px);
@@ -78,47 +263,8 @@ All colors MUST be HSL.
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Custom scrollbar for premium look */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: hsl(var(--background));
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: hsl(var(--border));
-    border-radius: 4px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted));
-  }
-
-  /* Selection color */
-  ::selection {
-    background: hsl(var(--primary) / 0.2);
-    color: hsl(var(--foreground));
-  }
-}
-
 /* iOS Mobile Components */
 @media (max-width: 599px) {
-  /* Mobile safe area padding */
   .ios-safe-area {
     padding-top: var(--safe-top);
     padding-bottom: var(--safe-bottom);
@@ -126,7 +272,6 @@ All colors MUST be HSL.
     padding-right: var(--safe-right);
   }
 
-  /* iOS Card Style */
   .ios-card {
     background: hsl(var(--card));
     border-radius: var(--ios-radius-lg);
@@ -135,7 +280,6 @@ All colors MUST be HSL.
     border: 1px solid hsl(var(--border) / 0.3);
   }
 
-  /* iOS Button Base */
   .ios-button {
     min-height: 54px;
     border-radius: var(--ios-radius);
@@ -150,7 +294,6 @@ All colors MUST be HSL.
     opacity: 0.9;
   }
 
-  /* iOS Input Style */
   .ios-input {
     height: 50px;
     border-radius: 14px;
@@ -161,11 +304,10 @@ All colors MUST be HSL.
   }
 
   .ios-input:focus {
-    border-color: hsl(var(--primary));
-    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
+    border-color: hsl(var(--hubla-primary));
+    box-shadow: 0 0 0 3px hsl(var(--hubla-primary) / 0.15);
   }
 
-  /* iOS Typography */
   .ios-title {
     font-size: var(--ios-text-title);
     font-weight: 600;
@@ -187,7 +329,6 @@ All colors MUST be HSL.
     color: hsl(var(--muted-foreground));
   }
 
-  /* Glassmorphism effect */
   .ios-glass {
     background: hsl(var(--card) / 0.85);
     backdrop-filter: blur(20px);
@@ -195,7 +336,6 @@ All colors MUST be HSL.
     border: 1px solid hsl(var(--border) / 0.2);
   }
 
-  /* iOS Animation */
   @keyframes ios-slide-up {
     from {
       opacity: 0;
@@ -208,12 +348,8 @@ All colors MUST be HSL.
   }
 
   @keyframes ios-fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   @keyframes ios-scale-in {
@@ -239,7 +375,6 @@ All colors MUST be HSL.
     animation: ios-scale-in 0.2s ease-out;
   }
 
-  /* Bottom Tab Bar */
   .ios-tab-bar {
     position: fixed;
     bottom: 0;
@@ -252,7 +387,7 @@ All colors MUST be HSL.
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid hsl(var(--border) / 0.3);
     border-radius: var(--ios-radius-lg) var(--ios-radius-lg) 0 0;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
     z-index: 50;
   }
 
@@ -269,7 +404,7 @@ All colors MUST be HSL.
   }
 
   .ios-tab-item.active {
-    color: hsl(var(--primary));
+    color: hsl(var(--hubla-primary));
   }
 
   .ios-tab-icon {
