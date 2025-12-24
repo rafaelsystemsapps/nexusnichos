@@ -26,7 +26,9 @@ export default {
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
+        "container-background": "hsl(var(--container-background))",
         foreground: "hsl(var(--foreground))",
+        "hubla-primary": "hsl(var(--hubla-primary))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -55,15 +57,42 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        surface: {
-          DEFAULT: "hsl(var(--surface))",
-          hover: "hsl(var(--surface-hover))",
+        // Chart colors
+        chart: {
+          1: "hsl(var(--chart-1))",
+          "1-faded": "hsl(var(--chart-1-faded))",
+          2: "hsl(var(--chart-2))",
+          3: "hsl(var(--chart-3))",
+          4: "hsl(var(--chart-4))",
+          5: "hsl(var(--chart-5))",
+          6: "hsl(var(--chart-6))",
+          7: "hsl(var(--chart-7))",
+          8: "hsl(var(--chart-8))",
+          9: "hsl(var(--chart-9))",
         },
-        highlight: "hsl(var(--highlight))",
+        // Sidebar colors
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
+        },
+        // Highlight
+        "highlight-button": "hsl(var(--highlight-button))",
+        // Error
+        error: {
+          DEFAULT: "hsl(var(--error))",
+          foreground: "hsl(var(--error-foreground))",
+          border: "hsl(var(--error-border))",
+        },
       },
       boxShadow: {
-        'premium': '0 4px 20px -2px rgba(0, 0, 0, 0.5)',
-        'premium-lg': '0 10px 40px -10px rgba(0, 0, 0, 0.7)',
+        'premium': '0 4px 20px -2px rgba(0, 0, 0, 0.1)',
+        'premium-lg': '0 10px 40px -10px rgba(0, 0, 0, 0.15)',
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -72,20 +101,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
