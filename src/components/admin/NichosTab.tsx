@@ -473,15 +473,39 @@ export function NichosTab() {
 
       {/* Dialog de confirmação para excluir usuário */}
       <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir o usuário <strong>{userToDelete?.nome}</strong> do
-              nicho <strong>{userToDelete?.nichoNome}</strong>?
-              <br />
-              <br />
-              Esta ação não pode ser desfeita. O usuário perderá acesso à workspace.
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <UserX className="h-5 w-5" />
+              Excluir Usuário e Workspace
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4 text-left">
+                <p>
+                  Tem certeza que deseja excluir o usuário <strong className="text-foreground">{userToDelete?.nome}</strong> do
+                  nicho <strong className="text-foreground">{userToDelete?.nichoNome}</strong>?
+                </p>
+                
+                <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 space-y-2">
+                  <p className="text-sm font-medium text-destructive">⚠️ Esta ação irá excluir permanentemente:</p>
+                  <ul className="text-xs space-y-1 text-muted-foreground list-disc list-inside">
+                    <li>Todos os pedidos do workspace</li>
+                    <li>Todos os produtos cadastrados</li>
+                    <li>Todas as transações financeiras</li>
+                    <li>Todos os conteúdos e subtarefas</li>
+                    <li>Todas as contas de redes sociais</li>
+                    <li>Todos os membros do time</li>
+                    <li>Toda a biblioteca do nicho</li>
+                    <li>Templates e logística semanal</li>
+                    <li>O próprio nicho/workspace</li>
+                    <li>A conta do usuário (email/senha)</li>
+                  </ul>
+                </div>
+
+                <p className="text-xs text-destructive font-medium">
+                  ❌ Esta ação NÃO pode ser desfeita!
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -491,7 +515,7 @@ export function NichosTab() {
               disabled={isDeletingUser}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeletingUser ? "Excluindo..." : "Excluir Usuário"}
+              {isDeletingUser ? "Excluindo tudo..." : "Confirmar Exclusão Total"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
