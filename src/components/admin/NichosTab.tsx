@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, DollarSign } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 export function NichosTab() {
@@ -15,11 +16,16 @@ export function NichosTab() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingNicho, setEditingNicho] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
     observacoes: "",
     financeiro_habilitado: false,
+    // Campos do usuário (apenas para criação)
+    usuario_nome: "",
+    usuario_email: "",
+    usuario_senha: "",
   });
 
   useEffect(() => {
@@ -44,33 +50,87 @@ export function NichosTab() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     try {
       if (editingNicho) {
+        // Apenas atualiza o nicho (não cria usuário ao editar)
         const { error } = await supabase
           .from("nichos")
-          .update(formData)
+          .update({
+            nome: formData.nome,
+            descricao: formData.descricao,
+            observacoes: formData.observacoes,
+            financeiro_habilitado: formData.financeiro_habilitado,
+          })
           .eq("id", editingNicho.id);
 
         if (error) throw error;
         toast.success("Nicho atualizado!");
       } else {
-        const { error } = await supabase.from("nichos").insert(formData);
+        // Validar campos do usuário
+        if (!formData.usuario_nome || !formData.usuario_email || !formData.usuario_senha) {
+          toast.error("Preencha todos os campos do usuário da workspace");
+          setIsSubmitting(false);
+          return;
+        }
 
-        if (error) throw error;
-        toast.success("Nicho criado!");
+        if (formData.usuario_senha.length < 6) {
+          toast.error("A senha deve ter pelo menos 6 caracteres");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // 1. Criar o nicho primeiro
+        const { data: nichoData, error: nichoError } = await supabase
+          .from("nichos")
+          .insert({
+            nome: formData.nome,
+            descricao: formData.descricao,
+            observacoes: formData.observacoes,
+            financeiro_habilitado: formData.financeiro_habilitado,
+          })
+          .select()
+          .single();
+
+        if (nichoError) throw nichoError;
+
+        // 2. Criar o usuário vinculado ao nicho
+        const { data: userData, error: userError } = await supabase.functions.invoke("create-user", {
+          body: {
+            email: formData.usuario_email,
+            password: formData.usuario_senha,
+            nome: formData.usuario_nome,
+            role: "colaborador",
+            nicho_id: nichoData.id,
+          },
+        });
+
+        if (userError || userData?.error) {
+          // Rollback: deletar o nicho criado
+          await supabase.from("nichos").delete().eq("id", nichoData.id);
+          throw new Error(userData?.error || userError?.message || "Erro ao criar usuário");
+        }
+
+        toast.success(
+          `Nicho "${formData.nome}" criado com sucesso!\n\nCredenciais de acesso:\nEmail: ${formData.usuario_email}\nSenha: ${formData.usuario_senha}`,
+          { duration: 10000 }
+        );
       }
 
       setDialogOpen(false);
       resetForm();
       fetchNichos();
     } catch (error: any) {
+      console.error("Erro:", error);
       toast.error("Erro: " + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja deletar este nicho?")) return;
+    if (!confirm("Tem certeza que deseja deletar este nicho? Isso também removerá os usuários vinculados.")) return;
 
     try {
       const { error } = await supabase.from("nichos").delete().eq("id", id);
@@ -84,7 +144,15 @@ export function NichosTab() {
   };
 
   const resetForm = () => {
-    setFormData({ nome: "", descricao: "", observacoes: "", financeiro_habilitado: false });
+    setFormData({
+      nome: "",
+      descricao: "",
+      observacoes: "",
+      financeiro_habilitado: false,
+      usuario_nome: "",
+      usuario_email: "",
+      usuario_senha: "",
+    });
     setEditingNicho(null);
   };
 
@@ -95,6 +163,9 @@ export function NichosTab() {
       descricao: nicho.descricao || "",
       observacoes: nicho.observacoes || "",
       financeiro_habilitado: nicho.financeiro_habilitado || false,
+      usuario_nome: "",
+      usuario_email: "",
+      usuario_senha: "",
     });
     setDialogOpen(true);
   };
@@ -110,15 +181,16 @@ export function NichosTab() {
               Criar Nicho
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>
                 {editingNicho ? "Editar Nicho" : "Criar Novo Nicho"}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Dados do Nicho */}
               <div>
-                <Label htmlFor="nome">Nome *</Label>
+                <Label htmlFor="nome">Nome do Nicho *</Label>
                 <Input
                   id="nome"
                   value={formData.nome}
@@ -161,8 +233,69 @@ export function NichosTab() {
                 />
               </div>
 
-              <Button type="submit" className="w-full">
-                {editingNicho ? "Atualizar" : "Criar"}
+              {/* Campos do Usuário - apenas ao criar */}
+              {!editingNicho && (
+                <>
+                  <Separator className="my-4" />
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <User className="w-4 h-4" />
+                      <span>Usuário da Workspace</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Crie as credenciais de acesso para este nicho
+                    </p>
+
+                    <div>
+                      <Label htmlFor="usuario_nome" className="flex items-center gap-2">
+                        <User className="w-3 h-3" />
+                        Nome do Usuário *
+                      </Label>
+                      <Input
+                        id="usuario_nome"
+                        value={formData.usuario_nome}
+                        onChange={(e) => setFormData({ ...formData, usuario_nome: e.target.value })}
+                        placeholder="Nome completo"
+                        required={!editingNicho}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="usuario_email" className="flex items-center gap-2">
+                        <Mail className="w-3 h-3" />
+                        Email de Acesso *
+                      </Label>
+                      <Input
+                        id="usuario_email"
+                        type="email"
+                        value={formData.usuario_email}
+                        onChange={(e) => setFormData({ ...formData, usuario_email: e.target.value })}
+                        placeholder="email@exemplo.com"
+                        required={!editingNicho}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="usuario_senha" className="flex items-center gap-2">
+                        <Lock className="w-3 h-3" />
+                        Senha de Acesso *
+                      </Label>
+                      <Input
+                        id="usuario_senha"
+                        type="password"
+                        value={formData.usuario_senha}
+                        onChange={(e) => setFormData({ ...formData, usuario_senha: e.target.value })}
+                        placeholder="Mínimo 6 caracteres"
+                        minLength={6}
+                        required={!editingNicho}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Salvando..." : editingNicho ? "Atualizar" : "Criar Nicho e Usuário"}
               </Button>
             </form>
           </DialogContent>
