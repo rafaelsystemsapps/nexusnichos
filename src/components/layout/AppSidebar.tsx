@@ -71,7 +71,6 @@ export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHa
         { title: "Nichos", href: "/admin/nichos", icon: Settings },
         { title: "Usuários", href: "/admin/usuarios", icon: Users },
         { title: "Conteúdos", href: "/admin/conteudos", icon: FileText },
-        { title: "Contas", href: "/admin/contas", icon: Share2 },
       ]
     : colaboradorNavItems;
 
