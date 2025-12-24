@@ -6,16 +6,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { User, Shield, Loader2, ArrowLeft } from "lucide-react";
+
+interface Profile {
+  id: string;
+  nome: string;
+  role: "admin" | "colaborador";
+}
 
 export default function Auth() {
-  const [email, setEmail] = useState("");
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingProfiles, setLoadingProfiles] = useState(true);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  
   const { user, role, nichoId, loading: authLoading, roleChecked, signIn } = useAuth();
   const navigate = useNavigate();
   const isIOSMobile = useIsIOSMobile();
+
+  // Fetch profiles on mount
+  useEffect(() => {
+    fetchProfiles();
+  }, []);
 
   // Auto-redirect logged-in users
   useEffect(() => {
@@ -34,17 +53,71 @@ export default function Auth() {
     }
   }, [user, role, nichoId, authLoading, roleChecked, navigate]);
 
+  const fetchProfiles = async () => {
+    try {
+      setLoadingProfiles(true);
+      const { data, error } = await supabase.functions.invoke("list-profiles");
+      
+      if (error) {
+        console.error("Error fetching profiles:", error);
+        toast.error("Erro ao carregar perfis");
+        return;
+      }
+
+      setProfiles(data || []);
+    } catch (err) {
+      console.error("Error:", err);
+      toast.error("Erro ao carregar perfis");
+    } finally {
+      setLoadingProfiles(false);
+    }
+  };
+
+  const handleProfileSelect = (profile: Profile) => {
+    setSelectedProfile(profile);
+    setPassword("");
+    setShowPasswordModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowPasswordModal(false);
+    setSelectedProfile(null);
+    setPassword("");
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedProfile) return;
+
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    try {
+      // First, get the email for this profile (using service role via edge function would be safer, 
+      // but since we're already authenticated flow, we can use a direct query with the profile id)
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", selectedProfile.id)
+        .single();
 
-    if (error) {
-      toast.error("Erro ao fazer login: " + error.message);
-      setLoading(false);
-    } else {
-      toast.success("Login realizado com sucesso!");
+      if (profileError || !profileData?.email) {
+        toast.error("Erro ao buscar dados do perfil");
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await signIn(profileData.email, password);
+
+      if (error) {
+        toast.error("Senha incorreta");
+        setLoading(false);
+      } else {
+        toast.success("Login realizado com sucesso!");
+        handleCloseModal();
+      }
+    } catch (err) {
+      console.error("Sign in error:", err);
+      toast.error("Erro ao fazer login");
       setLoading(false);
     }
   };
@@ -57,7 +130,7 @@ export default function Auth() {
         isIOSMobile && "ios-safe-area"
       )}>
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-4"></div>
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
@@ -77,11 +150,11 @@ export default function Auth() {
       )}>
         <CardHeader className={cn(
           "text-center",
-          isIOSMobile ? "space-y-2 pb-6 pt-6" : "space-y-3 pb-8"
+          isIOSMobile ? "space-y-2 pb-4 pt-6" : "space-y-3 pb-6"
         )}>
           <CardTitle className={cn(
             "font-bold tracking-tight",
-            isIOSMobile ? "text-2xl" : "text-4xl"
+            isIOSMobile ? "text-2xl" : "text-3xl"
           )}>
             Nexus Nichos
           </CardTitle>
@@ -89,64 +162,124 @@ export default function Auth() {
             "text-muted-foreground",
             isIOSMobile ? "text-sm" : "text-base"
           )}>
-            Sistema de gestão de conteúdo orgânico
+            Selecione seu perfil para continuar
           </CardDescription>
         </CardHeader>
-        <CardContent className={isIOSMobile ? "px-5 pb-6" : undefined}>
-          <form onSubmit={handleSignIn} className={cn(
-            isIOSMobile ? "space-y-5" : "space-y-4"
-          )}>
-            <div className="space-y-2">
-              <Label htmlFor="login-email" className={cn(
-                isIOSMobile && "ios-title"
-              )}>
-                Email
-              </Label>
-              <Input
-                id="login-email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className={cn(
-                  isIOSMobile && "ios-input"
-                )}
-              />
+        
+        <CardContent className={cn(
+          isIOSMobile ? "px-4 pb-6" : "px-6 pb-6"
+        )}>
+          {loadingProfiles ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-
+          ) : profiles.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Nenhum perfil encontrado</p>
+            </div>
+          ) : (
             <div className="space-y-2">
-              <Label htmlFor="login-password" className={cn(
-                isIOSMobile && "ios-title"
-              )}>
-                Senha
-              </Label>
+              {profiles.map((profile) => (
+                <button
+                  key={profile.id}
+                  onClick={() => handleProfileSelect(profile)}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-4 rounded-lg border border-border/50",
+                    "bg-card hover:bg-accent/50 transition-colors",
+                    "text-left focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  )}
+                >
+                  <div className={cn(
+                    "flex items-center justify-center w-10 h-10 rounded-full",
+                    profile.role === "admin" 
+                      ? "bg-primary/10 text-primary" 
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    {profile.role === "admin" ? (
+                      <Shield className="h-5 w-5" />
+                    ) : (
+                      <User className="h-5 w-5" />
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground truncate">
+                      {profile.nome}
+                    </p>
+                  </div>
+                  
+                  <Badge 
+                    variant={profile.role === "admin" ? "default" : "secondary"}
+                    className="shrink-0"
+                  >
+                    {profile.role === "admin" ? "Admin" : "Workspace"}
+                  </Badge>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Password Modal */}
+      <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
+        <DialogContent className={cn(
+          "sm:max-w-md",
+          isIOSMobile && "rounded-[20px]"
+        )}>
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              Olá, {selectedProfile?.nome}!
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              Digite sua senha para continuar
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSignIn} className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
               <Input
-                id="login-password"
+                id="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className={cn(
-                  isIOSMobile && "ios-input"
-                )}
+                autoFocus
+                className={cn(isIOSMobile && "ios-input")}
               />
             </div>
-
-            <Button 
-              type="submit" 
-              className={cn(
-                "w-full",
-                isIOSMobile && "ios-button mt-6"
-              )} 
-              disabled={loading}
-            >
-              {loading ? "Entrando..." : "Entrar"}
-            </Button>
+            
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseModal}
+                className="flex-1"
+                disabled={loading}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={loading || !password}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Entrando...
+                  </>
+                ) : (
+                  "Entrar"
+                )}
+              </Button>
+            </div>
           </form>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
