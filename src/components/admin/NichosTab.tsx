@@ -385,7 +385,7 @@ export function NichosTab() {
           </p>
         ) : (
           nichos.map((nicho) => (
-            <Card key={nicho.id} className="border-border/50 shadow-premium hover:shadow-premium-lg transition-all duration-200 hover:border-primary/20">
+            <Card key={nicho.id} className="border-border/50 shadow-premium hover:shadow-premium-lg transition-all duration-200 hover:border-primary/20 flex flex-col">
               <CardHeader>
                 <CardTitle className="flex justify-between items-start">
                   <span className="text-lg">{nicho.nome}</span>
@@ -409,32 +409,45 @@ export function NichosTab() {
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {nicho.descricao && (
-                  <p className="text-sm text-muted-foreground leading-relaxed">{nicho.descricao}</p>
-                )}
-                {nicho.financeiro_habilitado && (
-                  <div className="flex items-center gap-2 text-xs text-primary">
-                    <DollarSign className="h-3 w-3" />
-                    <span>Módulo Financeiro Ativo</span>
-                  </div>
-                )}
+              <CardContent className="flex-1 flex flex-col">
+                <div className="space-y-4 flex-1">
+                  {nicho.descricao && (
+                    <p className="text-sm text-muted-foreground leading-relaxed">{nicho.descricao}</p>
+                  )}
+                  {nicho.financeiro_habilitado && (
+                    <div className="flex items-center gap-2 text-xs text-primary">
+                      <DollarSign className="h-3 w-3" />
+                      <span>Módulo Financeiro Ativo</span>
+                    </div>
+                  )}
 
-                {/* Usuário vinculado */}
-                <Separator />
-                {nicho.usuario ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <User className="h-4 w-4 text-primary" />
-                      <span>Usuário Vinculado</span>
+                  {/* Usuário vinculado */}
+                  <Separator />
+                  {nicho.usuario ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <User className="h-4 w-4 text-primary" />
+                        <span>Usuário Vinculado</span>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+                        <p className="text-sm font-medium">{nicho.usuario.nome}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Mail className="h-3 w-3" />
+                          {nicho.usuario.email}
+                        </p>
+                      </div>
                     </div>
-                    <div className="bg-muted/50 rounded-lg p-3 space-y-1">
-                      <p className="text-sm font-medium">{nicho.usuario.nome}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        {nicho.usuario.email}
-                      </p>
+                  ) : (
+                    <div className="text-xs text-muted-foreground flex items-center gap-2 py-2">
+                      <User className="h-4 w-4" />
+                      <span>Nenhum usuário vinculado</span>
                     </div>
+                  )}
+                </div>
+
+                {/* Botão sempre na parte inferior */}
+                {nicho.usuario && (
+                  <div className="mt-4 pt-4 border-t border-border/30">
                     <Button
                       variant="outline"
                       size="sm"
@@ -450,11 +463,6 @@ export function NichosTab() {
                       <UserX className="h-4 w-4 mr-2" />
                       Excluir Usuário
                     </Button>
-                  </div>
-                ) : (
-                  <div className="text-xs text-muted-foreground flex items-center gap-2 py-2">
-                    <User className="h-4 w-4" />
-                    <span>Nenhum usuário vinculado</span>
                   </div>
                 )}
               </CardContent>
