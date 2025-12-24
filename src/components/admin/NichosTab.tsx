@@ -6,23 +6,41 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX } from "lucide-react";
 import { toast } from "sonner";
 
+interface NichoWithUser {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  observacoes: string | null;
+  financeiro_habilitado: boolean;
+  pedidos_habilitado: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+  usuario?: {
+    id: string;
+    nome: string;
+    email: string;
+  } | null;
+}
+
 export function NichosTab() {
-  const [nichos, setNichos] = useState<any[]>([]);
+  const [nichos, setNichos] = useState<NichoWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingNicho, setEditingNicho] = useState<any>(null);
+  const [editingNicho, setEditingNicho] = useState<NichoWithUser | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; nome: string; nichoNome: string } | null>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
     observacoes: "",
     financeiro_habilitado: false,
-    // Campos do usuário (apenas para criação)
     usuario_nome: "",
     usuario_email: "",
     usuario_senha: "",
@@ -34,13 +52,44 @@ export function NichosTab() {
 
   const fetchNichos = async () => {
     try {
-      const { data, error } = await supabase
+      // Buscar nichos
+      const { data: nichosData, error: nichosError } = await supabase
         .from("nichos")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setNichos(data || []);
+      if (nichosError) throw nichosError;
+
+      // Buscar relações user_nichos com profiles
+      const { data: userNichosData, error: userNichosError } = await supabase
+        .from("user_nichos")
+        .select("nicho_id, user_id");
+
+      if (userNichosError) throw userNichosError;
+
+      // Buscar profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, nome, email");
+
+      if (profilesError) throw profilesError;
+
+      // Combinar dados
+      const nichosWithUsers: NichoWithUser[] = (nichosData || []).map((nicho) => {
+        const userNicho = userNichosData?.find((un) => un.nicho_id === nicho.id);
+        const profile = userNicho
+          ? profilesData?.find((p) => p.id === userNicho.user_id)
+          : null;
+
+        return {
+          ...nicho,
+          usuario: profile
+            ? { id: profile.id, nome: profile.nome, email: profile.email }
+            : null,
+        };
+      });
+
+      setNichos(nichosWithUsers);
     } catch (error: any) {
       toast.error("Erro ao carregar nichos");
     } finally {
@@ -140,6 +189,33 @@ export function NichosTab() {
       fetchNichos();
     } catch (error: any) {
       toast.error("Erro ao deletar: " + error.message);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    setIsDeletingUser(true);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("delete-user", {
+        body: { user_id: userToDelete.id },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || "Erro ao excluir usuário");
+      }
+
+      toast.success(`Usuário "${userToDelete.nome}" excluído com sucesso!`);
+      setUserToDelete(null);
+      fetchNichos();
+    } catch (error: any) {
+      toast.error("Erro ao excluir: " + error.message);
+    } finally {
+      setIsDeletingUser(false);
     }
   };
 
@@ -333,14 +409,52 @@ export function NichosTab() {
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 {nicho.descricao && (
                   <p className="text-sm text-muted-foreground leading-relaxed">{nicho.descricao}</p>
                 )}
                 {nicho.financeiro_habilitado && (
-                  <div className="mt-3 flex items-center gap-2 text-xs text-primary">
+                  <div className="flex items-center gap-2 text-xs text-primary">
                     <DollarSign className="h-3 w-3" />
                     <span>Módulo Financeiro Ativo</span>
+                  </div>
+                )}
+
+                {/* Usuário vinculado */}
+                <Separator />
+                {nicho.usuario ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <User className="h-4 w-4 text-primary" />
+                      <span>Usuário Vinculado</span>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+                      <p className="text-sm font-medium">{nicho.usuario.nome}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        {nicho.usuario.email}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
+                      onClick={() =>
+                        setUserToDelete({
+                          id: nicho.usuario!.id,
+                          nome: nicho.usuario!.nome,
+                          nichoNome: nicho.nome,
+                        })
+                      }
+                    >
+                      <UserX className="h-4 w-4 mr-2" />
+                      Excluir Usuário
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground flex items-center gap-2 py-2">
+                    <User className="h-4 w-4" />
+                    <span>Nenhum usuário vinculado</span>
                   </div>
                 )}
               </CardContent>
@@ -348,6 +462,32 @@ export function NichosTab() {
           ))
         )}
       </div>
+
+      {/* Dialog de confirmação para excluir usuário */}
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o usuário <strong>{userToDelete?.nome}</strong> do
+              nicho <strong>{userToDelete?.nichoNome}</strong>?
+              <br />
+              <br />
+              Esta ação não pode ser desfeita. O usuário perderá acesso à workspace.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingUser}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={isDeletingUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingUser ? "Excluindo..." : "Excluir Usuário"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
