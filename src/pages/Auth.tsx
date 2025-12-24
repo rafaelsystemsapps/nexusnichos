@@ -16,6 +16,7 @@ import { User, Shield, Loader2, ArrowLeft } from "lucide-react";
 interface Profile {
   id: string;
   nome: string;
+  email: string;
   role: "admin" | "colaborador";
 }
 
@@ -92,21 +93,8 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      // First, get the email for this profile (using service role via edge function would be safer, 
-      // but since we're already authenticated flow, we can use a direct query with the profile id)
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("id", selectedProfile.id)
-        .single();
-
-      if (profileError || !profileData?.email) {
-        toast.error("Erro ao buscar dados do perfil");
-        setLoading(false);
-        return;
-      }
-
-      const { error } = await signIn(profileData.email, password);
+      // Use the email from the profile (already fetched from Edge Function)
+      const { error } = await signIn(selectedProfile.email, password);
 
       if (error) {
         toast.error("Senha incorreta");

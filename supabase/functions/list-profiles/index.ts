@@ -8,6 +8,7 @@ const corsHeaders = {
 interface ProfileWithRole {
   id: string;
   nome: string;
+  email: string;
   role: "admin" | "colaborador";
 }
 
@@ -28,7 +29,7 @@ Deno.serve(async (req) => {
     // Fetch all profiles
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, nome");
+      .select("id, nome, email");
 
     if (profilesError) {
       console.error("Error fetching profiles:", profilesError);
@@ -56,6 +57,7 @@ Deno.serve(async (req) => {
       .map((profile) => ({
         id: profile.id,
         nome: profile.nome,
+        email: profile.email,
         role: (rolesMap.get(profile.id) || "colaborador") as "admin" | "colaborador",
       }))
       // Sort: admins first, then alphabetically by name
