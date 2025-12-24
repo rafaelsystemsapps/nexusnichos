@@ -5,13 +5,11 @@ import { useIsIOSMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Shield, Loader2, ArrowLeft } from "lucide-react";
+import { Shield, Loader2, Lock } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -19,6 +17,20 @@ interface Profile {
   email: string;
   role: "admin" | "colaborador";
 }
+
+// Netflix-style avatar colors
+const AVATAR_COLORS = [
+  "from-red-500 to-red-700",
+  "from-blue-500 to-blue-700", 
+  "from-green-500 to-green-700",
+  "from-yellow-500 to-yellow-600",
+  "from-purple-500 to-purple-700",
+  "from-pink-500 to-pink-700",
+  "from-cyan-500 to-cyan-700",
+  "from-orange-500 to-orange-700",
+];
+
+const ADMIN_COLOR = "from-amber-400 to-amber-600";
 
 export default function Auth() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -93,7 +105,6 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      // Use the email from the profile (already fetched from Edge Function)
       const { error } = await signIn(selectedProfile.email, password);
 
       if (error) {
@@ -110,16 +121,30 @@ export default function Auth() {
     }
   };
 
+  const getAvatarColor = (index: number, isAdmin: boolean) => {
+    if (isAdmin) return ADMIN_COLOR;
+    return AVATAR_COLORS[index % AVATAR_COLORS.length];
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   // Show loading while checking auth state
   if (authLoading) {
     return (
       <div className={cn(
-        "min-h-screen flex items-center justify-center bg-background",
+        "min-h-screen flex items-center justify-center bg-[#141414]",
         isIOSMobile && "ios-safe-area"
       )}>
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-white mx-auto mb-4" />
+          <p className="text-neutral-400">Carregando...</p>
         </div>
       </div>
     );
@@ -127,132 +152,170 @@ export default function Auth() {
 
   return (
     <div className={cn(
-      "min-h-screen flex items-center justify-center bg-background",
-      isIOSMobile ? "p-4 ios-safe-area" : "p-4"
+      "min-h-screen flex flex-col items-center justify-center bg-[#141414]",
+      isIOSMobile ? "p-4 ios-safe-area" : "p-8"
     )}>
-      <Card className={cn(
-        "w-full border-border/50",
-        isIOSMobile 
-          ? "max-w-full rounded-[20px] shadow-lg ios-animate-scale-in" 
-          : "max-w-md shadow-premium-lg"
-      )}>
-        <CardHeader className={cn(
-          "text-center",
-          isIOSMobile ? "space-y-2 pb-4 pt-6" : "space-y-3 pb-6"
+      {/* Header */}
+      <div className="text-center mb-12 animate-fade-in">
+        <h1 className={cn(
+          "font-bold text-white tracking-tight mb-3",
+          isIOSMobile ? "text-3xl" : "text-4xl"
         )}>
-          <CardTitle className={cn(
-            "font-bold tracking-tight",
-            isIOSMobile ? "text-2xl" : "text-3xl"
-          )}>
-            Nexus Nichos
-          </CardTitle>
-          <CardDescription className={cn(
-            "text-muted-foreground",
-            isIOSMobile ? "text-sm" : "text-base"
-          )}>
-            Selecione seu perfil para continuar
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className={cn(
-          isIOSMobile ? "px-4 pb-6" : "px-6 pb-6"
+          Quem está acessando?
+        </h1>
+        <p className="text-neutral-400 text-lg">
+          Selecione seu perfil para continuar
+        </p>
+      </div>
+
+      {/* Profiles Grid */}
+      {loadingProfiles ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-white" />
+        </div>
+      ) : profiles.length === 0 ? (
+        <div className="text-center py-16 text-neutral-400">
+          <p className="text-lg">Nenhum perfil encontrado</p>
+        </div>
+      ) : (
+        <div className={cn(
+          "grid gap-6 md:gap-8 w-full max-w-4xl px-4",
+          profiles.length <= 2 && "grid-cols-2 max-w-lg",
+          profiles.length === 3 && "grid-cols-3 max-w-2xl",
+          profiles.length >= 4 && "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
         )}>
-          {loadingProfiles ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : profiles.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Nenhum perfil encontrado</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {profiles.map((profile) => (
-                <button
-                  key={profile.id}
-                  onClick={() => handleProfileSelect(profile)}
-                  className={cn(
-                    "w-full flex items-center gap-3 p-4 rounded-lg border border-border/50",
-                    "bg-card hover:bg-accent/50 transition-colors",
-                    "text-left focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  )}
-                >
+          {profiles.map((profile, index) => {
+            const isAdmin = profile.role === "admin";
+            const colorClass = getAvatarColor(index, isAdmin);
+            
+            return (
+              <button
+                key={profile.id}
+                onClick={() => handleProfileSelect(profile)}
+                className="group flex flex-col items-center gap-3 focus:outline-none animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                {/* Avatar */}
+                <div className={cn(
+                  "relative w-24 h-24 md:w-32 md:h-32 rounded-md overflow-hidden",
+                  "transition-all duration-200 ease-out",
+                  "group-hover:ring-4 group-hover:ring-white group-hover:scale-105",
+                  "group-focus:ring-4 group-focus:ring-white"
+                )}>
                   <div className={cn(
-                    "flex items-center justify-center w-10 h-10 rounded-full",
-                    profile.role === "admin" 
-                      ? "bg-primary/10 text-primary" 
-                      : "bg-muted text-muted-foreground"
+                    "w-full h-full bg-gradient-to-br flex items-center justify-center",
+                    colorClass
                   )}>
-                    {profile.role === "admin" ? (
-                      <Shield className="h-5 w-5" />
+                    {isAdmin ? (
+                      <Shield className="w-10 h-10 md:w-14 md:h-14 text-white/90" />
                     ) : (
-                      <User className="h-5 w-5" />
+                      <span className="text-2xl md:text-4xl font-bold text-white/90">
+                        {getInitials(profile.nome)}
+                      </span>
                     )}
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">
-                      {profile.nome}
-                    </p>
-                  </div>
-                  
-                  <Badge 
-                    variant={profile.role === "admin" ? "default" : "secondary"}
-                    className="shrink-0"
-                  >
-                    {profile.role === "admin" ? "Admin" : "Workspace"}
-                  </Badge>
-                </button>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  {/* Hover overlay */}
+                  <div className={cn(
+                    "absolute inset-0 bg-black/20 opacity-0",
+                    "group-hover:opacity-100 transition-opacity duration-200"
+                  )} />
+                </div>
+
+                {/* Name */}
+                <span className={cn(
+                  "text-neutral-400 text-sm md:text-base font-medium",
+                  "group-hover:text-white transition-colors duration-200",
+                  "text-center max-w-[120px] md:max-w-[160px] truncate"
+                )}>
+                  {profile.nome}
+                </span>
+
+                {/* Role badge */}
+                <span className={cn(
+                  "text-xs px-2 py-0.5 rounded-sm",
+                  isAdmin 
+                    ? "bg-amber-500/20 text-amber-400" 
+                    : "bg-neutral-700/50 text-neutral-500"
+                )}>
+                  {isAdmin ? "Admin" : "Workspace"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Password Modal */}
       <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
         <DialogContent className={cn(
-          "sm:max-w-md",
+          "sm:max-w-md bg-[#1a1a1a] border-neutral-800",
           isIOSMobile && "rounded-[20px]"
         )}>
-          <DialogHeader>
-            <DialogTitle className="text-center">
+          <DialogHeader className="text-center">
+            {selectedProfile && (
+              <div className="flex flex-col items-center gap-4 mb-4">
+                {/* Selected profile avatar */}
+                <div className={cn(
+                  "w-20 h-20 rounded-md overflow-hidden bg-gradient-to-br flex items-center justify-center",
+                  getAvatarColor(
+                    profiles.findIndex(p => p.id === selectedProfile.id),
+                    selectedProfile.role === "admin"
+                  )
+                )}>
+                  {selectedProfile.role === "admin" ? (
+                    <Shield className="w-10 h-10 text-white/90" />
+                  ) : (
+                    <span className="text-2xl font-bold text-white/90">
+                      {getInitials(selectedProfile.nome)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+            <DialogTitle className="text-white text-xl">
               Olá, {selectedProfile?.nome}!
             </DialogTitle>
-            <DialogDescription className="text-center">
+            <DialogDescription className="text-neutral-400">
               Digite sua senha para continuar
             </DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={handleSignIn} className="space-y-4 mt-4">
+          <form onSubmit={handleSignIn} className="space-y-5 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoFocus
-                className={cn(isIOSMobile && "ios-input")}
-              />
+              <Label htmlFor="password" className="text-neutral-300">Senha</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoFocus
+                  className={cn(
+                    "bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 pl-10",
+                    "focus:border-white focus:ring-white/20",
+                    isIOSMobile && "ios-input"
+                  )}
+                />
+              </div>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleCloseModal}
-                className="flex-1"
+                className="flex-1 bg-transparent border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-white"
                 disabled={loading}
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar
+                Cancelar
               </Button>
               <Button
                 type="submit"
-                className="flex-1"
+                className="flex-1 bg-white text-black hover:bg-neutral-200"
                 disabled={loading || !password}
               >
                 {loading ? (
