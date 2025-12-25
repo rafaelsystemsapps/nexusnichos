@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Radio,
   Archive,
+  Network,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -41,9 +42,10 @@ interface AppSidebarProps {
   pedidosHabilitado?: boolean;
   radarHabilitado?: boolean;
   cemiterioHabilitado?: boolean;
+  mapaDependenciaHabilitado?: boolean;
 }
 
-export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado }: AppSidebarProps) {
+export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -129,6 +131,15 @@ export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHab
       title: "Cemitério",
       href: `/workspace/${nichoId}/cemiterio`,
       icon: Archive,
+    });
+  }
+
+  // Adiciona Mapa de Dependência se habilitado (módulo de diagnóstico)
+  if (mapaDependenciaHabilitado) {
+    colaboradorNavItems.push({
+      title: "Mapa",
+      href: `/workspace/${nichoId}/mapa-dependencia`,
+      icon: Network,
     });
   }
 

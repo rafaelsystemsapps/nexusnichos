@@ -306,6 +306,7 @@ export type Database = {
           financeiro_habilitado: boolean
           foco_do_dia: string | null
           id: string
+          mapa_dependencia_habilitado: boolean
           nome: string
           observacoes: string | null
           pedidos_habilitado: boolean
@@ -321,6 +322,7 @@ export type Database = {
           financeiro_habilitado?: boolean
           foco_do_dia?: string | null
           id?: string
+          mapa_dependencia_habilitado?: boolean
           nome: string
           observacoes?: string | null
           pedidos_habilitado?: boolean
@@ -336,6 +338,7 @@ export type Database = {
           financeiro_habilitado?: boolean
           foco_do_dia?: string | null
           id?: string
+          mapa_dependencia_habilitado?: boolean
           nome?: string
           observacoes?: string | null
           pedidos_habilitado?: boolean
