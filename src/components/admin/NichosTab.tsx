@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX, Radar, Archive, AlertTriangle, Network, FlaskConical, Lightbulb, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX, Radar, Archive, AlertTriangle, Network, FlaskConical, Lightbulb, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 interface NichoWithUser {
@@ -43,6 +43,7 @@ export function NichosTab() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userToDelete, setUserToDelete] = useState<{ id: string; nome: string; nichoNome: string } | null>(null);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
@@ -269,6 +270,32 @@ export function NichosTab() {
       usuario_senha: "",
     });
     setEditingNicho(null);
+    setCurrentStep(1);
+  };
+
+  const getTotalSteps = () => editingNicho ? 2 : 3;
+
+  const canProceed = () => {
+    if (currentStep === 1) return formData.nome.trim() !== "";
+    if (currentStep === 2) return true;
+    if (currentStep === 3) {
+      return formData.usuario_nome.trim() !== "" && 
+             formData.usuario_email.trim() !== "" && 
+             formData.usuario_senha.length >= 6;
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (currentStep < getTotalSteps() && canProceed()) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
   };
 
   const openEditDialog = (nicho: any) => {
@@ -307,246 +334,265 @@ export function NichosTab() {
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>
-                {editingNicho ? "Editar Nicho" : "Criar Novo Nicho"}
+                {editingNicho ? "Editar Nicho" : `Criar Novo Nicho - Etapa ${currentStep} de ${getTotalSteps()}`}
               </DialogTitle>
             </DialogHeader>
+
+            {/* Progress indicator */}
+            {!editingNicho && (
+              <div className="flex gap-2 mb-4">
+                {Array.from({ length: getTotalSteps() }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1 flex-1 rounded-full transition-colors ${
+                      i + 1 <= currentStep ? "bg-primary" : "bg-muted"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Dados do Nicho */}
-              <div>
-                <Label htmlFor="nome">Nome do Nicho *</Label>
-                <Input
-                  id="nome"
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="contas">Controle de Contas</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Habilitar gerenciamento de contas de redes sociais
-                    </p>
+              {/* Etapa 1: Nome do Nicho */}
+              {currentStep === 1 && (
+                <div className="space-y-4">
+                  <div className="text-center mb-6">
+                    <h3 className="text-lg font-semibold">Identificação</h3>
+                    <p className="text-sm text-muted-foreground">Defina o nome do nicho</p>
                   </div>
-                  <Switch
-                    id="contas"
-                    checked={formData.contas_habilitado}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, contas_habilitado: checked })
-                    }
-                  />
+                  <div>
+                    <Label htmlFor="nome">Nome do Nicho *</Label>
+                    <Input
+                      id="nome"
+                      value={formData.nome}
+                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                      placeholder="Ex: Nicho de Pets, Fitness, etc."
+                      required
+                    />
+                  </div>
                 </div>
-
-                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="financeiro">Módulo Financeiro</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Habilitar controle de transações e faturamento
-                    </p>
-                  </div>
-                  <Switch
-                    id="financeiro"
-                    checked={formData.financeiro_habilitado}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, financeiro_habilitado: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="pedidos" className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                      Pedidos
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Habilitar gestão e acompanhamento de pedidos
-                    </p>
-                  </div>
-                  <Switch
-                    id="pedidos"
-                    checked={formData.pedidos_habilitado}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, pedidos_habilitado: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="radar">Radar de Oportunidades</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Habilitar monitoramento de tendências
-                    </p>
-                  </div>
-                  <Switch
-                    id="radar"
-                    checked={formData.radar_habilitado}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, radar_habilitado: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="cemiterio">Cemitério</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Habilitar arquivo de ativos encerrados
-                    </p>
-                  </div>
-                  <Switch
-                    id="cemiterio"
-                    checked={formData.cemiterio_habilitado}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, cemiterio_habilitado: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="alertas" className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-destructive" />
-                      Alertas de Risco
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Sinalização visual de riscos operacionais
-                    </p>
-                  </div>
-                  <Switch
-                    id="alertas"
-                    checked={formData.alertas_habilitado}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, alertas_habilitado: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="mapa_dependencia" className="flex items-center gap-2">
-                      <Network className="h-4 w-4 text-muted-foreground" />
-                      Mapa de Dependência
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Visualização de concentração e fragilidades
-                    </p>
-                  </div>
-                  <Switch
-                    id="mapa_dependencia"
-                    checked={formData.mapa_dependencia_habilitado}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, mapa_dependencia_habilitado: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="teste_rapido" className="flex items-center gap-2">
-                      <FlaskConical className="h-4 w-4 text-muted-foreground" />
-                      Teste Rápido
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Experimentação controlada e decisão rápida
-                    </p>
-                  </div>
-                  <Switch
-                    id="teste_rapido"
-                    checked={formData.teste_rapido_habilitado}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, teste_rapido_habilitado: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="logs_aprendizado" className="flex items-center gap-2">
-                      <Lightbulb className="h-4 w-4 text-muted-foreground" />
-                      Logs de Aprendizado
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Captura de aprendizado diário
-                    </p>
-                  </div>
-                  <Switch
-                    id="logs_aprendizado"
-                    checked={formData.logs_aprendizado_habilitado}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, logs_aprendizado_habilitado: checked })
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Campos do Usuário - apenas ao criar */}
-              {!editingNicho && (
-                <>
-                  <Separator className="my-4" />
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <User className="w-4 h-4" />
-                      <span>Usuário da Workspace</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Crie as credenciais de acesso para este nicho
-                    </p>
-
-                    <div>
-                      <Label htmlFor="usuario_nome" className="flex items-center gap-2">
-                        <User className="w-3 h-3" />
-                        Nome do Usuário *
-                      </Label>
-                      <Input
-                        id="usuario_nome"
-                        value={formData.usuario_nome}
-                        onChange={(e) => setFormData({ ...formData, usuario_nome: e.target.value })}
-                        placeholder="Nome completo"
-                        required={!editingNicho}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="usuario_email" className="flex items-center gap-2">
-                        <Mail className="w-3 h-3" />
-                        Email de Acesso *
-                      </Label>
-                      <Input
-                        id="usuario_email"
-                        type="email"
-                        value={formData.usuario_email}
-                        onChange={(e) => setFormData({ ...formData, usuario_email: e.target.value })}
-                        placeholder="email@exemplo.com"
-                        required={!editingNicho}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="usuario_senha" className="flex items-center gap-2">
-                        <Lock className="w-3 h-3" />
-                        Senha de Acesso *
-                      </Label>
-                      <Input
-                        id="usuario_senha"
-                        type="password"
-                        value={formData.usuario_senha}
-                        onChange={(e) => setFormData({ ...formData, usuario_senha: e.target.value })}
-                        placeholder="Mínimo 6 caracteres"
-                        minLength={6}
-                        required={!editingNicho}
-                      />
-                    </div>
-                  </div>
-                </>
               )}
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Salvando..." : editingNicho ? "Atualizar" : "Criar Nicho e Usuário"}
-              </Button>
+              {/* Etapa 2: Módulos */}
+              {currentStep === 2 && (
+                <div className="space-y-4">
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-semibold">Módulos</h3>
+                    <p className="text-sm text-muted-foreground">Ative os recursos do nicho</p>
+                  </div>
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="contas" className="text-sm">Controle de Contas</Label>
+                        <p className="text-xs text-muted-foreground">Gerenciamento de redes sociais</p>
+                      </div>
+                      <Switch
+                        id="contas"
+                        checked={formData.contas_habilitado}
+                        onCheckedChange={(checked) => setFormData({ ...formData, contas_habilitado: checked })}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="financeiro" className="text-sm flex items-center gap-2">
+                          <DollarSign className="h-3 w-3" />
+                          Módulo Financeiro
+                        </Label>
+                        <p className="text-xs text-muted-foreground">Transações e faturamento</p>
+                      </div>
+                      <Switch
+                        id="financeiro"
+                        checked={formData.financeiro_habilitado}
+                        onCheckedChange={(checked) => setFormData({ ...formData, financeiro_habilitado: checked })}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="pedidos" className="text-sm flex items-center gap-2">
+                          <Package className="h-3 w-3" />
+                          Pedidos
+                        </Label>
+                        <p className="text-xs text-muted-foreground">Gestão de pedidos</p>
+                      </div>
+                      <Switch
+                        id="pedidos"
+                        checked={formData.pedidos_habilitado}
+                        onCheckedChange={(checked) => setFormData({ ...formData, pedidos_habilitado: checked })}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="radar" className="text-sm flex items-center gap-2">
+                          <Radar className="h-3 w-3" />
+                          Radar de Oportunidades
+                        </Label>
+                        <p className="text-xs text-muted-foreground">Monitoramento de tendências</p>
+                      </div>
+                      <Switch
+                        id="radar"
+                        checked={formData.radar_habilitado}
+                        onCheckedChange={(checked) => setFormData({ ...formData, radar_habilitado: checked })}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="cemiterio" className="text-sm flex items-center gap-2">
+                          <Archive className="h-3 w-3" />
+                          Cemitério
+                        </Label>
+                        <p className="text-xs text-muted-foreground">Arquivo de ativos encerrados</p>
+                      </div>
+                      <Switch
+                        id="cemiterio"
+                        checked={formData.cemiterio_habilitado}
+                        onCheckedChange={(checked) => setFormData({ ...formData, cemiterio_habilitado: checked })}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="alertas" className="text-sm flex items-center gap-2">
+                          <AlertTriangle className="h-3 w-3 text-destructive" />
+                          Alertas de Risco
+                        </Label>
+                        <p className="text-xs text-muted-foreground">Sinalização de riscos</p>
+                      </div>
+                      <Switch
+                        id="alertas"
+                        checked={formData.alertas_habilitado}
+                        onCheckedChange={(checked) => setFormData({ ...formData, alertas_habilitado: checked })}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="mapa_dependencia" className="text-sm flex items-center gap-2">
+                          <Network className="h-3 w-3" />
+                          Mapa de Dependência
+                        </Label>
+                        <p className="text-xs text-muted-foreground">Concentração e fragilidades</p>
+                      </div>
+                      <Switch
+                        id="mapa_dependencia"
+                        checked={formData.mapa_dependencia_habilitado}
+                        onCheckedChange={(checked) => setFormData({ ...formData, mapa_dependencia_habilitado: checked })}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="teste_rapido" className="text-sm flex items-center gap-2">
+                          <FlaskConical className="h-3 w-3" />
+                          Teste Rápido
+                        </Label>
+                        <p className="text-xs text-muted-foreground">Experimentação controlada</p>
+                      </div>
+                      <Switch
+                        id="teste_rapido"
+                        checked={formData.teste_rapido_habilitado}
+                        onCheckedChange={(checked) => setFormData({ ...formData, teste_rapido_habilitado: checked })}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="logs_aprendizado" className="text-sm flex items-center gap-2">
+                          <Lightbulb className="h-3 w-3" />
+                          Logs de Aprendizado
+                        </Label>
+                        <p className="text-xs text-muted-foreground">Captura de aprendizado diário</p>
+                      </div>
+                      <Switch
+                        id="logs_aprendizado"
+                        checked={formData.logs_aprendizado_habilitado}
+                        onCheckedChange={(checked) => setFormData({ ...formData, logs_aprendizado_habilitado: checked })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Etapa 3: Usuário (apenas ao criar) */}
+              {currentStep === 3 && !editingNicho && (
+                <div className="space-y-4">
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-semibold">Usuário da Workspace</h3>
+                    <p className="text-sm text-muted-foreground">Crie as credenciais de acesso</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="usuario_nome" className="flex items-center gap-2">
+                      <User className="w-3 h-3" />
+                      Nome do Usuário *
+                    </Label>
+                    <Input
+                      id="usuario_nome"
+                      value={formData.usuario_nome}
+                      onChange={(e) => setFormData({ ...formData, usuario_nome: e.target.value })}
+                      placeholder="Nome completo"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="usuario_email" className="flex items-center gap-2">
+                      <Mail className="w-3 h-3" />
+                      Email de Acesso *
+                    </Label>
+                    <Input
+                      id="usuario_email"
+                      type="email"
+                      value={formData.usuario_email}
+                      onChange={(e) => setFormData({ ...formData, usuario_email: e.target.value })}
+                      placeholder="email@exemplo.com"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="usuario_senha" className="flex items-center gap-2">
+                      <Lock className="w-3 h-3" />
+                      Senha de Acesso *
+                    </Label>
+                    <Input
+                      id="usuario_senha"
+                      type="password"
+                      value={formData.usuario_senha}
+                      onChange={(e) => setFormData({ ...formData, usuario_senha: e.target.value })}
+                      placeholder="Mínimo 6 caracteres"
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Navegação */}
+              <div className="flex gap-2 pt-2">
+                {currentStep > 1 && (
+                  <Button type="button" variant="outline" onClick={handleBack} className="flex-1">
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Voltar
+                  </Button>
+                )}
+                
+                {currentStep < getTotalSteps() ? (
+                  <Button 
+                    type="button" 
+                    onClick={handleNext} 
+                    className="flex-1"
+                    disabled={!canProceed()}
+                  >
+                    Próximo
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                ) : (
+                  <Button type="submit" className="flex-1" disabled={isSubmitting || !canProceed()}>
+                    {isSubmitting ? "Salvando..." : editingNicho ? "Atualizar" : "Criar Nicho"}
+                  </Button>
+                )}
+              </div>
             </form>
           </DialogContent>
         </Dialog>
