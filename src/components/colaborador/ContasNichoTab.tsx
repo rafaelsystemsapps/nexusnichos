@@ -2,14 +2,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, Hash } from "lucide-react";
+import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -21,37 +18,60 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ContasNichoTabProps {
   nichoId: string;
 }
 
+// Ícones por plataforma
 const plataformaIcons: Record<string, React.ReactNode> = {
-  instagram: <Instagram className="h-5 w-5" />,
-  youtube: <Youtube className="h-5 w-5" />,
-  twitter: <Twitter className="h-5 w-5" />,
-  tiktok: <Music2 className="h-5 w-5" />,
-  threads: <Hash className="h-5 w-5" />,
-  facebook: <MessageCircle className="h-5 w-5" />,
+  instagram: <Instagram className="h-4 w-4" />,
+  youtube: <Youtube className="h-4 w-4" />,
+  twitter: <Twitter className="h-4 w-4" />,
+  tiktok: <Music2 className="h-4 w-4" />,
+  facebook: <MessageCircle className="h-4 w-4" />,
+  whatsapp: <MessageCircle className="h-4 w-4" />,
 };
 
-const TIPOS_CONTEUDO = [
-  "Dark",
-  "Achadinhos", 
-  "Humor",
-  "Lifestyle",
-  "Educacional",
-  "Reviews",
-  "Trends",
-  "Outro"
-];
+// Status minimalista: ativa, risco, caída
+type StatusConta = "ativa" | "risco" | "caida";
 
-const STATUS_AQUECIMENTO = [
-  { value: "aquecida", label: "Aquecida", color: "bg-emerald-500/20 text-emerald-400" },
-  { value: "media", label: "Média", color: "bg-amber-500/20 text-amber-400" },
-  { value: "fria", label: "Fria", color: "bg-blue-500/20 text-blue-400" },
-  { value: "inativa", label: "Inativa", color: "bg-zinc-500/20 text-zinc-400" },
-];
+const STATUS_CONFIG: Record<StatusConta, { label: string; className: string }> = {
+  ativa: { 
+    label: "Ativa", 
+    className: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" 
+  },
+  risco: { 
+    label: "Risco", 
+    className: "bg-amber-500/20 text-amber-400 border-amber-500/30" 
+  },
+  caida: { 
+    label: "Caída", 
+    className: "bg-red-500/20 text-red-400 border-red-500/30" 
+  },
+};
+
+// Mapeamento do enum antigo para o novo status minimalista
+const mapStatusFromDB = (status: string): StatusConta => {
+  if (status === "ativa") return "ativa";
+  if (status === "pausada" || status === "limitada") return "risco";
+  if (status === "banida") return "caida";
+  return "ativa";
+};
+
+// Mapeamento do status minimalista para o enum do banco
+const mapStatusToDB = (status: StatusConta): string => {
+  if (status === "ativa") return "ativa";
+  if (status === "risco") return "limitada"; // limitada representa risco no DB
+  if (status === "caida") return "banida"; // banida representa caída no DB
+  return "ativa";
+};
 
 export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const { user } = useAuth();
@@ -60,14 +80,11 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingConta, setEditingConta] = useState<any>(null);
   const [formData, setFormData] = useState({
-    plataforma: "instagram",
+    plataforma: "tiktok",
     nome_conta: "",
-    url_conta: "",
-    status: "ativa",
-    observacoes: "",
-    tipo_conteudo: "",
-    media_videos: 0,
-    status_aquecimento: "media",
+    status: "ativa" as StatusConta,
+    ultima_acao: "",
+    proxima_acao: "",
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contaToDelete, setContaToDelete] = useState<any>(null);
@@ -96,18 +113,21 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validação: próxima ação obrigatória se status é risco ou caída
+    if ((formData.status === "risco" || formData.status === "caida") && !formData.proxima_acao.trim()) {
+      toast.error("Próxima ação é obrigatória para contas em risco ou caídas");
+      return;
+    }
+
     try {
       const payload = {
         plataforma: formData.plataforma as any,
         nome_conta: formData.nome_conta,
-        url_conta: formData.url_conta || null,
-        status: formData.status as any,
-        observacoes: formData.observacoes || null,
+        status: mapStatusToDB(formData.status) as any,
+        ultima_acao: formData.ultima_acao || null,
+        proxima_acao: formData.proxima_acao || null,
         nicho_id: nichoId,
         responsavel_id: user?.id || null,
-        tipo_conteudo: formData.tipo_conteudo || null,
-        media_videos: formData.media_videos || 0,
-        status_aquecimento: formData.status_aquecimento || "media",
       };
 
       if (editingConta) {
@@ -122,7 +142,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         const { error } = await supabase.from("contas_redes_sociais").insert([payload]);
 
         if (error) throw error;
-        toast.success("Conta criada!");
+        toast.success("Conta adicionada!");
       }
 
       setDialogOpen(false);
@@ -135,14 +155,11 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
 
   const resetForm = () => {
     setFormData({
-      plataforma: "instagram",
+      plataforma: "tiktok",
       nome_conta: "",
-      url_conta: "",
       status: "ativa",
-      observacoes: "",
-      tipo_conteudo: "",
-      media_videos: 0,
-      status_aquecimento: "media",
+      ultima_acao: "",
+      proxima_acao: "",
     });
     setEditingConta(null);
   };
@@ -152,36 +169,11 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     setFormData({
       plataforma: conta.plataforma,
       nome_conta: conta.nome_conta,
-      url_conta: conta.url_conta || "",
-      status: conta.status,
-      observacoes: conta.observacoes || "",
-      tipo_conteudo: conta.tipo_conteudo || "",
-      media_videos: conta.media_videos || 0,
-      status_aquecimento: conta.status_aquecimento || "media",
+      status: mapStatusFromDB(conta.status),
+      ultima_acao: conta.ultima_acao || "",
+      proxima_acao: conta.proxima_acao || "",
     });
     setDialogOpen(true);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const config: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-      ativa: { variant: "default", label: "Ativa" },
-      pausada: { variant: "secondary", label: "Pausada" },
-      banida: { variant: "destructive", label: "Banida" },
-      limitada: { variant: "outline", label: "Limitada" },
-    };
-
-    const { variant, label } = config[status] || { variant: "default", label: status };
-    return <Badge variant={variant}>{label}</Badge>;
-  };
-
-  const getAquecimentoBadge = (status: string) => {
-    const config = STATUS_AQUECIMENTO.find(s => s.value === status);
-    if (!config) return null;
-    return (
-      <span className={`text-xs px-2 py-0.5 rounded-full ${config.color}`}>
-        {config.label}
-      </span>
-    );
   };
 
   const handleDelete = async () => {
@@ -194,10 +186,10 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         .eq("id", contaToDelete.id);
 
       if (error) throw error;
-      toast.success("Conta excluída!");
+      toast.success("Conta removida!");
       fetchContas();
     } catch (error: any) {
-      toast.error("Erro ao excluir: " + error.message);
+      toast.error("Erro ao remover: " + error.message);
     } finally {
       setDeleteDialogOpen(false);
       setContaToDelete(null);
@@ -209,6 +201,16 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     setDeleteDialogOpen(true);
   };
 
+  const getStatusDisplay = (dbStatus: string) => {
+    const status = mapStatusFromDB(dbStatus);
+    const config = STATUS_CONFIG[status];
+    return (
+      <span className={`text-xs font-medium px-2 py-1 rounded-md border ${config.className}`}>
+        {config.label}
+      </span>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -218,202 +220,186 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Header minimalista */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Contas do Nicho</h2>
-          <p className="text-sm text-muted-foreground">Gerencie as contas de redes sociais</p>
+          <h2 className="text-xl font-semibold">Controle de Contas</h2>
+          <p className="text-xs text-muted-foreground">Atenção rápida: alguma conta precisa de ação?</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Conta
+            <Button size="sm" onClick={resetForm}>
+              <Plus className="w-4 h-4 mr-1" />
+              Adicionar
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[400px]">
             <DialogHeader>
               <DialogTitle>
                 {editingConta ? "Editar Conta" : "Nova Conta"}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Plataforma *</Label>
+                  <Label className="text-xs">Plataforma *</Label>
                   <Select
                     value={formData.plataforma}
                     onValueChange={(value) => setFormData({ ...formData, plataforma: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="instagram">Instagram</SelectItem>
                       <SelectItem value="tiktok">TikTok</SelectItem>
+                      <SelectItem value="instagram">Instagram</SelectItem>
                       <SelectItem value="youtube">YouTube</SelectItem>
+                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
                       <SelectItem value="facebook">Facebook</SelectItem>
                       <SelectItem value="twitter">Twitter/X</SelectItem>
-                      <SelectItem value="threads">Threads</SelectItem>
-                      <SelectItem value="linkedin">LinkedIn</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label>@ da Conta *</Label>
+                  <Label className="text-xs">Identificador *</Label>
                   <Input
+                    className="h-9"
                     value={formData.nome_conta}
                     onChange={(e) => setFormData({ ...formData, nome_conta: e.target.value })}
-                    placeholder="@usuario"
+                    placeholder="Nome interno"
                     required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Status da Conta *</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ativa">Ativa</SelectItem>
-                      <SelectItem value="pausada">Pausada</SelectItem>
-                      <SelectItem value="banida">Banida</SelectItem>
-                      <SelectItem value="limitada">Limitada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Status Aquecimento</Label>
-                  <Select
-                    value={formData.status_aquecimento}
-                    onValueChange={(value) => setFormData({ ...formData, status_aquecimento: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_AQUECIMENTO.map(s => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Tipo de Conteúdo</Label>
-                  <Select
-                    value={formData.tipo_conteudo}
-                    onValueChange={(value) => setFormData({ ...formData, tipo_conteudo: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIPOS_CONTEUDO.map(tipo => (
-                        <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Média de Vídeos/Semana</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={formData.media_videos}
-                    onChange={(e) => setFormData({ ...formData, media_videos: parseInt(e.target.value) || 0 })}
-                    placeholder="0"
+                    maxLength={50}
                   />
                 </div>
               </div>
 
               <div>
-                <Label>Observações</Label>
-                <Textarea
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  placeholder="Observações sobre a conta..."
+                <Label className="text-xs">Status *</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value as StatusConta })}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ativa">🟢 Ativa</SelectItem>
+                    <SelectItem value="risco">🟡 Risco</SelectItem>
+                    <SelectItem value="caida">🔴 Caída</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-xs">Última ação feita</Label>
+                <Input
+                  className="h-9"
+                  value={formData.ultima_acao}
+                  onChange={(e) => setFormData({ ...formData, ultima_acao: e.target.value })}
+                  placeholder="Ex: Postou 3 vídeos ontem"
+                  maxLength={100}
                 />
               </div>
 
-              <Button type="submit" className="w-full">
-                {editingConta ? "Atualizar" : "Criar"}
+              <div>
+                <Label className="text-xs">
+                  Próxima ação necessária
+                  {(formData.status === "risco" || formData.status === "caida") && (
+                    <span className="text-destructive ml-1">*</span>
+                  )}
+                </Label>
+                <Input
+                  className="h-9"
+                  value={formData.proxima_acao}
+                  onChange={(e) => setFormData({ ...formData, proxima_acao: e.target.value })}
+                  placeholder="Ex: Pausar 3 dias, mudar IP"
+                  maxLength={100}
+                  required={formData.status === "risco" || formData.status === "caida"}
+                />
+              </div>
+
+              <Button type="submit" className="w-full" size="sm">
+                {editingConta ? "Atualizar" : "Adicionar"}
               </Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
+      {/* Lista minimalista */}
       {contas.length === 0 ? (
-        <Card className="border-border/50 shadow-premium">
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Nenhuma conta cadastrada.</p>
-          </CardContent>
-        </Card>
+        <div className="text-center py-12 text-muted-foreground text-sm">
+          Nenhuma conta cadastrada.
+        </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {contas.map((conta) => (
-            <Card key={conta.id} className="border-border/50 shadow-premium hover:shadow-premium-lg transition-all">
-              <CardContent className="pt-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-surface">
-                      {plataformaIcons[conta.plataforma] || (
-                        <span className="text-xs font-medium capitalize">{conta.plataforma}</span>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">{conta.nome_conta}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{conta.plataforma}</p>
-                    </div>
+        <div className="border border-border/50 rounded-lg divide-y divide-border/50 bg-card/50">
+          {contas.map((conta) => {
+            const status = mapStatusFromDB(conta.status);
+            const needsAction = status === "risco" || status === "caida";
+            
+            return (
+              <div 
+                key={conta.id} 
+                className={`px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-colors ${
+                  needsAction ? "bg-destructive/5" : ""
+                }`}
+              >
+                {/* Ícone da plataforma */}
+                <div className="pt-0.5 text-muted-foreground">
+                  {plataformaIcons[conta.plataforma] || (
+                    <span className="text-xs font-medium capitalize">{conta.plataforma?.[0]}</span>
+                  )}
+                </div>
+                
+                {/* Conteúdo principal */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-sm truncate">{conta.nome_conta}</span>
+                    {getStatusDisplay(conta.status)}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(conta)}>
-                      <Pencil className="h-4 w-4" />
+                  
+                  {/* Última ação */}
+                  {conta.ultima_acao && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      <span className="opacity-60">Última:</span> {conta.ultima_acao}
+                    </p>
+                  )}
+                  
+                  {/* Próxima ação - destaque se necessário */}
+                  {conta.proxima_acao && (
+                    <p className={`text-xs mt-0.5 ${needsAction ? "text-amber-400 font-medium" : "text-muted-foreground"}`}>
+                      <span className="opacity-60">Próxima:</span> {conta.proxima_acao}
+                    </p>
+                  )}
+                </div>
+
+                {/* Menu de ações */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                      <MoreVertical className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" 
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => openEditDialog(conta)}>
+                      <Pencil className="h-3.5 w-3.5 mr-2" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
                       onClick={() => openDeleteDialog(conta)}
+                      className="text-destructive focus:text-destructive"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  {getStatusBadge(conta.status)}
-                  {conta.status_aquecimento && getAquecimentoBadge(conta.status_aquecimento)}
-                </div>
-
-                <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-                  {conta.tipo_conteudo && (
-                    <span className="px-2 py-0.5 rounded bg-muted">{conta.tipo_conteudo}</span>
-                  )}
-                  {conta.media_videos > 0 && (
-                    <span>{conta.media_videos} vídeos/sem</span>
-                  )}
-                </div>
-
-                {conta.observacoes && (
-                  <p className="text-xs text-muted-foreground mt-3 line-clamp-2">{conta.observacoes}</p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                      <Trash2 className="h-3.5 w-3.5 mr-2" />
+                      Remover
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -421,16 +407,15 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
+            <AlertDialogTitle>Remover conta?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir a conta <strong>{contaToDelete?.nome_conta}</strong>? 
-              Esta ação não pode ser desfeita e as tarefas vinculadas perderão a referência.
+              Tem certeza que deseja remover <strong>{contaToDelete?.nome_conta}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-              Excluir
+              Remover
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
