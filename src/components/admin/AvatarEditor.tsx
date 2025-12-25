@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -13,6 +15,7 @@ interface AvatarEditorProps {
   currentEmoji?: string | null;
   currentColor?: string | null;
   onSave: () => void;
+  allowNameEdit?: boolean;
 }
 
 // Paleta de cores estilo Telegram
@@ -49,21 +52,34 @@ export function AvatarEditor({
   currentEmoji,
   currentColor,
   onSave,
+  allowNameEdit = true,
 }: AvatarEditorProps) {
+  const [name, setName] = useState<string>(userName);
   const [selectedEmoji, setSelectedEmoji] = useState<string>(currentEmoji || "😀");
   const [selectedColor, setSelectedColor] = useState<string>(currentColor || AVATAR_COLORS[5]);
   const [isSaving, setIsSaving] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("Rostos");
 
   const handleSave = async () => {
+    if (allowNameEdit && !name.trim()) {
+      toast.error("O nome não pode estar vazio");
+      return;
+    }
+
     setIsSaving(true);
     try {
+      const updateData: any = {
+        avatar_emoji: selectedEmoji,
+        avatar_color: selectedColor,
+      };
+      
+      if (allowNameEdit) {
+        updateData.nome = name.trim();
+      }
+
       const { error } = await supabase
         .from("profiles")
-        .update({
-          avatar_emoji: selectedEmoji,
-          avatar_color: selectedColor,
-        })
+        .update(updateData)
         .eq("id", userId);
 
       if (error) throw error;
@@ -120,6 +136,20 @@ export function AvatarEditor({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Name Input */}
+          {allowNameEdit && (
+            <div className="space-y-2">
+              <Label htmlFor="profile-name">Nome</Label>
+              <Input
+                id="profile-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Seu nome"
+                maxLength={100}
+              />
+            </div>
+          )}
+
           {/* Preview */}
           <div className="flex flex-col items-center gap-3">
             <div
@@ -128,11 +158,11 @@ export function AvatarEditor({
             >
               {selectedEmoji || (
                 <span className="text-white font-bold text-3xl">
-                  {getInitials(userName)}
+                  {getInitials(name || userName)}
                 </span>
               )}
             </div>
-            <span className="text-sm text-muted-foreground">{userName}</span>
+            <span className="text-sm text-muted-foreground">{name || userName}</span>
           </div>
 
           {/* Seletor de Cores */}
