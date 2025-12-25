@@ -112,6 +112,14 @@ const MODULOS_CONFIG = [
     color: "indigo",
   },
   {
+    id: "lembretes_hoje",
+    dbField: "lembretes_hoje_habilitado",
+    label: "Lembretes de Hoje",
+    description: "Pressão temporal consciente para o fim do dia",
+    icon: AlertTriangle,
+    color: "amber",
+  },
+  {
     id: "cemiterio",
     dbField: "cemiterio_habilitado",
     label: "Módulo Cemitério",

@@ -19,6 +19,7 @@ import {
   Network,
   FlaskConical,
   Lightbulb,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -47,6 +48,7 @@ interface AppSidebarProps {
   mapaDependenciaHabilitado?: boolean;
   testeRapidoHabilitado?: boolean;
   logsAprendizadoHabilitado?: boolean;
+  lembretesHojeHabilitado?: boolean;
   timeHabilitado?: boolean;
   ordemAbas?: string[] | null;
 }
@@ -63,10 +65,11 @@ const DEFAULT_ORDER = [
   "mapa",
   "testes",
   "aprendizado",
+  "lembretes",
   "configuracoes",
 ];
 
-export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, timeHabilitado, ordemAbas }: AppSidebarProps) {
+export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, ordemAbas }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -113,6 +116,7 @@ export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHab
     mapa: { title: "Mapa", href: `/workspace/${nichoId}/mapa-dependencia`, icon: Network, enabled: mapaDependenciaHabilitado === true },
     testes: { title: "Testes", href: `/workspace/${nichoId}/testes`, icon: FlaskConical, enabled: testeRapidoHabilitado === true },
     aprendizado: { title: "Aprendizado", href: `/workspace/${nichoId}/aprendizado`, icon: Lightbulb, enabled: logsAprendizadoHabilitado === true },
+    lembretes: { title: "Lembretes", href: `/workspace/${nichoId}/lembretes`, icon: Bell, enabled: lembretesHojeHabilitado === true },
     configuracoes: { title: "Configurações", href: `/workspace/${nichoId}/configuracoes`, icon: Settings, enabled: true },
   };
 
