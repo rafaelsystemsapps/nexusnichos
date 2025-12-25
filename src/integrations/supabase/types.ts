@@ -311,6 +311,7 @@ export type Database = {
           observacoes: string | null
           pedidos_habilitado: boolean
           radar_habilitado: boolean
+          teste_rapido_habilitado: boolean
           updated_at: string | null
         }
         Insert: {
@@ -327,6 +328,7 @@ export type Database = {
           observacoes?: string | null
           pedidos_habilitado?: boolean
           radar_habilitado?: boolean
+          teste_rapido_habilitado?: boolean
           updated_at?: string | null
         }
         Update: {
@@ -343,6 +345,7 @@ export type Database = {
           observacoes?: string | null
           pedidos_habilitado?: boolean
           radar_habilitado?: boolean
+          teste_rapido_habilitado?: boolean
           updated_at?: string | null
         }
         Relationships: []
@@ -730,6 +733,47 @@ export type Database = {
           },
           {
             foreignKeyName: "tarefa_templates_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testes_rapidos: {
+        Row: {
+          created_at: string
+          hipotese: string
+          id: string
+          nicho_id: string
+          plataforma: string
+          resultado_percebido: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hipotese: string
+          id?: string
+          nicho_id: string
+          plataforma: string
+          resultado_percebido?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hipotese?: string
+          id?: string
+          nicho_id?: string
+          plataforma?: string
+          resultado_percebido?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testes_rapidos_nicho_id_fkey"
             columns: ["nicho_id"]
             isOneToOne: false
             referencedRelation: "nichos"

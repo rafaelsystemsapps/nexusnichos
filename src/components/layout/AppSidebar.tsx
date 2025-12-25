@@ -17,6 +17,7 @@ import {
   Radio,
   Archive,
   Network,
+  FlaskConical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -43,9 +44,10 @@ interface AppSidebarProps {
   radarHabilitado?: boolean;
   cemiterioHabilitado?: boolean;
   mapaDependenciaHabilitado?: boolean;
+  testeRapidoHabilitado?: boolean;
 }
 
-export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado }: AppSidebarProps) {
+export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -140,6 +142,15 @@ export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHab
       title: "Mapa",
       href: `/workspace/${nichoId}/mapa-dependencia`,
       icon: Network,
+    });
+  }
+
+  // Adiciona Teste Rápido se habilitado (experimentação)
+  if (testeRapidoHabilitado) {
+    colaboradorNavItems.push({
+      title: "Testes",
+      href: `/workspace/${nichoId}/testes`,
+      icon: FlaskConical,
     });
   }
 

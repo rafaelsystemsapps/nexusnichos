@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX, Radar, Archive, AlertTriangle, Network } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX, Radar, Archive, AlertTriangle, Network, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 
 interface NichoWithUser {
@@ -24,6 +24,7 @@ interface NichoWithUser {
   contas_habilitado: boolean;
   alertas_habilitado: boolean;
   mapa_dependencia_habilitado: boolean;
+  teste_rapido_habilitado: boolean;
   created_at: string | null;
   updated_at: string | null;
   usuario?: {
@@ -51,6 +52,7 @@ export function NichosTab() {
     contas_habilitado: true,
     alertas_habilitado: false,
     mapa_dependencia_habilitado: false,
+    teste_rapido_habilitado: false,
     usuario_nome: "",
     usuario_email: "",
     usuario_senha: "",
@@ -126,6 +128,7 @@ export function NichosTab() {
             contas_habilitado: formData.contas_habilitado,
             alertas_habilitado: formData.alertas_habilitado,
             mapa_dependencia_habilitado: formData.mapa_dependencia_habilitado,
+            teste_rapido_habilitado: formData.teste_rapido_habilitado,
           })
           .eq("id", editingNicho.id);
 
@@ -158,6 +161,7 @@ export function NichosTab() {
             contas_habilitado: formData.contas_habilitado,
             alertas_habilitado: formData.alertas_habilitado,
             mapa_dependencia_habilitado: formData.mapa_dependencia_habilitado,
+            teste_rapido_habilitado: formData.teste_rapido_habilitado,
           })
           .select()
           .single();
@@ -250,6 +254,7 @@ export function NichosTab() {
       contas_habilitado: true,
       alertas_habilitado: false,
       mapa_dependencia_habilitado: false,
+      teste_rapido_habilitado: false,
       usuario_nome: "",
       usuario_email: "",
       usuario_senha: "",
@@ -269,6 +274,7 @@ export function NichosTab() {
       contas_habilitado: nicho.contas_habilitado !== false,
       alertas_habilitado: nicho.alertas_habilitado || false,
       mapa_dependencia_habilitado: nicho.mapa_dependencia_habilitado || false,
+      teste_rapido_habilitado: nicho.teste_rapido_habilitado || false,
       usuario_nome: "",
       usuario_email: "",
       usuario_senha: "",
@@ -422,6 +428,25 @@ export function NichosTab() {
                     checked={formData.mapa_dependencia_habilitado}
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, mapa_dependencia_habilitado: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="teste_rapido" className="flex items-center gap-2">
+                      <FlaskConical className="h-4 w-4 text-muted-foreground" />
+                      Teste Rápido
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Experimentação controlada e decisão rápida
+                    </p>
+                  </div>
+                  <Switch
+                    id="teste_rapido"
+                    checked={formData.teste_rapido_habilitado}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, teste_rapido_habilitado: checked })
                     }
                   />
                 </div>

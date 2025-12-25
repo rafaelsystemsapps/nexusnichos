@@ -13,6 +13,7 @@ import { LogisticaSemanalTab } from "@/components/colaborador/LogisticaSemanalTa
 import { RadarOportunidadesTab } from "@/components/colaborador/RadarOportunidadesTab";
 import { CemiterioTab } from "@/components/colaborador/CemiterioTab";
 import { MapaDependencia } from "@/components/colaborador/MapaDependencia";
+import { TesteRapidoTab } from "@/components/colaborador/TesteRapidoTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
 
@@ -79,6 +80,7 @@ export default function ColaboradorWorkspace() {
     if (subPath === "radar") return "Radar de Oportunidades";
     if (subPath === "cemiterio") return "Cemitério";
     if (subPath === "mapa-dependencia") return "Mapa de Dependência";
+    if (subPath === "testes") return "Teste Rápido";
     if (subPath === "configuracoes") return "Configurações";
     return "Workspace";
   };
@@ -111,6 +113,9 @@ export default function ColaboradorWorkspace() {
     if (subPath === "mapa-dependencia" && nicho.mapa_dependencia_habilitado) {
       return <MapaDependencia nichoId={nichoId!} />;
     }
+    if (subPath === "testes" && nicho.teste_rapido_habilitado) {
+      return <TesteRapidoTab nichoId={nichoId!} />;
+    }
     if (subPath === "configuracoes") {
       return (
         <ConfiguracoesNichoTab 
@@ -135,6 +140,7 @@ export default function ColaboradorWorkspace() {
       radarHabilitado={nicho.radar_habilitado}
       cemiterioHabilitado={nicho.cemiterio_habilitado}
       mapaDependenciaHabilitado={nicho.mapa_dependencia_habilitado}
+      testeRapidoHabilitado={nicho.teste_rapido_habilitado}
     >
       {renderContent()}
     </MainLayout>

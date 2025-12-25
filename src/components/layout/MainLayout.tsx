@@ -15,9 +15,10 @@ export interface MainLayoutProps {
   radarHabilitado?: boolean;
   cemiterioHabilitado?: boolean;
   mapaDependenciaHabilitado?: boolean;
+  testeRapidoHabilitado?: boolean;
 }
 
-export function MainLayout({ children, nichoId, nichoNome, title, subtitle, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado }: MainLayoutProps) {
+export function MainLayout({ children, nichoId, nichoNome, title, subtitle, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado }: MainLayoutProps) {
   const isIOSMobile = useIsIOSMobile();
 
   return (
@@ -25,7 +26,7 @@ export function MainLayout({ children, nichoId, nichoNome, title, subtitle, cont
       "min-h-screen bg-background",
       isIOSMobile && "ios-safe-area"
     )}>
-      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} contasHabilitado={contasHabilitado} financeiroHabilitado={financeiroHabilitado} pedidosHabilitado={pedidosHabilitado} radarHabilitado={radarHabilitado} cemiterioHabilitado={cemiterioHabilitado} mapaDependenciaHabilitado={mapaDependenciaHabilitado} />
+      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} contasHabilitado={contasHabilitado} financeiroHabilitado={financeiroHabilitado} pedidosHabilitado={pedidosHabilitado} radarHabilitado={radarHabilitado} cemiterioHabilitado={cemiterioHabilitado} mapaDependenciaHabilitado={mapaDependenciaHabilitado} testeRapidoHabilitado={testeRapidoHabilitado} />
       
       <main className={cn(
         "min-h-screen",
