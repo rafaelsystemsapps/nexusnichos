@@ -20,6 +20,7 @@ import {
   FlaskConical,
   Lightbulb,
   Bell,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -50,6 +51,7 @@ interface AppSidebarProps {
   logsAprendizadoHabilitado?: boolean;
   lembretesHojeHabilitado?: boolean;
   timeHabilitado?: boolean;
+  clientesHabilitado?: boolean;
   ordemAbas?: string[] | null;
 }
 
@@ -58,6 +60,7 @@ const DEFAULT_ORDER = [
   "contas",
   "logistica",
   "time",
+  "clientes",
   "financeiro",
   "pedidos",
   "radar",
@@ -69,7 +72,7 @@ const DEFAULT_ORDER = [
   "configuracoes",
 ];
 
-export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, ordemAbas }: AppSidebarProps) {
+export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, ordemAbas }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -109,6 +112,7 @@ export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHab
     contas: { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2, enabled: contasHabilitado !== false },
     logistica: { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck, enabled: true },
     time: { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users, enabled: timeHabilitado !== false },
+    clientes: { title: "Clientes", href: `/workspace/${nichoId}/clientes`, icon: UserCheck, enabled: clientesHabilitado === true },
     financeiro: { title: "Financeiro", href: `/workspace/${nichoId}/financeiro`, icon: DollarSign, enabled: financeiroHabilitado === true },
     pedidos: { title: "Pedidos", href: `/workspace/${nichoId}/pedidos`, icon: Package, enabled: pedidosHabilitado === true },
     radar: { title: "Radar", href: `/workspace/${nichoId}/radar`, icon: Radio, enabled: radarHabilitado === true },
