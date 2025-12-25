@@ -179,7 +179,12 @@ export function RadarOportunidadesTab({ nichoId }: RadarOportunidadesTabProps) {
 
   const isExpired = (dateStr: string | null) => {
     if (!dateStr) return false;
-    return new Date(dateStr) < new Date(new Date().toDateString());
+    // Parse date parts to avoid timezone issues
+    const [year, month, day] = dateStr.split("-").map(Number);
+    const itemDate = new Date(year, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return itemDate < today;
   };
 
   const radarCheio = items.length >= MAX_ITEMS;
