@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX, Radar, Archive } from "lucide-react";
 import { toast } from "sonner";
 
 interface NichoWithUser {
@@ -19,6 +19,8 @@ interface NichoWithUser {
   observacoes: string | null;
   financeiro_habilitado: boolean;
   pedidos_habilitado: boolean;
+  radar_habilitado: boolean;
+  cemiterio_habilitado: boolean;
   created_at: string | null;
   updated_at: string | null;
   usuario?: {
@@ -41,6 +43,8 @@ export function NichosTab() {
     descricao: "",
     observacoes: "",
     financeiro_habilitado: false,
+    radar_habilitado: false,
+    cemiterio_habilitado: false,
     usuario_nome: "",
     usuario_email: "",
     usuario_senha: "",
@@ -111,6 +115,8 @@ export function NichosTab() {
             descricao: formData.descricao,
             observacoes: formData.observacoes,
             financeiro_habilitado: formData.financeiro_habilitado,
+            radar_habilitado: formData.radar_habilitado,
+            cemiterio_habilitado: formData.cemiterio_habilitado,
           })
           .eq("id", editingNicho.id);
 
@@ -138,6 +144,8 @@ export function NichosTab() {
             descricao: formData.descricao,
             observacoes: formData.observacoes,
             financeiro_habilitado: formData.financeiro_habilitado,
+            radar_habilitado: formData.radar_habilitado,
+            cemiterio_habilitado: formData.cemiterio_habilitado,
           })
           .select()
           .single();
@@ -225,6 +233,8 @@ export function NichosTab() {
       descricao: "",
       observacoes: "",
       financeiro_habilitado: false,
+      radar_habilitado: false,
+      cemiterio_habilitado: false,
       usuario_nome: "",
       usuario_email: "",
       usuario_senha: "",
@@ -239,6 +249,8 @@ export function NichosTab() {
       descricao: nicho.descricao || "",
       observacoes: nicho.observacoes || "",
       financeiro_habilitado: nicho.financeiro_habilitado || false,
+      radar_habilitado: nicho.radar_habilitado || false,
+      cemiterio_habilitado: nicho.cemiterio_habilitado || false,
       usuario_nome: "",
       usuario_email: "",
       usuario_senha: "",
@@ -293,20 +305,54 @@ export function NichosTab() {
                 />
               </div>
 
-              <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
-                <div className="space-y-0.5">
-                  <Label htmlFor="financeiro">Módulo Financeiro</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Habilitar controle de transações e faturamento
-                  </p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="financeiro">Módulo Financeiro</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Habilitar controle de transações e faturamento
+                    </p>
+                  </div>
+                  <Switch
+                    id="financeiro"
+                    checked={formData.financeiro_habilitado}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, financeiro_habilitado: checked })
+                    }
+                  />
                 </div>
-                <Switch
-                  id="financeiro"
-                  checked={formData.financeiro_habilitado}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, financeiro_habilitado: checked })
-                  }
-                />
+
+                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="radar">Radar de Oportunidades</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Habilitar monitoramento de tendências
+                    </p>
+                  </div>
+                  <Switch
+                    id="radar"
+                    checked={formData.radar_habilitado}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, radar_habilitado: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="cemiterio">Cemitério</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Habilitar arquivo de ativos encerrados
+                    </p>
+                  </div>
+                  <Switch
+                    id="cemiterio"
+                    checked={formData.cemiterio_habilitado}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, cemiterio_habilitado: checked })
+                    }
+                  />
+                </div>
               </div>
 
               {/* Campos do Usuário - apenas ao criar */}
@@ -414,12 +460,26 @@ export function NichosTab() {
                   {nicho.descricao && (
                     <p className="text-sm text-muted-foreground leading-relaxed">{nicho.descricao}</p>
                   )}
-                  {nicho.financeiro_habilitado && (
-                    <div className="flex items-center gap-2 text-xs text-primary">
-                      <DollarSign className="h-3 w-3" />
-                      <span>Módulo Financeiro Ativo</span>
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {nicho.financeiro_habilitado && (
+                      <div className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full">
+                        <DollarSign className="h-3 w-3" />
+                        <span>Financeiro</span>
+                      </div>
+                    )}
+                    {nicho.radar_habilitado && (
+                      <div className="flex items-center gap-1 text-xs text-orange-500 bg-orange-500/10 px-2 py-1 rounded-full">
+                        <Radar className="h-3 w-3" />
+                        <span>Radar</span>
+                      </div>
+                    )}
+                    {nicho.cemiterio_habilitado && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                        <Archive className="h-3 w-3" />
+                        <span>Cemitério</span>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Usuário vinculado */}
                   <Separator />
