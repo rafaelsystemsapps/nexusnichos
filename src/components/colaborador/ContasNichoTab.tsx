@@ -32,11 +32,11 @@ interface ContasNichoTabProps {
 
 // Ícones por plataforma
 const plataformaIcons: Record<string, React.ReactNode> = {
-  instagram: <Instagram className="h-4 w-4" />,
-  youtube: <Youtube className="h-4 w-4" />,
-  twitter: <Twitter className="h-4 w-4" />,
-  tiktok: <Music2 className="h-4 w-4" />,
-  facebook: <MessageCircle className="h-4 w-4" />,
+  instagram: <Instagram className="h-4 w-4 text-pink-500" />,
+  youtube: <Youtube className="h-4 w-4 text-red-500" />,
+  twitter: <Twitter className="h-4 w-4 text-sky-400" />,
+  tiktok: <Music2 className="h-4 w-4 text-cyan-400" />,
+  facebook: <MessageCircle className="h-4 w-4 text-blue-500" />,
   whatsapp: <Phone className="h-4 w-4 text-green-500" />,
   telegram: <Send className="h-4 w-4 text-blue-400" />,
   site: <Globe className="h-4 w-4 text-purple-400" />,
