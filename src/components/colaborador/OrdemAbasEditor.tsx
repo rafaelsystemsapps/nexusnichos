@@ -35,6 +35,7 @@ import {
   Lightbulb,
   Settings,
   Move,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +60,7 @@ interface OrdemAbasEditorProps {
     mapa_dependencia_habilitado?: boolean;
     teste_rapido_habilitado?: boolean;
     logs_aprendizado_habilitado?: boolean;
+    lembretes_hoje_habilitado?: boolean;
   };
   onConfigUpdate: () => void;
 }
@@ -75,6 +77,7 @@ const DEFAULT_ORDER = [
   "mapa",
   "testes",
   "aprendizado",
+  "lembretes",
   "configuracoes",
 ];
 
@@ -90,6 +93,7 @@ const ABA_CONFIG: Record<string, { title: string; icon: React.ComponentType<{ cl
   mapa: { title: "Mapa", icon: Network },
   testes: { title: "Testes", icon: FlaskConical },
   aprendizado: { title: "Aprendizado", icon: Lightbulb },
+  lembretes: { title: "Lembretes", icon: Bell },
   configuracoes: { title: "Configurações", icon: Settings },
 };
 
@@ -180,6 +184,7 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
       mapa: nicho.mapa_dependencia_habilitado === true,
       testes: nicho.teste_rapido_habilitado === true,
       aprendizado: nicho.logs_aprendizado_habilitado === true,
+      lembretes: nicho.lembretes_hoje_habilitado === true,
       configuracoes: true, // sempre habilitado
     };
 
@@ -260,6 +265,7 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
       mapa: nicho.mapa_dependencia_habilitado === true,
       testes: nicho.teste_rapido_habilitado === true,
       aprendizado: nicho.logs_aprendizado_habilitado === true,
+      lembretes: nicho.lembretes_hoje_habilitado === true,
       configuracoes: true,
     };
 
