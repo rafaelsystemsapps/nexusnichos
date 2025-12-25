@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PedidosResumoCards } from "./PedidosResumoCards";
 import { PedidoForm } from "./PedidoForm";
 import { PedidosTable } from "./PedidosTable";
+import { ProdutosList } from "./ProdutosList";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -138,6 +139,9 @@ export function PedidosTab({ nichoId }: PedidosTabProps) {
         nichoId={nichoId}
         onUpdate={fetchPedidos}
       />
+
+      {/* Produtos Cadastrados */}
+      <ProdutosList nichoId={nichoId} />
     </div>
   );
 }

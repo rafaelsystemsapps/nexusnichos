@@ -5,7 +5,6 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DollarSign, Settings, Package, Radio, Archive } from "lucide-react";
-import { ProdutosList } from "./ProdutosList";
 import { OrdemAbasEditor } from "./OrdemAbasEditor";
 
 interface ConfiguracoesNichoTabProps {
@@ -254,9 +253,6 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
 
       {/* Ordem das Abas */}
       <OrdemAbasEditor nichoId={nichoId} nicho={nicho} onConfigUpdate={onConfigUpdate} />
-
-      {/* Produtos Cadastrados */}
-      <ProdutosList nichoId={nichoId} />
     </div>
   );
 }
