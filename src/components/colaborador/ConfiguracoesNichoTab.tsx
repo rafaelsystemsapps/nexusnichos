@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { DollarSign, Settings, ListChecks, Plus, Pencil, Trash2, Package } from "lucide-react";
+import { DollarSign, Settings, ListChecks, Plus, Pencil, Trash2, Package, Radio } from "lucide-react";
 import { TemplateForm } from "./TemplateForm";
 import { ProdutosList } from "./ProdutosList";
 import {
@@ -40,6 +40,7 @@ interface ConfiguracoesNichoTabProps {
   nicho: {
     financeiro_habilitado: boolean;
     pedidos_habilitado?: boolean;
+    radar_habilitado?: boolean;
   };
   onConfigUpdate: () => void;
 }
@@ -47,6 +48,7 @@ interface ConfiguracoesNichoTabProps {
 export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: ConfiguracoesNichoTabProps) {
   const [financeiroHabilitado, setFinanceiroHabilitado] = useState(nicho.financeiro_habilitado);
   const [pedidosHabilitado, setPedidosHabilitado] = useState(nicho.pedidos_habilitado ?? false);
+  const [radarHabilitado, setRadarHabilitado] = useState(nicho.radar_habilitado ?? false);
   const [saving, setSaving] = useState(false);
   
   // Templates state
@@ -61,7 +63,8 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
   useEffect(() => {
     setFinanceiroHabilitado(nicho.financeiro_habilitado);
     setPedidosHabilitado(nicho.pedidos_habilitado ?? false);
-  }, [nicho.financeiro_habilitado, nicho.pedidos_habilitado]);
+    setRadarHabilitado(nicho.radar_habilitado ?? false);
+  }, [nicho.financeiro_habilitado, nicho.pedidos_habilitado, nicho.radar_habilitado]);
 
   useEffect(() => {
     fetchTemplatesAndContas();
@@ -139,6 +142,28 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
       onConfigUpdate();
     } catch (error: any) {
       setPedidosHabilitado(!enabled);
+      toast.error("Erro ao salvar configuração: " + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleRadar = async (enabled: boolean) => {
+    setSaving(true);
+    setRadarHabilitado(enabled);
+
+    try {
+      const { error } = await supabase
+        .from("nichos")
+        .update({ radar_habilitado: enabled })
+        .eq("id", nichoId);
+
+      if (error) throw error;
+
+      toast.success(enabled ? "Radar de Oportunidades ativado!" : "Radar de Oportunidades desativado!");
+      onConfigUpdate();
+    } catch (error: any) {
+      setRadarHabilitado(!enabled);
       toast.error("Erro ao salvar configuração: " + error.message);
     } finally {
       setSaving(false);
@@ -265,6 +290,28 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
               id="pedidos"
               checked={pedidosHabilitado}
               onCheckedChange={handleTogglePedidos}
+              disabled={saving}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-lg bg-surface/50 border border-border/30">
+            <div className="flex items-center gap-4">
+              <div className="p-2 rounded-lg bg-cyan-500/10">
+                <Radio className="h-5 w-5 text-cyan-500" />
+              </div>
+              <div>
+                <Label htmlFor="radar" className="text-base font-medium cursor-pointer">
+                  Radar de Oportunidades
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Monitore tendências e oportunidades do mercado
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="radar"
+              checked={radarHabilitado}
+              onCheckedChange={handleToggleRadar}
               disabled={saving}
             />
           </div>

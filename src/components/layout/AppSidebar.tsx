@@ -14,6 +14,7 @@ import {
   CalendarCheck,
   Package,
   ChevronDown,
+  Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -36,9 +37,10 @@ interface AppSidebarProps {
   nichoNome?: string;
   financeiroHabilitado?: boolean;
   pedidosHabilitado?: boolean;
+  radarHabilitado?: boolean;
 }
 
-export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHabilitado }: AppSidebarProps) {
+export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHabilitado, radarHabilitado }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -94,6 +96,15 @@ export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHa
       title: "Pedidos",
       href: `/workspace/${nichoId}/pedidos`,
       icon: Package,
+    });
+  }
+
+  // Adiciona Radar se habilitado
+  if (radarHabilitado) {
+    colaboradorNavItems.push({
+      title: "Radar",
+      href: `/workspace/${nichoId}/radar`,
+      icon: Radio,
     });
   }
 

@@ -261,6 +261,7 @@ export type Database = {
           nome: string
           observacoes: string | null
           pedidos_habilitado: boolean
+          radar_habilitado: boolean
           updated_at: string | null
         }
         Insert: {
@@ -271,6 +272,7 @@ export type Database = {
           nome: string
           observacoes?: string | null
           pedidos_habilitado?: boolean
+          radar_habilitado?: boolean
           updated_at?: string | null
         }
         Update: {
@@ -281,6 +283,7 @@ export type Database = {
           nome?: string
           observacoes?: string | null
           pedidos_habilitado?: boolean
+          radar_habilitado?: boolean
           updated_at?: string | null
         }
         Relationships: []
@@ -430,6 +433,53 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      radar_oportunidades: {
+        Row: {
+          arquivado: boolean
+          created_at: string
+          data_validade: string | null
+          id: string
+          nicho_id: string
+          observacao: string | null
+          plataforma: string
+          status_termico: string
+          tema: string
+          updated_at: string
+        }
+        Insert: {
+          arquivado?: boolean
+          created_at?: string
+          data_validade?: string | null
+          id?: string
+          nicho_id: string
+          observacao?: string | null
+          plataforma: string
+          status_termico?: string
+          tema: string
+          updated_at?: string
+        }
+        Update: {
+          arquivado?: boolean
+          created_at?: string
+          data_validade?: string | null
+          id?: string
+          nicho_id?: string
+          observacao?: string | null
+          plataforma?: string
+          status_termico?: string
+          tema?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radar_oportunidades_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       semana_logistica: {
         Row: {
