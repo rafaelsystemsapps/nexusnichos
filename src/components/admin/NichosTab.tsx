@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX, Radar, Archive } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX, Radar, Archive, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 interface NichoWithUser {
@@ -22,6 +22,7 @@ interface NichoWithUser {
   radar_habilitado: boolean;
   cemiterio_habilitado: boolean;
   contas_habilitado: boolean;
+  alertas_habilitado: boolean;
   created_at: string | null;
   updated_at: string | null;
   usuario?: {
@@ -47,6 +48,7 @@ export function NichosTab() {
     radar_habilitado: false,
     cemiterio_habilitado: false,
     contas_habilitado: true,
+    alertas_habilitado: false,
     usuario_nome: "",
     usuario_email: "",
     usuario_senha: "",
@@ -120,6 +122,7 @@ export function NichosTab() {
             radar_habilitado: formData.radar_habilitado,
             cemiterio_habilitado: formData.cemiterio_habilitado,
             contas_habilitado: formData.contas_habilitado,
+            alertas_habilitado: formData.alertas_habilitado,
           })
           .eq("id", editingNicho.id);
 
@@ -150,6 +153,7 @@ export function NichosTab() {
             radar_habilitado: formData.radar_habilitado,
             cemiterio_habilitado: formData.cemiterio_habilitado,
             contas_habilitado: formData.contas_habilitado,
+            alertas_habilitado: formData.alertas_habilitado,
           })
           .select()
           .single();
@@ -240,6 +244,7 @@ export function NichosTab() {
       radar_habilitado: false,
       cemiterio_habilitado: false,
       contas_habilitado: true,
+      alertas_habilitado: false,
       usuario_nome: "",
       usuario_email: "",
       usuario_senha: "",
@@ -257,6 +262,7 @@ export function NichosTab() {
       radar_habilitado: nicho.radar_habilitado || false,
       cemiterio_habilitado: nicho.cemiterio_habilitado || false,
       contas_habilitado: nicho.contas_habilitado !== false,
+      alertas_habilitado: nicho.alertas_habilitado || false,
       usuario_nome: "",
       usuario_email: "",
       usuario_senha: "",
@@ -372,6 +378,25 @@ export function NichosTab() {
                     checked={formData.cemiterio_habilitado}
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, cemiterio_habilitado: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="alertas" className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                      Alertas de Risco
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Sinalização visual de riscos operacionais
+                    </p>
+                  </div>
+                  <Switch
+                    id="alertas"
+                    checked={formData.alertas_habilitado}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, alertas_habilitado: checked })
                     }
                   />
                 </div>
@@ -499,6 +524,12 @@ export function NichosTab() {
                       <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
                         <Archive className="h-3 w-3" />
                         <span>Cemitério</span>
+                      </div>
+                    )}
+                    {nicho.alertas_habilitado && (
+                      <div className="flex items-center gap-1 text-xs text-destructive bg-destructive/10 px-2 py-1 rounded-full">
+                        <AlertTriangle className="h-3 w-3" />
+                        <span>Alertas</span>
                       </div>
                     )}
                   </div>
