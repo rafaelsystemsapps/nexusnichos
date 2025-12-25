@@ -485,9 +485,9 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                 
                 {/* Conteúdo principal */}
                 <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm truncate w-[120px]">{conta.nome_conta}</span>
-                    <div className="w-[85px] flex justify-start">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm truncate min-w-[120px] max-w-[120px]">{conta.nome_conta}</span>
+                    <div className="w-[90px] shrink-0">
                       {getStatusDisplay(conta.status)}
                     </div>
                   </div>
