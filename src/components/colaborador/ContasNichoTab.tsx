@@ -660,17 +660,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                     <Label className="text-xs text-muted-foreground">Senha Gmail</Label>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm font-mono">
-                        {gmailSenhaVisivel ? contaCredenciais.gmail_senha : "••••••••••••"}
+                        {contaCredenciais.gmail_senha}
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="shrink-0 h-9 w-9"
-                        onClick={() => setGmailSenhaVisivel(!gmailSenhaVisivel)}
-                      >
-                        {gmailSenhaVisivel ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                      </Button>
                       <Button
                         type="button"
                         variant="outline"
