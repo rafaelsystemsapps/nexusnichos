@@ -20,6 +20,10 @@ import {
   XCircle,
   Save,
   X,
+  Percent,
+  DollarSign,
+  Smartphone,
+  Calendar,
 } from "lucide-react";
 import { TarefaClienteItem } from "./TarefaClienteItem";
 import { ClienteForm } from "./ClienteForm";
@@ -144,6 +148,30 @@ export function ClienteCard({ cliente, onUpdate, nichoId }: ClienteCardProps) {
     </svg>
   );
 
+  // Calcular tempo de parceria
+  const calcularTempoParceria = () => {
+    if (!cliente.data_inicio_parceria) return null;
+    const inicio = new Date(cliente.data_inicio_parceria);
+    const hoje = new Date();
+    const diffMs = hoje.getTime() - inicio.getTime();
+    const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDias < 30) return `${diffDias} dias`;
+    const diffMeses = Math.floor(diffDias / 30);
+    if (diffMeses < 12) return `${diffMeses} ${diffMeses === 1 ? "mês" : "meses"}`;
+    const diffAnos = Math.floor(diffMeses / 12);
+    return `${diffAnos} ${diffAnos === 1 ? "ano" : "anos"}`;
+  };
+
+  const tempoParceria = calcularTempoParceria();
+
+  const formatarValorContrato = () => {
+    if (!cliente.valor_contrato) return null;
+    if (cliente.modelo_pagamento === "porcentagem") {
+      return `${cliente.valor_contrato}%`;
+    }
+    return `R$ ${cliente.valor_contrato.toLocaleString("pt-BR")}`;
+  };
+
   return (
     <>
       <Card className={cn(
@@ -226,6 +254,39 @@ export function ClienteCard({ cliente, onUpdate, nichoId }: ClienteCardProps) {
               </Button>
             </div>
           </div>
+
+          {/* Info do Contrato */}
+          {(cliente.modelo_pagamento || cliente.app_url || tempoParceria) && (
+            <div className="flex items-center gap-3 flex-wrap mt-2 pt-2 border-t border-border/30">
+              {cliente.modelo_pagamento && cliente.valor_contrato && (
+                <div className="flex items-center gap-1.5 text-sm">
+                  {cliente.modelo_pagamento === "porcentagem" ? (
+                    <Percent className="h-4 w-4 text-emerald-400" />
+                  ) : (
+                    <DollarSign className="h-4 w-4 text-emerald-400" />
+                  )}
+                  <span className="text-foreground font-medium">{formatarValorContrato()}</span>
+                </div>
+              )}
+              {cliente.app_url && (
+                <a
+                  href={cliente.app_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-sm transition-colors"
+                >
+                  <Smartphone className="h-3.5 w-3.5" />
+                  App
+                </a>
+              )}
+              {tempoParceria && (
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Parceria há {tempoParceria}</span>
+                </div>
+              )}
+            </div>
+          )}
         </CardHeader>
 
         <CardContent className="space-y-4">

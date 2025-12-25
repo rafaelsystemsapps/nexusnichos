@@ -130,13 +130,18 @@ export type Database = {
       }
       clientes: {
         Row: {
+          app_url: string | null
           created_at: string
+          data_inicio_parceria: string | null
           id: string
           instagram_url: string | null
           link_principal: string | null
           meta_descricao: string | null
           meta_status: Database["public"]["Enums"]["meta_status"]
           meta_valor: number | null
+          modelo_pagamento:
+            | Database["public"]["Enums"]["modelo_pagamento"]
+            | null
           nicho_id: string
           nome: string
           observacao_texto: string | null
@@ -147,15 +152,21 @@ export type Database = {
           tiktok_url: string | null
           tipo: Database["public"]["Enums"]["tipo_cliente"]
           updated_at: string
+          valor_contrato: number | null
         }
         Insert: {
+          app_url?: string | null
           created_at?: string
+          data_inicio_parceria?: string | null
           id?: string
           instagram_url?: string | null
           link_principal?: string | null
           meta_descricao?: string | null
           meta_status?: Database["public"]["Enums"]["meta_status"]
           meta_valor?: number | null
+          modelo_pagamento?:
+            | Database["public"]["Enums"]["modelo_pagamento"]
+            | null
           nicho_id: string
           nome: string
           observacao_texto?: string | null
@@ -166,15 +177,21 @@ export type Database = {
           tiktok_url?: string | null
           tipo?: Database["public"]["Enums"]["tipo_cliente"]
           updated_at?: string
+          valor_contrato?: number | null
         }
         Update: {
+          app_url?: string | null
           created_at?: string
+          data_inicio_parceria?: string | null
           id?: string
           instagram_url?: string | null
           link_principal?: string | null
           meta_descricao?: string | null
           meta_status?: Database["public"]["Enums"]["meta_status"]
           meta_valor?: number | null
+          modelo_pagamento?:
+            | Database["public"]["Enums"]["modelo_pagamento"]
+            | null
           nicho_id?: string
           nome?: string
           observacao_texto?: string | null
@@ -185,6 +202,7 @@ export type Database = {
           tiktok_url?: string | null
           tipo?: Database["public"]["Enums"]["tipo_cliente"]
           updated_at?: string
+          valor_contrato?: number | null
         }
         Relationships: [
           {
@@ -1170,6 +1188,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "colaborador"
       meta_status: "on_track" | "atencao" | "longe"
+      modelo_pagamento: "porcentagem" | "valor_fixo"
       plataforma_social:
         | "tiktok"
         | "instagram"
@@ -1318,6 +1337,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "colaborador"],
       meta_status: ["on_track", "atencao", "longe"],
+      modelo_pagamento: ["porcentagem", "valor_fixo"],
       plataforma_social: [
         "tiktok",
         "instagram",

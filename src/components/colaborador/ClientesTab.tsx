@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Search, Users, Filter } from "lucide-react";
+import { Plus, Search, Users, Filter, Percent, DollarSign } from "lucide-react";
 import { ClienteCard } from "./ClienteCard";
 import { ClienteForm } from "./ClienteForm";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTipo, setFilterTipo] = useState<string>("todos");
   const [filterStatus, setFilterStatus] = useState<string>("todos");
+  const [filterPagamento, setFilterPagamento] = useState<string>("todos");
 
   useEffect(() => {
     fetchClientes();
@@ -46,7 +47,8 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
     const matchSearch = cliente.nome.toLowerCase().includes(searchTerm.toLowerCase());
     const matchTipo = filterTipo === "todos" || cliente.tipo === filterTipo;
     const matchStatus = filterStatus === "todos" || cliente.status === filterStatus;
-    return matchSearch && matchTipo && matchStatus;
+    const matchPagamento = filterPagamento === "todos" || cliente.modelo_pagamento === filterPagamento;
+    return matchSearch && matchTipo && matchStatus && matchPagamento;
   });
 
   // Stats
@@ -56,6 +58,8 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
     pausado: clientes.filter(c => c.status === "pausado").length,
     influencers: clientes.filter(c => c.tipo === "influencer").length,
     negocios: clientes.filter(c => c.tipo === "negocio_local").length,
+    porcentagem: clientes.filter(c => c.modelo_pagamento === "porcentagem").length,
+    valorFixo: clientes.filter(c => c.modelo_pagamento === "valor_fixo").length,
   };
 
   if (loading) {
@@ -69,7 +73,7 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
   return (
     <div className="space-y-6">
       {/* Header Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <div className="p-4 rounded-lg bg-card/50 border border-border/50">
           <p className="text-2xl font-bold">{stats.total}</p>
           <p className="text-xs text-muted-foreground">Total</p>
@@ -88,7 +92,21 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
         </div>
         <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
           <p className="text-2xl font-bold text-blue-400">{stats.negocios}</p>
-          <p className="text-xs text-muted-foreground">Negócios</p>
+          <p className="text-xs text-muted-foreground">Negocios</p>
+        </div>
+        <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+          <div className="flex items-center gap-2">
+            <Percent className="h-4 w-4 text-cyan-400" />
+            <p className="text-2xl font-bold text-cyan-400">{stats.porcentagem}</p>
+          </div>
+          <p className="text-xs text-muted-foreground">Porcentagem</p>
+        </div>
+        <div className="p-4 rounded-lg bg-teal-500/10 border border-teal-500/20">
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-teal-400" />
+            <p className="text-2xl font-bold text-teal-400">{stats.valorFixo}</p>
+          </div>
+          <p className="text-xs text-muted-foreground">Valor Fixo</p>
         </div>
       </div>
 
@@ -124,6 +142,16 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
               <SelectItem value="rodando">Rodando</SelectItem>
               <SelectItem value="pausado">Pausado</SelectItem>
               <SelectItem value="finalizado">Finalizado</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterPagamento} onValueChange={setFilterPagamento}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Pagamento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="porcentagem">Porcentagem</SelectItem>
+              <SelectItem value="valor_fixo">Valor Fixo</SelectItem>
             </SelectContent>
           </Select>
         </div>
