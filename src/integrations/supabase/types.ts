@@ -90,6 +90,112 @@ export type Database = {
           },
         ]
       }
+      cliente_templates: {
+        Row: {
+          campos_padrao: Json | null
+          created_at: string
+          id: string
+          nicho_id: string
+          nome: string
+          tarefas_base: Json | null
+          tipo: Database["public"]["Enums"]["tipo_cliente"]
+        }
+        Insert: {
+          campos_padrao?: Json | null
+          created_at?: string
+          id?: string
+          nicho_id: string
+          nome: string
+          tarefas_base?: Json | null
+          tipo?: Database["public"]["Enums"]["tipo_cliente"]
+        }
+        Update: {
+          campos_padrao?: Json | null
+          created_at?: string
+          id?: string
+          nicho_id?: string
+          nome?: string
+          tarefas_base?: Json | null
+          tipo?: Database["public"]["Enums"]["tipo_cliente"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_templates_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clientes: {
+        Row: {
+          created_at: string
+          id: string
+          instagram_url: string | null
+          link_principal: string | null
+          meta_descricao: string | null
+          meta_status: Database["public"]["Enums"]["meta_status"]
+          meta_valor: number | null
+          nicho_id: string
+          nome: string
+          observacao_texto: string | null
+          ordem: number
+          outro_link_label: string | null
+          outro_link_url: string | null
+          status: Database["public"]["Enums"]["status_cliente"]
+          tiktok_url: string | null
+          tipo: Database["public"]["Enums"]["tipo_cliente"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instagram_url?: string | null
+          link_principal?: string | null
+          meta_descricao?: string | null
+          meta_status?: Database["public"]["Enums"]["meta_status"]
+          meta_valor?: number | null
+          nicho_id: string
+          nome: string
+          observacao_texto?: string | null
+          ordem?: number
+          outro_link_label?: string | null
+          outro_link_url?: string | null
+          status?: Database["public"]["Enums"]["status_cliente"]
+          tiktok_url?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_cliente"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instagram_url?: string | null
+          link_principal?: string | null
+          meta_descricao?: string | null
+          meta_status?: Database["public"]["Enums"]["meta_status"]
+          meta_valor?: number | null
+          nicho_id?: string
+          nome?: string
+          observacao_texto?: string | null
+          ordem?: number
+          outro_link_label?: string | null
+          outro_link_url?: string | null
+          status?: Database["public"]["Enums"]["status_cliente"]
+          tiktok_url?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_cliente"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contas_redes_sociais: {
         Row: {
           created_at: string | null
@@ -403,6 +509,7 @@ export type Database = {
         Row: {
           alertas_habilitado: boolean
           cemiterio_habilitado: boolean
+          clientes_habilitado: boolean
           contas_habilitado: boolean
           created_at: string | null
           descricao: string | null
@@ -424,6 +531,7 @@ export type Database = {
         Insert: {
           alertas_habilitado?: boolean
           cemiterio_habilitado?: boolean
+          clientes_habilitado?: boolean
           contas_habilitado?: boolean
           created_at?: string | null
           descricao?: string | null
@@ -445,6 +553,7 @@ export type Database = {
         Update: {
           alertas_habilitado?: boolean
           cemiterio_habilitado?: boolean
+          clientes_habilitado?: boolean
           contas_habilitado?: boolean
           created_at?: string | null
           descricao?: string | null
@@ -861,6 +970,44 @@ export type Database = {
           },
         ]
       }
+      tarefas_cliente: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          descricao: string
+          id: string
+          ordem: number
+          responsavel: string | null
+          status: Database["public"]["Enums"]["status_tarefa_cliente"]
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          descricao: string
+          id?: string
+          ordem?: number
+          responsavel?: string | null
+          status?: Database["public"]["Enums"]["status_tarefa_cliente"]
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          descricao?: string
+          id?: string
+          ordem?: number
+          responsavel?: string | null
+          status?: Database["public"]["Enums"]["status_tarefa_cliente"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_cliente_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       testes_rapidos: {
         Row: {
           created_at: string
@@ -1018,9 +1165,11 @@ export type Database = {
         Returns: boolean
       }
       marcar_tarefas_nao_concluidas: { Args: never; Returns: undefined }
+      reset_tarefas_cliente_semanal: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "colaborador"
+      meta_status: "on_track" | "atencao" | "longe"
       plataforma_social:
         | "tiktok"
         | "instagram"
@@ -1032,10 +1181,13 @@ export type Database = {
         | "whatsapp"
         | "telegram"
         | "site"
+      status_cliente: "rodando" | "pausado" | "finalizado"
       status_conta: "ativa" | "pausada" | "banida" | "limitada"
       status_conteudo: "planejado" | "em_producao" | "publicado"
       status_pedido: "pendente" | "enviado" | "cancelado"
       status_tarefa: "pendente" | "em_andamento" | "concluida" | "nao_concluida"
+      status_tarefa_cliente: "pendente" | "feito"
+      tipo_cliente: "influencer" | "negocio_local"
       tipo_midia: "video" | "imagem" | "carrossel" | "texto"
     }
     CompositeTypes: {
@@ -1165,6 +1317,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "colaborador"],
+      meta_status: ["on_track", "atencao", "longe"],
       plataforma_social: [
         "tiktok",
         "instagram",
@@ -1177,10 +1330,13 @@ export const Constants = {
         "telegram",
         "site",
       ],
+      status_cliente: ["rodando", "pausado", "finalizado"],
       status_conta: ["ativa", "pausada", "banida", "limitada"],
       status_conteudo: ["planejado", "em_producao", "publicado"],
       status_pedido: ["pendente", "enviado", "cancelado"],
       status_tarefa: ["pendente", "em_andamento", "concluida", "nao_concluida"],
+      status_tarefa_cliente: ["pendente", "feito"],
+      tipo_cliente: ["influencer", "negocio_local"],
       tipo_midia: ["video", "imagem", "carrossel", "texto"],
     },
   },

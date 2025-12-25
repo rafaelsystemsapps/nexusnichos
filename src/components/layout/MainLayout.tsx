@@ -19,10 +19,11 @@ export interface MainLayoutProps {
   logsAprendizadoHabilitado?: boolean;
   lembretesHojeHabilitado?: boolean;
   timeHabilitado?: boolean;
+  clientesHabilitado?: boolean;
   ordemAbas?: string[] | null;
 }
 
-export function MainLayout({ children, nichoId, nichoNome, title, subtitle, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, ordemAbas }: MainLayoutProps) {
+export function MainLayout({ children, nichoId, nichoNome, title, subtitle, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, ordemAbas }: MainLayoutProps) {
   const isIOSMobile = useIsIOSMobile();
 
   return (
@@ -30,7 +31,7 @@ export function MainLayout({ children, nichoId, nichoNome, title, subtitle, cont
       "min-h-screen bg-background",
       isIOSMobile && "ios-safe-area"
     )}>
-      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} contasHabilitado={contasHabilitado} financeiroHabilitado={financeiroHabilitado} pedidosHabilitado={pedidosHabilitado} radarHabilitado={radarHabilitado} cemiterioHabilitado={cemiterioHabilitado} mapaDependenciaHabilitado={mapaDependenciaHabilitado} testeRapidoHabilitado={testeRapidoHabilitado} logsAprendizadoHabilitado={logsAprendizadoHabilitado} lembretesHojeHabilitado={lembretesHojeHabilitado} timeHabilitado={timeHabilitado} ordemAbas={ordemAbas} />
+      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} contasHabilitado={contasHabilitado} financeiroHabilitado={financeiroHabilitado} pedidosHabilitado={pedidosHabilitado} radarHabilitado={radarHabilitado} cemiterioHabilitado={cemiterioHabilitado} mapaDependenciaHabilitado={mapaDependenciaHabilitado} testeRapidoHabilitado={testeRapidoHabilitado} logsAprendizadoHabilitado={logsAprendizadoHabilitado} lembretesHojeHabilitado={lembretesHojeHabilitado} timeHabilitado={timeHabilitado} clientesHabilitado={clientesHabilitado} ordemAbas={ordemAbas} />
       
       <main className={cn(
         "min-h-screen",
