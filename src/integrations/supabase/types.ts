@@ -303,6 +303,7 @@ export type Database = {
           created_at: string | null
           descricao: string | null
           financeiro_habilitado: boolean
+          foco_do_dia: string | null
           id: string
           nome: string
           observacoes: string | null
@@ -316,6 +317,7 @@ export type Database = {
           created_at?: string | null
           descricao?: string | null
           financeiro_habilitado?: boolean
+          foco_do_dia?: string | null
           id?: string
           nome: string
           observacoes?: string | null
@@ -329,6 +331,7 @@ export type Database = {
           created_at?: string | null
           descricao?: string | null
           financeiro_habilitado?: boolean
+          foco_do_dia?: string | null
           id?: string
           nome?: string
           observacoes?: string | null
