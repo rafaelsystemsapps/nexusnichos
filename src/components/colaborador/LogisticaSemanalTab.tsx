@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -21,11 +22,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { format, startOfWeek, endOfWeek, addDays, getWeek, getYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Clock, XCircle, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Clock, XCircle, Trash2, ListChecks, Pencil, ChevronDown, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TemplateForm } from "./TemplateForm";
+
+interface Conta {
+  id: string;
+  nome_conta: string;
+  plataforma: string;
+}
 
 interface LogisticaSemanalTabProps {
   nichoId: string;
@@ -36,6 +49,8 @@ interface TarefaTemplate {
   titulo: string;
   descricao: string | null;
   conta_id: string | null;
+  ativa: boolean;
+  ordem: number;
   conta?: {
     nome_conta: string;
     plataforma: string;
@@ -77,10 +92,16 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
   const [semanaAtual, setSemanaAtual] = useState<SemanaLogistica | null>(null);
   const [tarefas, setTarefas] = useState<TarefaDiaria[]>([]);
   const [templates, setTemplates] = useState<TarefaTemplate[]>([]);
-  const [contas, setContas] = useState<any[]>([]);
+  const [allTemplates, setAllTemplates] = useState<TarefaTemplate[]>([]);
+  const [contas, setContas] = useState<Conta[]>([]);
   const [contaFiltro, setContaFiltro] = useState<string>("todas");
   const [weekOffset, setWeekOffset] = useState(0);
   const [templateParaDeletar, setTemplateParaDeletar] = useState<TarefaTemplate | null>(null);
+  
+  // Template management states
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<TarefaTemplate | null>(null);
 
   const getWeekDates = useCallback(() => {
     const hoje = new Date();
@@ -128,25 +149,29 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
 
       setSemanaAtual(semana);
 
-      // Buscar templates ativos
-      const { data: templatesData, error: templatesError } = await supabase
+      // Buscar todos os templates (para gerenciamento)
+      const { data: allTemplatesData, error: allTemplatesError } = await supabase
         .from("tarefa_templates")
         .select(`
           id,
           titulo,
           descricao,
           conta_id,
+          ativa,
+          ordem,
           conta:conta_id (
             nome_conta,
             plataforma
           )
         `)
         .eq("nicho_id", nichoId)
-        .eq("ativa", true)
         .order("ordem");
 
-      if (templatesError) throw templatesError;
-      setTemplates(templatesData || []);
+      if (allTemplatesError) throw allTemplatesError;
+      setAllTemplates(allTemplatesData || []);
+
+      // Filtrar apenas ativos para a grid
+      setTemplates((allTemplatesData || []).filter(t => t.ativa));
 
       // Buscar tarefas da semana
       const { data: tarefasData, error: tarefasError } = await supabase
@@ -256,6 +281,7 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
       if (error) throw error;
       
       setTemplates((prev) => prev.filter((t) => t.id !== templateParaDeletar.id));
+      setAllTemplates((prev) => prev.filter((t) => t.id !== templateParaDeletar.id));
       setTarefas((prev) => prev.filter((t) => t.template_id !== templateParaDeletar.id));
       toast.success("Template removido com sucesso");
     } catch (error: any) {
@@ -263,6 +289,51 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
     } finally {
       setTemplateParaDeletar(null);
     }
+  };
+
+  const handleToggleTemplateAtivo = async (template: TarefaTemplate) => {
+    const newAtiva = !template.ativa;
+    
+    // Optimistic update
+    setAllTemplates(prev => prev.map(t => 
+      t.id === template.id ? { ...t, ativa: newAtiva } : t
+    ));
+    if (newAtiva) {
+      setTemplates(prev => [...prev, { ...template, ativa: newAtiva }]);
+    } else {
+      setTemplates(prev => prev.filter(t => t.id !== template.id));
+    }
+
+    try {
+      const { error } = await supabase
+        .from("tarefa_templates")
+        .update({ ativa: newAtiva })
+        .eq("id", template.id);
+
+      if (error) throw error;
+      toast.success(newAtiva ? "Template ativado" : "Template desativado");
+    } catch (error: any) {
+      // Rollback
+      setAllTemplates(prev => prev.map(t => 
+        t.id === template.id ? { ...t, ativa: !newAtiva } : t
+      ));
+      if (!newAtiva) {
+        setTemplates(prev => [...prev, { ...template, ativa: !newAtiva }]);
+      } else {
+        setTemplates(prev => prev.filter(t => t.id !== template.id));
+      }
+      toast.error("Erro ao atualizar: " + error.message);
+    }
+  };
+
+  const handleEditTemplate = (template: TarefaTemplate) => {
+    setEditingTemplate(template);
+    setFormOpen(true);
+  };
+
+  const handleNewTemplate = () => {
+    setEditingTemplate(null);
+    setFormOpen(true);
   };
 
   const deletarTarefa = async (tarefaId: string) => {
@@ -348,11 +419,107 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
         </Select>
       </div>
 
+      {/* Seção colapsável de Templates de Tarefas */}
+      <Collapsible open={templatesOpen} onOpenChange={setTemplatesOpen}>
+        <Card className="bg-card/50 border-border/50">
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Settings2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Templates de Tarefas</CardTitle>
+                    <CardDescription className="text-xs">Configure as tarefas que aparecem na Logística Semanal</CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {allTemplates.filter(t => t.ativa).length} ativos
+                  </Badge>
+                  <ChevronDown className={cn("h-4 w-4 transition-transform", templatesOpen && "rotate-180")} />
+                </div>
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0 space-y-3">
+              <div className="flex justify-end">
+                <Button onClick={handleNewTemplate} size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Novo
+                </Button>
+              </div>
+              {allTemplates.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <ListChecks className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                  <p>Nenhum template configurado</p>
+                  <p className="text-sm">Crie templates para organizar suas tarefas semanais</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {allTemplates.map((template) => (
+                    <div
+                      key={template.id}
+                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                        template.ativa 
+                          ? "bg-surface/50 border-border/30" 
+                          : "bg-muted/20 border-border/20 opacity-60"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <Switch
+                          checked={template.ativa}
+                          onCheckedChange={() => handleToggleTemplateAtivo(template)}
+                          className="shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className={`font-medium truncate ${!template.ativa && "text-muted-foreground"}`}>
+                            {template.titulo}
+                          </p>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {template.conta 
+                              ? `@${template.conta.nome_conta} (${template.conta.plataforma})`
+                              : "Geral"
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditTemplate(template)}
+                          className="h-8 w-8"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setTemplateParaDeletar(template)}
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
       {/* Grid de tarefas */}
       {templatesFiltrados.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            Nenhum template de tarefa configurado. Configure templates em Configurações.
+            <ListChecks className="h-10 w-10 mx-auto mb-2 opacity-50" />
+            <p>Nenhum template de tarefa ativo</p>
+            <p className="text-sm">Ative templates acima para gerar tarefas</p>
           </CardContent>
         </Card>
       ) : (
@@ -458,6 +625,16 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Template Form Modal */}
+      <TemplateForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        nichoId={nichoId}
+        template={editingTemplate}
+        contas={contas}
+        onSuccess={fetchData}
+      />
     </div>
   );
 }
