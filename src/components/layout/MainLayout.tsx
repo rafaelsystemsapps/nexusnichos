@@ -3,7 +3,7 @@ import { AppSidebar } from "./AppSidebar";
 import { useIsIOSMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-interface MainLayoutProps {
+export interface MainLayoutProps {
   children: ReactNode;
   nichoId?: string;
   nichoNome?: string;
@@ -11,9 +11,10 @@ interface MainLayoutProps {
   subtitle?: string;
   financeiroHabilitado?: boolean;
   pedidosHabilitado?: boolean;
+  radarHabilitado?: boolean;
 }
 
-export function MainLayout({ children, nichoId, nichoNome, title, subtitle, financeiroHabilitado, pedidosHabilitado }: MainLayoutProps) {
+export function MainLayout({ children, nichoId, nichoNome, title, subtitle, financeiroHabilitado, pedidosHabilitado, radarHabilitado }: MainLayoutProps) {
   const isIOSMobile = useIsIOSMobile();
 
   return (
@@ -21,7 +22,7 @@ export function MainLayout({ children, nichoId, nichoNome, title, subtitle, fina
       "min-h-screen bg-background",
       isIOSMobile && "ios-safe-area"
     )}>
-      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} financeiroHabilitado={financeiroHabilitado} pedidosHabilitado={pedidosHabilitado} />
+      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} financeiroHabilitado={financeiroHabilitado} pedidosHabilitado={pedidosHabilitado} radarHabilitado={radarHabilitado} />
       
       <main className={cn(
         "min-h-screen",
