@@ -769,6 +769,7 @@ export type Database = {
           ordem: number
           titulo: string
           updated_at: string
+          vezes_por_semana: number
         }
         Insert: {
           ativa?: boolean
@@ -781,6 +782,7 @@ export type Database = {
           ordem?: number
           titulo: string
           updated_at?: string
+          vezes_por_semana?: number
         }
         Update: {
           ativa?: boolean
@@ -793,6 +795,7 @@ export type Database = {
           ordem?: number
           titulo?: string
           updated_at?: string
+          vezes_por_semana?: number
         }
         Relationships: [
           {

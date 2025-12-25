@@ -22,7 +22,7 @@ interface Template {
   conta_id: string | null;
   ativa: boolean;
   ordem: number;
-  frequencia?: string;
+  vezes_por_semana?: number;
 }
 
 interface TemplateFormProps {
@@ -38,7 +38,7 @@ export function TemplateForm({ open, onOpenChange, nichoId, template, contas, on
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [contaId, setContaId] = useState<string>("geral");
-  const [frequencia, setFrequencia] = useState<string>("diaria");
+  const [vezesPorSemana, setVezesPorSemana] = useState<number>(7);
   const [ativa, setAtiva] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -47,13 +47,13 @@ export function TemplateForm({ open, onOpenChange, nichoId, template, contas, on
       setTitulo(template.titulo);
       setDescricao(template.descricao || "");
       setContaId(template.conta_id || "geral");
-      setFrequencia(template.frequencia || "diaria");
+      setVezesPorSemana(template.vezes_por_semana ?? 7);
       setAtiva(template.ativa);
     } else {
       setTitulo("");
       setDescricao("");
       setContaId("geral");
-      setFrequencia("diaria");
+      setVezesPorSemana(7);
       setAtiva(true);
     }
   }, [template, open]);
@@ -73,7 +73,7 @@ export function TemplateForm({ open, onOpenChange, nichoId, template, contas, on
         titulo: titulo.trim(),
         descricao: descricao.trim() || null,
         conta_id: contaId === "geral" ? null : contaId,
-        frequencia,
+        vezes_por_semana: vezesPorSemana,
         ativa,
         nicho_id: nichoId,
       };
@@ -151,20 +151,27 @@ export function TemplateForm({ open, onOpenChange, nichoId, template, contas, on
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="frequencia">Frequência</Label>
-            <Select value={frequencia} onValueChange={setFrequencia}>
+            <Label htmlFor="vezes">Frequência por Semana</Label>
+            <Select value={vezesPorSemana.toString()} onValueChange={(v) => setVezesPorSemana(parseInt(v))}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione a frequência" />
+                <SelectValue placeholder="Quantas vezes por semana?" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="diaria">Diária (7x por semana)</SelectItem>
-                <SelectItem value="semanal">Semanal (1x por semana)</SelectItem>
+                <SelectItem value="1">1x por semana</SelectItem>
+                <SelectItem value="2">2x por semana</SelectItem>
+                <SelectItem value="3">3x por semana</SelectItem>
+                <SelectItem value="4">4x por semana</SelectItem>
+                <SelectItem value="5">5x por semana</SelectItem>
+                <SelectItem value="6">6x por semana</SelectItem>
+                <SelectItem value="7">Diária (7x)</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              {frequencia === "semanal" 
+              {vezesPorSemana === 7 
+                ? "Uma tarefa para cada dia da semana"
+                : vezesPorSemana === 1
                 ? "Uma única tarefa para completar durante toda a semana"
-                : "Uma tarefa para cada dia da semana"
+                : `${vezesPorSemana} tarefas para completar durante a semana`
               }
             </p>
           </div>
