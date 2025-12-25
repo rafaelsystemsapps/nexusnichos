@@ -20,10 +20,13 @@ interface CemiterioTabProps {
   nichoId: string;
 }
 
+const MAX_ITEMS = 50;
+
 export function CemiterioTab({ nichoId }: CemiterioTabProps) {
   const [itens, setItens] = useState<CemiterioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     fetchItens();
@@ -31,11 +34,21 @@ export function CemiterioTab({ nichoId }: CemiterioTabProps) {
 
   const fetchItens = async () => {
     try {
+      // Busca contagem total primeiro
+      const { count } = await supabase
+        .from("cemiterio")
+        .select("*", { count: "exact", head: true })
+        .eq("nicho_id", nichoId);
+      
+      setTotalCount(count || 0);
+
+      // Busca itens com limite
       const { data, error } = await supabase
         .from("cemiterio")
         .select("*")
         .eq("nicho_id", nichoId)
-        .order("data_encerramento", { ascending: false });
+        .order("data_encerramento", { ascending: false })
+        .limit(MAX_ITEMS);
 
       if (error) throw error;
       setItens(data || []);
@@ -95,7 +108,7 @@ export function CemiterioTab({ nichoId }: CemiterioTabProps) {
               variant="ghost" 
               size="sm" 
               onClick={() => setFormOpen(true)}
-              className="text-muted-foreground hover:text-foreground"
+              className="opacity-40 hover:opacity-100 text-muted-foreground/50 hover:text-foreground transition-opacity"
             >
               <Plus className="h-4 w-4 mr-1" />
               Adicionar
@@ -122,6 +135,13 @@ export function CemiterioTab({ nichoId }: CemiterioTabProps) {
               onDelete={handleDelete}
             />
           ))}
+          
+          {/* Aviso discreto de limite */}
+          {totalCount > MAX_ITEMS && (
+            <p className="text-center text-xs text-muted-foreground/40 pt-4">
+              Mostrando os {MAX_ITEMS} itens mais recentes
+            </p>
+          )}
         </div>
       )}
 
