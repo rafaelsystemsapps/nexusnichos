@@ -83,7 +83,7 @@ export default function ColaboradorWorkspace() {
 
   const renderContent = () => {
     if (!subPath || subPath === "") {
-      return <DashboardNichoTab nichoId={nichoId!} />;
+      return <DashboardNichoTab nichoId={nichoId!} alertasHabilitado={nicho.alertas_habilitado} />;
     }
     if (subPath === "contas" && nicho.contas_habilitado !== false) {
       return <ContasNichoTab nichoId={nichoId!} />;

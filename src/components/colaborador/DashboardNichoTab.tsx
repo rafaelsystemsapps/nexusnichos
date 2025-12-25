@@ -8,8 +8,11 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { differenceInDays } from "date-fns";
 import { FocoDoDia } from "./FocoDoDia";
+import { AlertasRisco } from "./AlertasRisco";
+
 interface DashboardNichoTabProps {
   nichoId: string;
+  alertasHabilitado?: boolean;
 }
 
 interface TarefaFila {
@@ -29,7 +32,7 @@ interface ContaAcao {
   proxima_acao: string | null;
 }
 
-export function DashboardNichoTab({ nichoId }: DashboardNichoTabProps) {
+export function DashboardNichoTab({ nichoId, alertasHabilitado = false }: DashboardNichoTabProps) {
   const [tarefasAtrasadas, setTarefasAtrasadas] = useState<TarefaFila[]>([]);
   const [tarefasHoje, setTarefasHoje] = useState<TarefaFila[]>([]);
   const [contasAcao, setContasAcao] = useState<ContaAcao[]>([]);
@@ -164,6 +167,9 @@ export function DashboardNichoTab({ nichoId }: DashboardNichoTabProps) {
     <div className={cn(isIOSMobile ? "space-y-4" : "space-y-6")}>
       {/* Foco do Dia - Sempre visível no topo */}
       <FocoDoDia nichoId={nichoId} />
+
+      {/* Alertas de Risco - Abaixo do Foco, acima da Fila */}
+      {alertasHabilitado && <AlertasRisco nichoId={nichoId} />}
 
       {/* Fila de Execução HOJE */}
       <Card className={cn(
