@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { DollarSign, Settings, ListChecks, Plus, Pencil, Trash2, Package, Radio, Archive } from "lucide-react";
 import { TemplateForm } from "./TemplateForm";
 import { ProdutosList } from "./ProdutosList";
+import { OrdemAbasEditor } from "./OrdemAbasEditor";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +43,12 @@ interface ConfiguracoesNichoTabProps {
     pedidos_habilitado?: boolean;
     radar_habilitado?: boolean;
     cemiterio_habilitado?: boolean;
+    contas_habilitado?: boolean;
+    time_habilitado?: boolean;
+    mapa_dependencia_habilitado?: boolean;
+    teste_rapido_habilitado?: boolean;
+    logs_aprendizado_habilitado?: boolean;
+    ordem_abas?: string[] | null;
   };
   onConfigUpdate: () => void;
 }
@@ -467,8 +474,12 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
         </CardContent>
       </Card>
 
+      {/* Ordem das Abas */}
+      <OrdemAbasEditor nichoId={nichoId} nicho={nicho} onConfigUpdate={onConfigUpdate} />
+
       {/* Produtos Cadastrados */}
       <ProdutosList nichoId={nichoId} />
+      
       {/* Template Form Modal */}
       <TemplateForm
         open={formOpen}

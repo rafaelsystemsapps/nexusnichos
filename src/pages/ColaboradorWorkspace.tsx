@@ -148,6 +148,7 @@ export default function ColaboradorWorkspace() {
       testeRapidoHabilitado={nicho.teste_rapido_habilitado}
       logsAprendizadoHabilitado={nicho.logs_aprendizado_habilitado}
       timeHabilitado={nicho.time_habilitado}
+      ordemAbas={nicho.ordem_abas}
     >
       {renderContent()}
     </MainLayout>

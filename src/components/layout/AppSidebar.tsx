@@ -48,9 +48,25 @@ interface AppSidebarProps {
   testeRapidoHabilitado?: boolean;
   logsAprendizadoHabilitado?: boolean;
   timeHabilitado?: boolean;
+  ordemAbas?: string[] | null;
 }
 
-export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, timeHabilitado }: AppSidebarProps) {
+const DEFAULT_ORDER = [
+  "dashboard",
+  "contas",
+  "logistica",
+  "time",
+  "financeiro",
+  "pedidos",
+  "radar",
+  "cemiterio",
+  "mapa",
+  "testes",
+  "aprendizado",
+  "configuracoes",
+];
+
+export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, timeHabilitado, ordemAbas }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -84,102 +100,33 @@ export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHab
       .slice(0, 2);
   };
 
-  const colaboradorNavItems: NavItem[] = [
-    { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard },
-  ];
+  // Configuração de todas as abas disponíveis
+  const abaConfig: Record<string, { title: string; href: string; icon: React.ComponentType<{ className?: string }>; enabled: boolean }> = {
+    dashboard: { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard, enabled: true },
+    contas: { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2, enabled: contasHabilitado !== false },
+    logistica: { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck, enabled: true },
+    time: { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users, enabled: timeHabilitado !== false },
+    financeiro: { title: "Financeiro", href: `/workspace/${nichoId}/financeiro`, icon: DollarSign, enabled: financeiroHabilitado === true },
+    pedidos: { title: "Pedidos", href: `/workspace/${nichoId}/pedidos`, icon: Package, enabled: pedidosHabilitado === true },
+    radar: { title: "Radar", href: `/workspace/${nichoId}/radar`, icon: Radio, enabled: radarHabilitado === true },
+    cemiterio: { title: "Cemitério", href: `/workspace/${nichoId}/cemiterio`, icon: Archive, enabled: cemiterioHabilitado === true },
+    mapa: { title: "Mapa", href: `/workspace/${nichoId}/mapa-dependencia`, icon: Network, enabled: mapaDependenciaHabilitado === true },
+    testes: { title: "Testes", href: `/workspace/${nichoId}/testes`, icon: FlaskConical, enabled: testeRapidoHabilitado === true },
+    aprendizado: { title: "Aprendizado", href: `/workspace/${nichoId}/aprendizado`, icon: Lightbulb, enabled: logsAprendizadoHabilitado === true },
+    configuracoes: { title: "Configurações", href: `/workspace/${nichoId}/configuracoes`, icon: Settings, enabled: true },
+  };
 
-  // Adiciona Contas se habilitado
-  if (contasHabilitado !== false) {
-    colaboradorNavItems.push({
-      title: "Contas",
-      href: `/workspace/${nichoId}/contas`,
-      icon: Share2,
-    });
-  }
-
-  // Sempre adiciona Logística
-  colaboradorNavItems.push(
-    { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck }
-  );
-
-  // Adiciona Time se habilitado
-  if (timeHabilitado !== false) {
-    colaboradorNavItems.push({
-      title: "Time",
-      href: `/workspace/${nichoId}/time`,
-      icon: Users,
-    });
-  }
-
-  // Adiciona Financeiro se habilitado
-  if (financeiroHabilitado) {
-    colaboradorNavItems.push({
-      title: "Financeiro",
-      href: `/workspace/${nichoId}/financeiro`,
-      icon: DollarSign,
-    });
-  }
-
-  // Adiciona Pedidos se habilitado
-  if (pedidosHabilitado) {
-    colaboradorNavItems.push({
-      title: "Pedidos",
-      href: `/workspace/${nichoId}/pedidos`,
-      icon: Package,
-    });
-  }
-
-  // Adiciona Radar se habilitado
-  if (radarHabilitado) {
-    colaboradorNavItems.push({
-      title: "Radar",
-      href: `/workspace/${nichoId}/radar`,
-      icon: Radio,
-    });
-  }
-
-  // Adiciona Cemitério se habilitado (visual discreto)
-  if (cemiterioHabilitado) {
-    colaboradorNavItems.push({
-      title: "Cemitério",
-      href: `/workspace/${nichoId}/cemiterio`,
-      icon: Archive,
-    });
-  }
-
-  // Adiciona Mapa de Dependência se habilitado (módulo de diagnóstico)
-  if (mapaDependenciaHabilitado) {
-    colaboradorNavItems.push({
-      title: "Mapa",
-      href: `/workspace/${nichoId}/mapa-dependencia`,
-      icon: Network,
-    });
-  }
-
-  // Adiciona Teste Rápido se habilitado (experimentação)
-  if (testeRapidoHabilitado) {
-    colaboradorNavItems.push({
-      title: "Testes",
-      href: `/workspace/${nichoId}/testes`,
-      icon: FlaskConical,
-    });
-  }
-
-  // Adiciona Logs de Aprendizado se habilitado (reflexivo)
-  if (logsAprendizadoHabilitado) {
-    colaboradorNavItems.push({
-      title: "Aprendizado",
-      href: `/workspace/${nichoId}/aprendizado`,
-      icon: Lightbulb,
-    });
-  }
-
-  // Sempre adiciona Configurações no final
-  colaboradorNavItems.push({
-    title: "Configurações",
-    href: `/workspace/${nichoId}/configuracoes`,
-    icon: Settings,
-  });
+  // Usa ordem customizada ou padrão
+  const order = ordemAbas || DEFAULT_ORDER;
+  
+  // Constrói os navItems baseado na ordem e itens habilitados
+  const colaboradorNavItems: NavItem[] = order
+    .filter(id => abaConfig[id]?.enabled)
+    .map(id => ({
+      title: abaConfig[id].title,
+      href: abaConfig[id].href,
+      icon: abaConfig[id].icon,
+    }));
 
   const navItems: NavItem[] = isAdmin
     ? [

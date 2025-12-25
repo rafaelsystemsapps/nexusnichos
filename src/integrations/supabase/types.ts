@@ -345,6 +345,7 @@ export type Database = {
           mapa_dependencia_habilitado: boolean
           nome: string
           observacoes: string | null
+          ordem_abas: string[] | null
           pedidos_habilitado: boolean
           radar_habilitado: boolean
           teste_rapido_habilitado: boolean
@@ -364,6 +365,7 @@ export type Database = {
           mapa_dependencia_habilitado?: boolean
           nome: string
           observacoes?: string | null
+          ordem_abas?: string[] | null
           pedidos_habilitado?: boolean
           radar_habilitado?: boolean
           teste_rapido_habilitado?: boolean
@@ -383,6 +385,7 @@ export type Database = {
           mapa_dependencia_habilitado?: boolean
           nome?: string
           observacoes?: string | null
+          ordem_abas?: string[] | null
           pedidos_habilitado?: boolean
           radar_habilitado?: boolean
           teste_rapido_habilitado?: boolean
