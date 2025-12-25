@@ -242,7 +242,7 @@ export default function Auth() {
                 <span className={cn(
                   "text-neutral-400 text-sm md:text-base font-medium",
                   "group-hover:text-white transition-colors duration-200",
-                  "text-center max-w-[120px] md:max-w-[160px] truncate"
+                  "text-center px-1"
                 )}>
                   {profile.nome}
                 </span>
