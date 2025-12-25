@@ -144,8 +144,28 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
           .select()
           .single();
 
-        if (createError) throw createError;
-        semana = novaSemana;
+        // Se der erro de duplicidade, buscar a semana existente
+        if (createError) {
+          if (createError.code === "23505") {
+            const { data: semanaExistente } = await supabase
+              .from("semana_logistica")
+              .select("*")
+              .eq("nicho_id", nichoId)
+              .eq("semana_numero", semanaNumero)
+              .eq("ano", ano)
+              .maybeSingle();
+            
+            if (semanaExistente) {
+              semana = semanaExistente;
+            } else {
+              throw createError;
+            }
+          } else {
+            throw createError;
+          }
+        } else {
+          semana = novaSemana;
+        }
       }
 
       setSemanaAtual(semana);
