@@ -276,6 +276,50 @@ export type Database = {
           },
         ]
       }
+      lembretes_hoje: {
+        Row: {
+          created_at: string
+          data_criacao: string
+          descricao: string
+          id: string
+          nicho_id: string
+          prioridade: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_criacao?: string
+          descricao: string
+          id?: string
+          nicho_id: string
+          prioridade?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_criacao?: string
+          descricao?: string
+          id?: string
+          nicho_id?: string
+          prioridade?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lembretes_hoje_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       logs_aprendizado: {
         Row: {
           aprendizado: string
@@ -365,6 +409,7 @@ export type Database = {
           financeiro_habilitado: boolean
           foco_do_dia: string | null
           id: string
+          lembretes_hoje_habilitado: boolean
           logs_aprendizado_habilitado: boolean
           mapa_dependencia_habilitado: boolean
           nome: string
@@ -385,6 +430,7 @@ export type Database = {
           financeiro_habilitado?: boolean
           foco_do_dia?: string | null
           id?: string
+          lembretes_hoje_habilitado?: boolean
           logs_aprendizado_habilitado?: boolean
           mapa_dependencia_habilitado?: boolean
           nome: string
@@ -405,6 +451,7 @@ export type Database = {
           financeiro_habilitado?: boolean
           foco_do_dia?: string | null
           id?: string
+          lembretes_hoje_habilitado?: boolean
           logs_aprendizado_habilitado?: boolean
           mapa_dependencia_habilitado?: boolean
           nome?: string
@@ -961,6 +1008,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      encerrar_lembretes_dia: { Args: never; Returns: undefined }
       get_user_nicho: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {

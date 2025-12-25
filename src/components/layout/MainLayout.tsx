@@ -17,11 +17,12 @@ export interface MainLayoutProps {
   mapaDependenciaHabilitado?: boolean;
   testeRapidoHabilitado?: boolean;
   logsAprendizadoHabilitado?: boolean;
+  lembretesHojeHabilitado?: boolean;
   timeHabilitado?: boolean;
   ordemAbas?: string[] | null;
 }
 
-export function MainLayout({ children, nichoId, nichoNome, title, subtitle, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, timeHabilitado, ordemAbas }: MainLayoutProps) {
+export function MainLayout({ children, nichoId, nichoNome, title, subtitle, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, ordemAbas }: MainLayoutProps) {
   const isIOSMobile = useIsIOSMobile();
 
   return (
@@ -29,7 +30,7 @@ export function MainLayout({ children, nichoId, nichoNome, title, subtitle, cont
       "min-h-screen bg-background",
       isIOSMobile && "ios-safe-area"
     )}>
-      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} contasHabilitado={contasHabilitado} financeiroHabilitado={financeiroHabilitado} pedidosHabilitado={pedidosHabilitado} radarHabilitado={radarHabilitado} cemiterioHabilitado={cemiterioHabilitado} mapaDependenciaHabilitado={mapaDependenciaHabilitado} testeRapidoHabilitado={testeRapidoHabilitado} logsAprendizadoHabilitado={logsAprendizadoHabilitado} timeHabilitado={timeHabilitado} ordemAbas={ordemAbas} />
+      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} contasHabilitado={contasHabilitado} financeiroHabilitado={financeiroHabilitado} pedidosHabilitado={pedidosHabilitado} radarHabilitado={radarHabilitado} cemiterioHabilitado={cemiterioHabilitado} mapaDependenciaHabilitado={mapaDependenciaHabilitado} testeRapidoHabilitado={testeRapidoHabilitado} logsAprendizadoHabilitado={logsAprendizadoHabilitado} lembretesHojeHabilitado={lembretesHojeHabilitado} timeHabilitado={timeHabilitado} ordemAbas={ordemAbas} />
       
       <main className={cn(
         "min-h-screen",

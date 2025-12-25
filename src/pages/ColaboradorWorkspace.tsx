@@ -15,6 +15,7 @@ import { CemiterioTab } from "@/components/colaborador/CemiterioTab";
 import { MapaDependencia } from "@/components/colaborador/MapaDependencia";
 import { TesteRapidoTab } from "@/components/colaborador/TesteRapidoTab";
 import { LogsAprendizadoTab } from "@/components/colaborador/LogsAprendizadoTab";
+import { LembretesHojeTab } from "@/components/colaborador/LembretesHojeTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
 
@@ -83,6 +84,7 @@ export default function ColaboradorWorkspace() {
     if (subPath === "mapa-dependencia") return "Mapa de Dependência";
     if (subPath === "testes") return "Teste Rápido";
     if (subPath === "aprendizado") return "Logs de Aprendizado";
+    if (subPath === "lembretes") return "Lembretes de Hoje";
     if (subPath === "configuracoes") return "Configurações";
     return "Workspace";
   };
@@ -121,6 +123,9 @@ export default function ColaboradorWorkspace() {
     if (subPath === "aprendizado" && nicho.logs_aprendizado_habilitado) {
       return <LogsAprendizadoTab nichoId={nichoId!} />;
     }
+    if (subPath === "lembretes" && nicho.lembretes_hoje_habilitado) {
+      return <LembretesHojeTab nichoId={nichoId!} />;
+    }
     if (subPath === "configuracoes") {
       return (
         <ConfiguracoesNichoTab 
@@ -147,6 +152,7 @@ export default function ColaboradorWorkspace() {
       mapaDependenciaHabilitado={nicho.mapa_dependencia_habilitado}
       testeRapidoHabilitado={nicho.teste_rapido_habilitado}
       logsAprendizadoHabilitado={nicho.logs_aprendizado_habilitado}
+      lembretesHojeHabilitado={nicho.lembretes_hoje_habilitado}
       timeHabilitado={nicho.time_habilitado}
       ordemAbas={nicho.ordem_abas}
     >
