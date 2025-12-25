@@ -4,7 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { DollarSign, Settings, Package, Radio, Archive } from "lucide-react";
+import { 
+  DollarSign, 
+  Settings, 
+  Package, 
+  Radio, 
+  Archive, 
+  Users, 
+  AlertTriangle, 
+  GitBranch, 
+  FlaskConical, 
+  BookOpen, 
+  UserCheck 
+} from "lucide-react";
 import { OrdemAbasEditor } from "./OrdemAbasEditor";
 
 interface ConfiguracoesNichoTabProps {
@@ -19,110 +31,140 @@ interface ConfiguracoesNichoTabProps {
     mapa_dependencia_habilitado?: boolean;
     teste_rapido_habilitado?: boolean;
     logs_aprendizado_habilitado?: boolean;
+    alertas_habilitado?: boolean;
     ordem_abas?: string[] | null;
   };
   onConfigUpdate: () => void;
 }
 
+// Configuração de módulos para facilitar a manutenção
+const MODULOS_CONFIG = [
+  {
+    id: "financeiro",
+    dbField: "financeiro_habilitado",
+    label: "Módulo Financeiro",
+    description: "Registre vendas e acompanhe o faturamento do seu nicho",
+    icon: DollarSign,
+    color: "emerald",
+  },
+  {
+    id: "pedidos",
+    dbField: "pedidos_habilitado",
+    label: "Módulo Pedidos",
+    description: "Gerencie pedidos e acompanhe envios",
+    icon: Package,
+    color: "orange",
+  },
+  {
+    id: "contas",
+    dbField: "contas_habilitado",
+    label: "Controle de Contas",
+    description: "Gerencie suas contas de redes sociais",
+    icon: UserCheck,
+    color: "blue",
+  },
+  {
+    id: "time",
+    dbField: "time_habilitado",
+    label: "Gestão de Time",
+    description: "Gerencie os membros da equipe do nicho",
+    icon: Users,
+    color: "violet",
+  },
+  {
+    id: "radar",
+    dbField: "radar_habilitado",
+    label: "Radar de Oportunidades",
+    description: "Monitore tendências e oportunidades do mercado",
+    icon: Radio,
+    color: "cyan",
+  },
+  {
+    id: "alertas",
+    dbField: "alertas_habilitado",
+    label: "Alertas de Risco",
+    description: "Receba alertas sobre riscos e problemas",
+    icon: AlertTriangle,
+    color: "amber",
+  },
+  {
+    id: "mapa_dependencia",
+    dbField: "mapa_dependencia_habilitado",
+    label: "Mapa de Dependência",
+    description: "Visualize dependências e gargalos do nicho",
+    icon: GitBranch,
+    color: "pink",
+  },
+  {
+    id: "teste_rapido",
+    dbField: "teste_rapido_habilitado",
+    label: "Testes Rápidos",
+    description: "Registre e acompanhe experimentos e testes",
+    icon: FlaskConical,
+    color: "lime",
+  },
+  {
+    id: "logs_aprendizado",
+    dbField: "logs_aprendizado_habilitado",
+    label: "Logs de Aprendizado",
+    description: "Documente aprendizados e insights do nicho",
+    icon: BookOpen,
+    color: "indigo",
+  },
+  {
+    id: "cemiterio",
+    dbField: "cemiterio_habilitado",
+    label: "Módulo Cemitério",
+    description: "Arquivo morto de ativos e ideias encerradas",
+    icon: Archive,
+    color: "slate",
+  },
+] as const;
+
+const COLOR_CLASSES: Record<string, { bg: string; text: string }> = {
+  emerald: { bg: "bg-emerald-500/10", text: "text-emerald-500" },
+  orange: { bg: "bg-orange-500/10", text: "text-orange-500" },
+  blue: { bg: "bg-blue-500/10", text: "text-blue-500" },
+  violet: { bg: "bg-violet-500/10", text: "text-violet-500" },
+  cyan: { bg: "bg-cyan-500/10", text: "text-cyan-500" },
+  amber: { bg: "bg-amber-500/10", text: "text-amber-500" },
+  pink: { bg: "bg-pink-500/10", text: "text-pink-500" },
+  lime: { bg: "bg-lime-500/10", text: "text-lime-500" },
+  indigo: { bg: "bg-indigo-500/10", text: "text-indigo-500" },
+  slate: { bg: "bg-slate-500/10", text: "text-slate-500" },
+};
+
 export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: ConfiguracoesNichoTabProps) {
-  const [financeiroHabilitado, setFinanceiroHabilitado] = useState(nicho.financeiro_habilitado);
-  const [pedidosHabilitado, setPedidosHabilitado] = useState(nicho.pedidos_habilitado ?? false);
-  const [radarHabilitado, setRadarHabilitado] = useState(nicho.radar_habilitado ?? false);
-  const [cemiterioHabilitado, setCemiterioHabilitado] = useState(nicho.cemiterio_habilitado ?? false);
-  const [saving, setSaving] = useState(false);
+  const [modulosState, setModulosState] = useState<Record<string, boolean>>({});
+  const [saving, setSaving] = useState<string | null>(null);
 
   useEffect(() => {
-    setFinanceiroHabilitado(nicho.financeiro_habilitado);
-    setPedidosHabilitado(nicho.pedidos_habilitado ?? false);
-    setRadarHabilitado(nicho.radar_habilitado ?? false);
-    setCemiterioHabilitado(nicho.cemiterio_habilitado ?? false);
-  }, [nicho.financeiro_habilitado, nicho.pedidos_habilitado, nicho.radar_habilitado, nicho.cemiterio_habilitado]);
+    const state: Record<string, boolean> = {};
+    MODULOS_CONFIG.forEach((modulo) => {
+      state[modulo.id] = (nicho as any)[modulo.dbField] ?? false;
+    });
+    setModulosState(state);
+  }, [nicho]);
 
-  const handleToggleFinanceiro = async (enabled: boolean) => {
-    setSaving(true);
-    setFinanceiroHabilitado(enabled);
-
-    try {
-      const { error } = await supabase
-        .from("nichos")
-        .update({ financeiro_habilitado: enabled })
-        .eq("id", nichoId);
-
-      if (error) throw error;
-
-      toast.success(enabled ? "Módulo Financeiro ativado!" : "Módulo Financeiro desativado!");
-      onConfigUpdate();
-    } catch (error: any) {
-      setFinanceiroHabilitado(!enabled);
-      toast.error("Erro ao salvar configuração: " + error.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleTogglePedidos = async (enabled: boolean) => {
-    setSaving(true);
-    setPedidosHabilitado(enabled);
+  const handleToggle = async (moduloId: string, dbField: string, label: string, enabled: boolean) => {
+    setSaving(moduloId);
+    setModulosState((prev) => ({ ...prev, [moduloId]: enabled }));
 
     try {
       const { error } = await supabase
         .from("nichos")
-        .update({ pedidos_habilitado: enabled })
+        .update({ [dbField]: enabled })
         .eq("id", nichoId);
 
       if (error) throw error;
 
-      toast.success(enabled ? "Módulo Pedidos ativado!" : "Módulo Pedidos desativado!");
+      toast.success(enabled ? `${label} ativado!` : `${label} desativado!`);
       onConfigUpdate();
     } catch (error: any) {
-      setPedidosHabilitado(!enabled);
+      setModulosState((prev) => ({ ...prev, [moduloId]: !enabled }));
       toast.error("Erro ao salvar configuração: " + error.message);
     } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleToggleRadar = async (enabled: boolean) => {
-    setSaving(true);
-    setRadarHabilitado(enabled);
-
-    try {
-      const { error } = await supabase
-        .from("nichos")
-        .update({ radar_habilitado: enabled })
-        .eq("id", nichoId);
-
-      if (error) throw error;
-
-      toast.success(enabled ? "Radar de Oportunidades ativado!" : "Radar de Oportunidades desativado!");
-      onConfigUpdate();
-    } catch (error: any) {
-      setRadarHabilitado(!enabled);
-      toast.error("Erro ao salvar configuração: " + error.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleToggleCemiterio = async (enabled: boolean) => {
-    setSaving(true);
-    setCemiterioHabilitado(enabled);
-
-    try {
-      const { error } = await supabase
-        .from("nichos")
-        .update({ cemiterio_habilitado: enabled })
-        .eq("id", nichoId);
-
-      if (error) throw error;
-
-      toast.success(enabled ? "Módulo Cemitério ativado!" : "Módulo Cemitério desativado!");
-      onConfigUpdate();
-    } catch (error: any) {
-      setCemiterioHabilitado(!enabled);
-      toast.error("Erro ao salvar configuração: " + error.message);
-    } finally {
-      setSaving(false);
+      setSaving(null);
     }
   };
 
@@ -144,110 +186,46 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
           <CardTitle className="text-lg">Módulos</CardTitle>
           <CardDescription>Ative ou desative módulos do sistema</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-lg bg-surface/50 border border-border/30">
-            <div className="flex items-center gap-4">
-              <div className="p-2 rounded-lg bg-emerald-500/10">
-                <DollarSign className="h-5 w-5 text-emerald-500" />
-              </div>
-              <div>
-                <Label htmlFor="financeiro" className="text-base font-medium cursor-pointer">
-                  Módulo Financeiro
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Registre vendas e acompanhe o faturamento do seu nicho
-                </p>
-              </div>
-            </div>
-            <Switch
-              id="financeiro"
-              checked={financeiroHabilitado}
-              onCheckedChange={handleToggleFinanceiro}
-              disabled={saving}
-            />
-          </div>
+        <CardContent className="space-y-3">
+          {MODULOS_CONFIG.map((modulo) => {
+            const Icon = modulo.icon;
+            const colorClass = COLOR_CLASSES[modulo.color];
+            const isEnabled = modulosState[modulo.id] ?? false;
 
-          <div className="flex items-center justify-between p-4 rounded-lg bg-surface/50 border border-border/30">
-            <div className="flex items-center gap-4">
-              <div className="p-2 rounded-lg bg-orange-500/10">
-                <Package className="h-5 w-5 text-orange-500" />
+            return (
+              <div
+                key={modulo.id}
+                className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                  isEnabled 
+                    ? "bg-surface/50 border-border/30" 
+                    : "bg-muted/20 border-border/20"
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-2 rounded-lg ${colorClass.bg}`}>
+                    <Icon className={`h-5 w-5 ${colorClass.text}`} />
+                  </div>
+                  <div>
+                    <Label 
+                      htmlFor={modulo.id} 
+                      className={`text-base font-medium cursor-pointer ${!isEnabled && "text-muted-foreground"}`}
+                    >
+                      {modulo.label}
+                    </Label>
+                    <p className={`text-sm ${isEnabled ? "text-muted-foreground" : "text-muted-foreground/70"}`}>
+                      {modulo.description}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id={modulo.id}
+                  checked={isEnabled}
+                  onCheckedChange={(enabled) => handleToggle(modulo.id, modulo.dbField, modulo.label, enabled)}
+                  disabled={saving !== null}
+                />
               </div>
-              <div>
-                <Label htmlFor="pedidos" className="text-base font-medium cursor-pointer">
-                  Módulo Pedidos
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Gerencie pedidos e acompanhe envios
-                </p>
-              </div>
-            </div>
-            <Switch
-              id="pedidos"
-              checked={pedidosHabilitado}
-              onCheckedChange={handleTogglePedidos}
-              disabled={saving}
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-4 rounded-lg bg-surface/50 border border-border/30">
-            <div className="flex items-center gap-4">
-              <div className="p-2 rounded-lg bg-cyan-500/10">
-                <Radio className="h-5 w-5 text-cyan-500" />
-              </div>
-              <div>
-                <Label htmlFor="radar" className="text-base font-medium cursor-pointer">
-                  Radar de Oportunidades
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Monitore tendências e oportunidades do mercado
-                </p>
-              </div>
-            </div>
-            <Switch
-              id="radar"
-              checked={radarHabilitado}
-              onCheckedChange={handleToggleRadar}
-              disabled={saving}
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted/20 border border-border/20">
-            <div className="flex items-center gap-4">
-              <div className="p-2 rounded-lg bg-muted/30">
-                <Archive className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div>
-                <Label htmlFor="cemiterio" className="text-base font-medium cursor-pointer text-muted-foreground">
-                  Módulo Cemitério
-                </Label>
-                <p className="text-sm text-muted-foreground/70">
-                  Arquivo morto de ativos e ideias encerradas
-                </p>
-              </div>
-            </div>
-            <Switch
-              id="cemiterio"
-              checked={cemiterioHabilitado}
-              onCheckedChange={handleToggleCemiterio}
-              disabled={saving}
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-4 rounded-lg bg-surface/30 border border-border/20 opacity-50">
-            <div className="flex items-center gap-4">
-              <div className="p-2 rounded-lg bg-muted/50">
-                <Settings className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-base font-medium text-muted-foreground">
-                  Mais módulos em breve...
-                </p>
-                <p className="text-sm text-muted-foreground/70">
-                  Calendário, Biblioteca, Relatórios e mais
-                </p>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </CardContent>
       </Card>
 
