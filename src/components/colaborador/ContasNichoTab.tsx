@@ -95,6 +95,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     gmail_senha: "",
     telefone: "",
     url_site: "",
+    pin: "",
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contaToDelete, setContaToDelete] = useState<any>(null);
@@ -150,6 +151,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         gmail_senha: formData.gmail_senha || null,
         telefone: formData.telefone || null,
         url_site: formData.url_site || null,
+        pin: formData.pin || null,
         nicho_id: nichoId,
         responsavel_id: user?.id || null,
       };
@@ -191,6 +193,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       gmail_senha: "",
       telefone: "",
       url_site: "",
+      pin: "",
     });
     setEditingConta(null);
     setCredenciaisOpen(false);
@@ -211,6 +214,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       gmail_senha: conta.gmail_senha || "",
       telefone: conta.telefone || "",
       url_site: conta.url_site || "",
+      pin: conta.pin || "",
     });
     // Abrir seção de credenciais se já existem dados
     setCredenciaisOpen(!!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha));
@@ -255,13 +259,15 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   };
 
   const hasCredenciais = (conta: any) => {
-    return !!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha || conta.telefone || conta.url_site);
+    return !!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha || conta.telefone || conta.url_site || conta.pin);
   };
 
   // Verifica se plataforma precisa de campos específicos
   const needsTelefone = formData.plataforma === "whatsapp" || formData.plataforma === "telegram";
   const needsUrlSite = formData.plataforma === "site";
-  const needsCredenciaisNormais = !needsTelefone; // Sites ainda podem ter login/senha
+  const needsPin = formData.plataforma === "instagram";
+  // Credenciais normais: não é WhatsApp, Telegram ou Instagram
+  const needsCredenciaisNormais = !needsTelefone && !needsPin;
 
   const getStatusDisplay = (dbStatus: string) => {
     const status = mapStatusFromDB(dbStatus);
@@ -400,6 +406,20 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                 </div>
               )}
 
+              {/* Campo específico para Instagram - apenas PIN */}
+              {needsPin && (
+                <div>
+                  <Label className="text-xs">PIN de Segurança</Label>
+                  <Input
+                    className="h-9"
+                    value={formData.pin}
+                    onChange={(e) => setFormData({ ...formData, pin: e.target.value })}
+                    placeholder="Ex: 1234"
+                    maxLength={10}
+                  />
+                </div>
+              )}
+
               {/* Campo específico para Sites */}
               {needsUrlSite && (
                 <div>
@@ -416,86 +436,92 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
               )}
 
               {/* Seção colapsável de credenciais - apenas para plataformas que precisam */}
-              <Collapsible open={credenciaisOpen} onOpenChange={setCredenciaisOpen}>
-                <CollapsibleTrigger asChild>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full justify-between text-muted-foreground hover:text-foreground"
-                  >
-                    <span className="flex items-center gap-2">
-                      <KeyRound className="h-3.5 w-3.5" />
-                      Credenciais de acesso (opcional)
-                    </span>
-                    {credenciaisOpen ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
+              {needsCredenciaisNormais && (
+                <Collapsible open={credenciaisOpen} onOpenChange={setCredenciaisOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-full justify-between text-muted-foreground hover:text-foreground"
+                    >
+                      <span className="flex items-center gap-2">
+                        <KeyRound className="h-3.5 w-3.5" />
+                        Credenciais de acesso (opcional)
+                      </span>
+                      {credenciaisOpen ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-3 pt-3">
+                    <div>
+                      <Label className="text-xs">Login / Email</Label>
+                      <Input
+                        className="h-9"
+                        value={formData.login_email}
+                        onChange={(e) => setFormData({ ...formData, login_email: e.target.value })}
+                        placeholder="Ex: email@gmail.com"
+                        maxLength={100}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Senha</Label>
+                      <Input
+                        className="h-9"
+                        type="text"
+                        value={formData.senha_acesso}
+                        onChange={(e) => setFormData({ ...formData, senha_acesso: e.target.value })}
+                        placeholder="Senha da conta"
+                        maxLength={100}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">URL de acesso</Label>
+                      <Input
+                        className="h-9"
+                        value={formData.url_conta}
+                        onChange={(e) => setFormData({ ...formData, url_conta: e.target.value })}
+                        placeholder="https://..."
+                        maxLength={200}
+                      />
+                    </div>
+
+                    {/* Gmail - não mostrar para Site */}
+                    {!needsUrlSite && (
+                      <>
+                        <div className="border-t border-border/50 pt-3 mt-2">
+                          <span className="text-xs text-muted-foreground">Gmail vinculado (opcional)</span>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Email do Gmail</Label>
+                          <Input
+                            className="h-9"
+                            value={formData.gmail_email}
+                            onChange={(e) => setFormData({ ...formData, gmail_email: e.target.value })}
+                            placeholder="Ex: conta@gmail.com"
+                            maxLength={100}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Senha do Gmail</Label>
+                          <Input
+                            className="h-9"
+                            type="text"
+                            value={formData.gmail_senha}
+                            onChange={(e) => setFormData({ ...formData, gmail_senha: e.target.value })}
+                            placeholder="Senha do Gmail"
+                            maxLength={100}
+                          />
+                        </div>
+                      </>
                     )}
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-3 pt-3">
-                  <div>
-                    <Label className="text-xs">Login / Email</Label>
-                    <Input
-                      className="h-9"
-                      value={formData.login_email}
-                      onChange={(e) => setFormData({ ...formData, login_email: e.target.value })}
-                      placeholder="Ex: email@gmail.com"
-                      maxLength={100}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Senha</Label>
-                    <Input
-                      className="h-9"
-                      type="text"
-                      value={formData.senha_acesso}
-                      onChange={(e) => setFormData({ ...formData, senha_acesso: e.target.value })}
-                      placeholder="Senha da conta"
-                      maxLength={100}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">URL de acesso</Label>
-                    <Input
-                      className="h-9"
-                      value={formData.url_conta}
-                      onChange={(e) => setFormData({ ...formData, url_conta: e.target.value })}
-                      placeholder="https://..."
-                      maxLength={200}
-                    />
-                  </div>
-
-                  {/* Separador visual para Gmail */}
-                  <div className="border-t border-border/50 pt-3 mt-2">
-                    <span className="text-xs text-muted-foreground">Gmail vinculado (opcional)</span>
-                  </div>
-
-                  <div>
-                    <Label className="text-xs">Email do Gmail</Label>
-                    <Input
-                      className="h-9"
-                      value={formData.gmail_email}
-                      onChange={(e) => setFormData({ ...formData, gmail_email: e.target.value })}
-                      placeholder="Ex: conta@gmail.com"
-                      maxLength={100}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Senha do Gmail</Label>
-                    <Input
-                      className="h-9"
-                      type="text"
-                      value={formData.gmail_senha}
-                      onChange={(e) => setFormData({ ...formData, gmail_senha: e.target.value })}
-                      placeholder="Senha do Gmail"
-                      maxLength={100}
-                    />
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
 
               <Button type="submit" className="w-full" size="sm">
                 {editingConta ? "Atualizar" : "Adicionar"}
@@ -543,6 +569,13 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   {(conta.plataforma === "whatsapp" || conta.plataforma === "telegram") && conta.telefone && (
                     <p className="text-xs text-muted-foreground mt-1">
                       <span className="opacity-60">Tel:</span> {conta.telefone}
+                    </p>
+                  )}
+
+                  {/* PIN para Instagram */}
+                  {conta.plataforma === "instagram" && conta.pin && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      <span className="opacity-60">PIN:</span> ****
                     </p>
                   )}
 
@@ -771,6 +804,27 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                     size="icon"
                     className="shrink-0 h-9 w-9"
                     onClick={() => copyToClipboard(contaCredenciais.telefone, "Telefone")}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* PIN para Instagram */}
+            {contaCredenciais?.pin && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">PIN de Segurança</Label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm font-mono">
+                    {contaCredenciais.pin}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 h-9 w-9"
+                    onClick={() => copyToClipboard(contaCredenciais.pin, "PIN")}
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
