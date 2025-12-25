@@ -95,6 +95,7 @@ export type Database = {
           created_at: string | null
           data_criacao_conta: string | null
           id: string
+          login_email: string | null
           media_videos: number | null
           nicho_id: string
           nome_conta: string
@@ -102,6 +103,7 @@ export type Database = {
           plataforma: Database["public"]["Enums"]["plataforma_social"]
           proxima_acao: string | null
           responsavel_id: string | null
+          senha_acesso: string | null
           status: Database["public"]["Enums"]["status_conta"] | null
           status_aquecimento: string | null
           tipo_conteudo: string | null
@@ -113,6 +115,7 @@ export type Database = {
           created_at?: string | null
           data_criacao_conta?: string | null
           id?: string
+          login_email?: string | null
           media_videos?: number | null
           nicho_id: string
           nome_conta: string
@@ -120,6 +123,7 @@ export type Database = {
           plataforma: Database["public"]["Enums"]["plataforma_social"]
           proxima_acao?: string | null
           responsavel_id?: string | null
+          senha_acesso?: string | null
           status?: Database["public"]["Enums"]["status_conta"] | null
           status_aquecimento?: string | null
           tipo_conteudo?: string | null
@@ -131,6 +135,7 @@ export type Database = {
           created_at?: string | null
           data_criacao_conta?: string | null
           id?: string
+          login_email?: string | null
           media_videos?: number | null
           nicho_id?: string
           nome_conta?: string
@@ -138,6 +143,7 @@ export type Database = {
           plataforma?: Database["public"]["Enums"]["plataforma_social"]
           proxima_acao?: string | null
           responsavel_id?: string | null
+          senha_acesso?: string | null
           status?: Database["public"]["Enums"]["status_conta"] | null
           status_aquecimento?: string | null
           tipo_conteudo?: string | null

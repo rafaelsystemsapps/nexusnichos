@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical, KeyRound, Eye, EyeOff, Copy, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -24,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface ContasNichoTabProps {
   nichoId: string;
@@ -85,9 +86,18 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     status: "ativa" as StatusConta,
     ultima_acao: "",
     proxima_acao: "",
+    login_email: "",
+    senha_acesso: "",
+    url_conta: "",
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contaToDelete, setContaToDelete] = useState<any>(null);
+  const [credenciaisOpen, setCredenciaisOpen] = useState(false);
+  
+  // Modal de visualização de credenciais
+  const [credenciaisModalOpen, setCredenciaisModalOpen] = useState(false);
+  const [contaCredenciais, setContaCredenciais] = useState<any>(null);
+  const [senhaVisivel, setSenhaVisivel] = useState(false);
 
   useEffect(() => {
     fetchContas();
@@ -126,6 +136,9 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         status: mapStatusToDB(formData.status) as any,
         ultima_acao: formData.ultima_acao || null,
         proxima_acao: formData.proxima_acao || null,
+        login_email: formData.login_email || null,
+        senha_acesso: formData.senha_acesso || null,
+        url_conta: formData.url_conta || null,
         nicho_id: nichoId,
         responsavel_id: user?.id || null,
       };
@@ -160,8 +173,12 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       status: "ativa",
       ultima_acao: "",
       proxima_acao: "",
+      login_email: "",
+      senha_acesso: "",
+      url_conta: "",
     });
     setEditingConta(null);
+    setCredenciaisOpen(false);
   };
 
   const openEditDialog = (conta: any) => {
@@ -172,7 +189,12 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       status: mapStatusFromDB(conta.status),
       ultima_acao: conta.ultima_acao || "",
       proxima_acao: conta.proxima_acao || "",
+      login_email: conta.login_email || "",
+      senha_acesso: conta.senha_acesso || "",
+      url_conta: conta.url_conta || "",
     });
+    // Abrir seção de credenciais se já existem dados
+    setCredenciaisOpen(!!(conta.login_email || conta.senha_acesso || conta.url_conta));
     setDialogOpen(true);
   };
 
@@ -199,6 +221,21 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const openDeleteDialog = (conta: any) => {
     setContaToDelete(conta);
     setDeleteDialogOpen(true);
+  };
+
+  const openCredenciaisModal = (conta: any) => {
+    setContaCredenciais(conta);
+    setSenhaVisivel(false);
+    setCredenciaisModalOpen(true);
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copiado!`);
+  };
+
+  const hasCredenciais = (conta: any) => {
+    return !!(conta.login_email || conta.senha_acesso || conta.url_conta);
   };
 
   const getStatusDisplay = (dbStatus: string) => {
@@ -321,6 +358,61 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                 />
               </div>
 
+              {/* Seção colapsável de credenciais */}
+              <Collapsible open={credenciaisOpen} onOpenChange={setCredenciaisOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full justify-between text-muted-foreground hover:text-foreground"
+                  >
+                    <span className="flex items-center gap-2">
+                      <KeyRound className="h-3.5 w-3.5" />
+                      Credenciais de acesso (opcional)
+                    </span>
+                    {credenciaisOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-3 pt-3">
+                  <div>
+                    <Label className="text-xs">Login / Email</Label>
+                    <Input
+                      className="h-9"
+                      value={formData.login_email}
+                      onChange={(e) => setFormData({ ...formData, login_email: e.target.value })}
+                      placeholder="Ex: email@gmail.com"
+                      maxLength={100}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Senha</Label>
+                    <Input
+                      className="h-9"
+                      type="password"
+                      value={formData.senha_acesso}
+                      onChange={(e) => setFormData({ ...formData, senha_acesso: e.target.value })}
+                      placeholder="••••••••"
+                      maxLength={100}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">URL de acesso</Label>
+                    <Input
+                      className="h-9"
+                      value={formData.url_conta}
+                      onChange={(e) => setFormData({ ...formData, url_conta: e.target.value })}
+                      placeholder="https://..."
+                      maxLength={200}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
               <Button type="submit" className="w-full" size="sm">
                 {editingConta ? "Atualizar" : "Adicionar"}
               </Button>
@@ -384,6 +476,12 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    {hasCredenciais(conta) && (
+                      <DropdownMenuItem onClick={() => openCredenciaisModal(conta)}>
+                        <KeyRound className="h-3.5 w-3.5 mr-2" />
+                        Ver acesso
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => openEditDialog(conta)}>
                       <Pencil className="h-3.5 w-3.5 mr-2" />
                       Editar
@@ -420,6 +518,92 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de Credenciais */}
+      <Dialog open={credenciaisModalOpen} onOpenChange={setCredenciaisModalOpen}>
+        <DialogContent className="sm:max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-4 w-4" />
+              Acesso: {contaCredenciais?.nome_conta}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Login/Email */}
+            {contaCredenciais?.login_email && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Login / Email</Label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm font-mono">
+                    {contaCredenciais.login_email}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 h-9 w-9"
+                    onClick={() => copyToClipboard(contaCredenciais.login_email, "Login")}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Senha */}
+            {contaCredenciais?.senha_acesso && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Senha</Label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm font-mono">
+                    {senhaVisivel ? contaCredenciais.senha_acesso : "••••••••••••"}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 h-9 w-9"
+                    onClick={() => setSenhaVisivel(!senhaVisivel)}
+                  >
+                    {senhaVisivel ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 h-9 w-9"
+                    onClick={() => copyToClipboard(contaCredenciais.senha_acesso, "Senha")}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* URL de acesso */}
+            {contaCredenciais?.url_conta && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">URL de Acesso</Label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm truncate">
+                    {contaCredenciais.url_conta}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 h-9 w-9"
+                    onClick={() => window.open(contaCredenciais.url_conta, "_blank")}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
