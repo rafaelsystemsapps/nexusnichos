@@ -317,9 +317,9 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                       <SelectItem value="tiktok">TikTok</SelectItem>
                       <SelectItem value="instagram">Instagram</SelectItem>
                       <SelectItem value="youtube">YouTube</SelectItem>
-                      <SelectItem value="whatsapp">📱 WhatsApp</SelectItem>
-                      <SelectItem value="telegram">✈️ Telegram</SelectItem>
-                      <SelectItem value="site">🌐 Site</SelectItem>
+                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                      <SelectItem value="telegram">Telegram</SelectItem>
+                      <SelectItem value="site">Site</SelectItem>
                       <SelectItem value="facebook">Facebook</SelectItem>
                       <SelectItem value="twitter">Twitter/X</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>
