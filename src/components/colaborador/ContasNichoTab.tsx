@@ -252,7 +252,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     const status = mapStatusFromDB(dbStatus);
     const config = STATUS_CONFIG[status];
     return (
-      <span className={`text-xs font-medium px-2 py-1 rounded-md border ${config.className}`}>
+      <span className={`text-xs font-medium px-2 py-1 rounded-md border w-[85px] text-center inline-block ${config.className}`}>
         {config.label}
       </span>
     );
