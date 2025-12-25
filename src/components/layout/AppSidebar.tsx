@@ -18,6 +18,7 @@ import {
   Archive,
   Network,
   FlaskConical,
+  Lightbulb,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -45,9 +46,10 @@ interface AppSidebarProps {
   cemiterioHabilitado?: boolean;
   mapaDependenciaHabilitado?: boolean;
   testeRapidoHabilitado?: boolean;
+  logsAprendizadoHabilitado?: boolean;
 }
 
-export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado }: AppSidebarProps) {
+export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -151,6 +153,15 @@ export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHab
       title: "Testes",
       href: `/workspace/${nichoId}/testes`,
       icon: FlaskConical,
+    });
+  }
+
+  // Adiciona Logs de Aprendizado se habilitado (reflexivo)
+  if (logsAprendizadoHabilitado) {
+    colaboradorNavItems.push({
+      title: "Aprendizado",
+      href: `/workspace/${nichoId}/aprendizado`,
+      icon: Lightbulb,
     });
   }
 

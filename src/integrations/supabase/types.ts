@@ -252,6 +252,41 @@ export type Database = {
           },
         ]
       }
+      logs_aprendizado: {
+        Row: {
+          aprendizado: string
+          created_at: string
+          data: string
+          id: string
+          nicho_id: string
+          updated_at: string
+        }
+        Insert: {
+          aprendizado: string
+          created_at?: string
+          data?: string
+          id?: string
+          nicho_id: string
+          updated_at?: string
+        }
+        Update: {
+          aprendizado?: string
+          created_at?: string
+          data?: string
+          id?: string
+          nicho_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logs_aprendizado_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       membros_time: {
         Row: {
           contato: string | null
@@ -306,6 +341,7 @@ export type Database = {
           financeiro_habilitado: boolean
           foco_do_dia: string | null
           id: string
+          logs_aprendizado_habilitado: boolean
           mapa_dependencia_habilitado: boolean
           nome: string
           observacoes: string | null
@@ -323,6 +359,7 @@ export type Database = {
           financeiro_habilitado?: boolean
           foco_do_dia?: string | null
           id?: string
+          logs_aprendizado_habilitado?: boolean
           mapa_dependencia_habilitado?: boolean
           nome: string
           observacoes?: string | null
@@ -340,6 +377,7 @@ export type Database = {
           financeiro_habilitado?: boolean
           foco_do_dia?: string | null
           id?: string
+          logs_aprendizado_habilitado?: boolean
           mapa_dependencia_habilitado?: boolean
           nome?: string
           observacoes?: string | null
