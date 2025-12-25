@@ -21,6 +21,7 @@ interface NichoWithUser {
   pedidos_habilitado: boolean;
   radar_habilitado: boolean;
   cemiterio_habilitado: boolean;
+  contas_habilitado: boolean;
   created_at: string | null;
   updated_at: string | null;
   usuario?: {
@@ -45,6 +46,7 @@ export function NichosTab() {
     financeiro_habilitado: false,
     radar_habilitado: false,
     cemiterio_habilitado: false,
+    contas_habilitado: true,
     usuario_nome: "",
     usuario_email: "",
     usuario_senha: "",
@@ -117,6 +119,7 @@ export function NichosTab() {
             financeiro_habilitado: formData.financeiro_habilitado,
             radar_habilitado: formData.radar_habilitado,
             cemiterio_habilitado: formData.cemiterio_habilitado,
+            contas_habilitado: formData.contas_habilitado,
           })
           .eq("id", editingNicho.id);
 
@@ -146,6 +149,7 @@ export function NichosTab() {
             financeiro_habilitado: formData.financeiro_habilitado,
             radar_habilitado: formData.radar_habilitado,
             cemiterio_habilitado: formData.cemiterio_habilitado,
+            contas_habilitado: formData.contas_habilitado,
           })
           .select()
           .single();
@@ -235,6 +239,7 @@ export function NichosTab() {
       financeiro_habilitado: false,
       radar_habilitado: false,
       cemiterio_habilitado: false,
+      contas_habilitado: true,
       usuario_nome: "",
       usuario_email: "",
       usuario_senha: "",
@@ -251,6 +256,7 @@ export function NichosTab() {
       financeiro_habilitado: nicho.financeiro_habilitado || false,
       radar_habilitado: nicho.radar_habilitado || false,
       cemiterio_habilitado: nicho.cemiterio_habilitado || false,
+      contas_habilitado: nicho.contas_habilitado !== false,
       usuario_nome: "",
       usuario_email: "",
       usuario_senha: "",
@@ -306,6 +312,22 @@ export function NichosTab() {
               </div>
 
               <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="contas">Controle de Contas</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Habilitar gerenciamento de contas de redes sociais
+                    </p>
+                  </div>
+                  <Switch
+                    id="contas"
+                    checked={formData.contas_habilitado}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, contas_habilitado: checked })
+                    }
+                  />
+                </div>
+
                 <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
                   <div className="space-y-0.5">
                     <Label htmlFor="financeiro">Módulo Financeiro</Label>

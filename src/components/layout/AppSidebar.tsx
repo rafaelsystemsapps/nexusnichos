@@ -36,13 +36,14 @@ interface NavItem {
 interface AppSidebarProps {
   nichoId?: string;
   nichoNome?: string;
+  contasHabilitado?: boolean;
   financeiroHabilitado?: boolean;
   pedidosHabilitado?: boolean;
   radarHabilitado?: boolean;
   cemiterioHabilitado?: boolean;
 }
 
-export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado }: AppSidebarProps) {
+export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -78,10 +79,22 @@ export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHa
 
   const colaboradorNavItems: NavItem[] = [
     { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard },
-    { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2 },
-    { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck },
-    { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users },
   ];
+
+  // Adiciona Contas se habilitado
+  if (contasHabilitado !== false) {
+    colaboradorNavItems.push({
+      title: "Contas",
+      href: `/workspace/${nichoId}/contas`,
+      icon: Share2,
+    });
+  }
+
+  // Sempre adiciona Logística e Time
+  colaboradorNavItems.push(
+    { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck },
+    { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users }
+  );
 
   // Adiciona Financeiro se habilitado
   if (financeiroHabilitado) {
