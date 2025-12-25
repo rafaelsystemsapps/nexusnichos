@@ -31,6 +31,10 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
     meta_valor: "",
     meta_status: "on_track" as "on_track" | "atencao" | "longe",
     observacao_texto: "",
+    modelo_pagamento: "" as "" | "porcentagem" | "valor_fixo",
+    valor_contrato: "",
+    app_url: "",
+    data_inicio_parceria: "",
   });
 
   useEffect(() => {
@@ -48,6 +52,10 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
         meta_valor: cliente.meta_valor?.toString() || "",
         meta_status: cliente.meta_status || "on_track",
         observacao_texto: cliente.observacao_texto || "",
+        modelo_pagamento: cliente.modelo_pagamento || "",
+        valor_contrato: cliente.valor_contrato?.toString() || "",
+        app_url: cliente.app_url || "",
+        data_inicio_parceria: cliente.data_inicio_parceria || "",
       });
     } else {
       setFormData({
@@ -63,6 +71,10 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
         meta_valor: "",
         meta_status: "on_track",
         observacao_texto: "",
+        modelo_pagamento: "",
+        valor_contrato: "",
+        app_url: "",
+        data_inicio_parceria: "",
       });
     }
   }, [cliente, open]);
@@ -90,6 +102,10 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
         meta_valor: formData.meta_valor ? parseFloat(formData.meta_valor) : null,
         meta_status: formData.meta_status,
         observacao_texto: formData.observacao_texto || null,
+        modelo_pagamento: formData.modelo_pagamento || null,
+        valor_contrato: formData.valor_contrato ? parseFloat(formData.valor_contrato) : null,
+        app_url: formData.app_url || null,
+        data_inicio_parceria: formData.data_inicio_parceria || null,
       };
 
       if (cliente) {
@@ -253,6 +269,53 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
                     <SelectItem value="longe">Longe</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Contrato */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-muted-foreground">Contrato</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Modelo de Pagamento</Label>
+                <Select
+                  value={formData.modelo_pagamento}
+                  onValueChange={(v) => setFormData({ ...formData, modelo_pagamento: v as any })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="porcentagem">Porcentagem</SelectItem>
+                    <SelectItem value="valor_fixo">Valor Fixo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Valor do Contrato {formData.modelo_pagamento === "porcentagem" ? "(%)" : "(R$)"}</Label>
+                <Input
+                  type="number"
+                  value={formData.valor_contrato}
+                  onChange={(e) => setFormData({ ...formData, valor_contrato: e.target.value })}
+                  placeholder={formData.modelo_pagamento === "porcentagem" ? "15" : "500"}
+                />
+              </div>
+              <div>
+                <Label>URL do App</Label>
+                <Input
+                  value={formData.app_url}
+                  onChange={(e) => setFormData({ ...formData, app_url: e.target.value })}
+                  placeholder="https://app.exemplo.com"
+                />
+              </div>
+              <div>
+                <Label>Data de Início da Parceria</Label>
+                <Input
+                  type="date"
+                  value={formData.data_inicio_parceria}
+                  onChange={(e) => setFormData({ ...formData, data_inicio_parceria: e.target.value })}
+                />
               </div>
             </div>
           </div>
