@@ -40,8 +40,8 @@ const plataformaIcons: Record<string, React.ReactNode> = {
   whatsapp: <MessageCircle className="h-4 w-4" />,
 };
 
-// Status minimalista: ativa, risco, caída
-type StatusConta = "ativa" | "risco" | "caida";
+// Status minimalista: ativa, risco, desativada
+type StatusConta = "ativa" | "risco" | "desativada";
 
 const STATUS_CONFIG: Record<StatusConta, { label: string; className: string }> = {
   ativa: { 
@@ -52,8 +52,8 @@ const STATUS_CONFIG: Record<StatusConta, { label: string; className: string }> =
     label: "Risco", 
     className: "bg-amber-500/20 text-amber-400 border-amber-500/30" 
   },
-  caida: { 
-    label: "Caída", 
+  desativada: { 
+    label: "Desativada", 
     className: "bg-red-500/20 text-red-400 border-red-500/30" 
   },
 };
@@ -62,7 +62,7 @@ const STATUS_CONFIG: Record<StatusConta, { label: string; className: string }> =
 const mapStatusFromDB = (status: string): StatusConta => {
   if (status === "ativa") return "ativa";
   if (status === "pausada" || status === "limitada") return "risco";
-  if (status === "banida") return "caida";
+  if (status === "banida") return "desativada";
   return "ativa";
 };
 
@@ -70,7 +70,7 @@ const mapStatusFromDB = (status: string): StatusConta => {
 const mapStatusToDB = (status: StatusConta): string => {
   if (status === "ativa") return "ativa";
   if (status === "risco") return "limitada"; // limitada representa risco no DB
-  if (status === "caida") return "banida"; // banida representa caída no DB
+  if (status === "desativada") return "banida"; // banida representa desativada no DB
   return "ativa";
 };
 
@@ -126,9 +126,9 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validação: próxima ação obrigatória se status é risco ou caída
-    if ((formData.status === "risco" || formData.status === "caida") && !formData.proxima_acao.trim()) {
-      toast.error("Próxima ação é obrigatória para contas em risco ou caídas");
+    // Validação: próxima ação obrigatória se status é risco ou desativada
+    if ((formData.status === "risco" || formData.status === "desativada") && !formData.proxima_acao.trim()) {
+      toast.error("Próxima ação é obrigatória para contas em risco ou desativadas");
       return;
     }
 
@@ -354,7 +354,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
               <div>
                 <Label className="text-xs">
                   Próxima ação necessária
-                  {(formData.status === "risco" || formData.status === "caida") && (
+                  {(formData.status === "risco" || formData.status === "desativada") && (
                     <span className="text-destructive ml-1">*</span>
                   )}
                 </Label>
@@ -364,7 +364,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   onChange={(e) => setFormData({ ...formData, proxima_acao: e.target.value })}
                   placeholder="Ex: Pausar 3 dias, mudar IP"
                   maxLength={100}
-                  required={formData.status === "risco" || formData.status === "caida"}
+                  required={formData.status === "risco" || formData.status === "desativada"}
                 />
               </div>
 
@@ -467,7 +467,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         <div className="border border-border/50 rounded-lg divide-y divide-border/50 bg-card/50">
           {contas.map((conta) => {
             const status = mapStatusFromDB(conta.status);
-            const needsAction = status === "risco" || status === "caida";
+            const needsAction = status === "risco" || status === "desativada";
             
             return (
               <div 
