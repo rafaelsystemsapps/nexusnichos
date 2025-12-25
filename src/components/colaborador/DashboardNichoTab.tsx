@@ -6,9 +6,8 @@ import { CheckCircle, AlertTriangle, Clock, CalendarClock, AlertCircle } from "l
 import { useIsIOSMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { format, isToday, differenceInDays } from "date-fns";
-import { ptBR } from "date-fns/locale";
-
+import { differenceInDays } from "date-fns";
+import { FocoDoDia } from "./FocoDoDia";
 interface DashboardNichoTabProps {
   nichoId: string;
 }
@@ -163,6 +162,9 @@ export function DashboardNichoTab({ nichoId }: DashboardNichoTabProps) {
 
   return (
     <div className={cn(isIOSMobile ? "space-y-4" : "space-y-6")}>
+      {/* Foco do Dia - Sempre visível no topo */}
+      <FocoDoDia nichoId={nichoId} />
+
       {/* Fila de Execução HOJE */}
       <Card className={cn(
         "border-border/50",
