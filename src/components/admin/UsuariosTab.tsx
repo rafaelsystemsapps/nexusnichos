@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Smile } from "lucide-react";
+import { Plus, Pencil, Trash2, Smile, Key } from "lucide-react";
 import { toast } from "sonner";
 import { AvatarEditor } from "./AvatarEditor";
 
@@ -37,6 +37,10 @@ export function UsuariosTab() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [avatarEditorOpen, setAvatarEditorOpen] = useState(false);
   const [editingAvatarUser, setEditingAvatarUser] = useState<any>(null);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [userToResetPassword, setUserToResetPassword] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   useEffect(() => {
     fetchUsuarios();
@@ -224,6 +228,32 @@ export function UsuariosTab() {
     setAvatarEditorOpen(true);
   };
 
+  const handleResetPassword = async () => {
+    if (!userToResetPassword || !newPassword) return;
+    
+    setIsResettingPassword(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("reset-password", {
+        body: { 
+          user_id: userToResetPassword.id, 
+          new_password: newPassword 
+        },
+      });
+
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      toast.success("Senha alterada com sucesso!");
+      setPasswordDialogOpen(false);
+      setNewPassword("");
+      setUserToResetPassword(null);
+    } catch (error: any) {
+      toast.error("Erro: " + error.message);
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -387,6 +417,18 @@ export function UsuariosTab() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => {
+                          setUserToResetPassword(user);
+                          setPasswordDialogOpen(true);
+                        }}
+                        className="hover:bg-amber-500/20 text-amber-500"
+                        title="Alterar Senha"
+                      >
+                        <Key className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => openEditDialog(user)}
                         className="hover:bg-primary/20"
                         title="Editar Usuário"
@@ -446,6 +488,43 @@ export function UsuariosTab() {
           onSave={fetchUsuarios}
         />
       )}
+
+      {/* Password Reset Dialog */}
+      <Dialog open={passwordDialogOpen} onOpenChange={(open) => {
+        setPasswordDialogOpen(open);
+        if (!open) {
+          setNewPassword("");
+          setUserToResetPassword(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterar Senha</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Alterando senha de: <strong>{userToResetPassword?.nome}</strong>
+            </p>
+            <div>
+              <Label>Nova Senha *</Label>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                minLength={6}
+              />
+            </div>
+            <Button 
+              onClick={handleResetPassword} 
+              className="w-full"
+              disabled={isResettingPassword || newPassword.length < 6}
+            >
+              {isResettingPassword ? "Alterando..." : "Alterar Senha"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
