@@ -117,17 +117,13 @@ export function AlertasRisco({ nichoId }: AlertasRiscoProps) {
           key={alerta.id}
           onClick={() => navigate(alerta.rota)}
           className={cn(
-            "cursor-pointer rounded-lg p-4 transition-opacity hover:opacity-90",
-            isIOSMobile && "p-3",
+            "cursor-pointer rounded-md p-3 border-l-4",
             alerta.cor === "vermelho" 
-              ? "bg-destructive text-destructive-foreground" 
-              : "bg-yellow-500 text-yellow-950"
+              ? "bg-red-600 text-white border-red-900" 
+              : "bg-amber-500 text-amber-950 border-amber-700"
           )}
         >
-          <p className={cn(
-            "font-semibold",
-            isIOSMobile ? "text-sm" : "text-base"
-          )}>
+          <p className="font-bold uppercase tracking-wide text-sm">
             {alerta.texto}
           </p>
         </div>
