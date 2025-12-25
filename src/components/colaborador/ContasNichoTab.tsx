@@ -487,15 +487,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm truncate">{conta.nome_conta}</span>
-                    {hasCredenciais(conta) && (
-                      <button
-                        onClick={() => openCredenciaisModal(conta)}
-                        className="p-1 rounded hover:bg-muted/50 transition-colors"
-                        title="Ver credenciais"
-                      >
-                        <KeyRound className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                      </button>
-                    )}
                     {getStatusDisplay(conta.status)}
                   </div>
                   
@@ -514,33 +505,43 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   )}
                 </div>
 
-                {/* Menu de ações */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {hasCredenciais(conta) && (
-                      <DropdownMenuItem onClick={() => openCredenciaisModal(conta)}>
-                        <KeyRound className="h-3.5 w-3.5 mr-2" />
-                        Ver acesso
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={() => openEditDialog(conta)}>
-                      <Pencil className="h-3.5 w-3.5 mr-2" />
-                      Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => openDeleteDialog(conta)}
-                      className="text-destructive focus:text-destructive"
+                {/* Ações rápidas */}
+                <div className="flex items-center gap-1 shrink-0">
+                  {/* Botão de credenciais */}
+                  {hasCredenciais(conta) && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => openCredenciaisModal(conta)}
+                      title="Ver credenciais"
                     >
-                      <Trash2 className="h-3.5 w-3.5 mr-2" />
-                      Remover
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <KeyRound className="h-4 w-4" />
+                    </Button>
+                  )}
+
+                  {/* Menu de ações */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-popover">
+                      <DropdownMenuItem onClick={() => openEditDialog(conta)}>
+                        <Pencil className="h-3.5 w-3.5 mr-2" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => openDeleteDialog(conta)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-2" />
+                        Remover
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             );
           })}
