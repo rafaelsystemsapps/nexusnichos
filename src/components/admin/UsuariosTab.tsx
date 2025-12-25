@@ -16,8 +16,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Smile } from "lucide-react";
 import { toast } from "sonner";
+import { AvatarEditor } from "./AvatarEditor";
 
 export function UsuariosTab() {
   const [usuarios, setUsuarios] = useState<any[]>([]);
@@ -34,6 +35,8 @@ export function UsuariosTab() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [avatarEditorOpen, setAvatarEditorOpen] = useState(false);
+  const [editingAvatarUser, setEditingAvatarUser] = useState<any>(null);
 
   useEffect(() => {
     fetchUsuarios();
@@ -216,6 +219,20 @@ export function UsuariosTab() {
     setDialogOpen(true);
   };
 
+  const openAvatarEditor = (user: any) => {
+    setEditingAvatarUser(user);
+    setAvatarEditorOpen(true);
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -333,7 +350,24 @@ export function UsuariosTab() {
             ) : (
               usuarios.map((user) => (
                 <TableRow key={user.id} className="hover:bg-surface-hover transition-colors">
-                  <TableCell className="font-medium">{user.nome}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      {/* Avatar */}
+                      <div 
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                        style={{ 
+                          backgroundColor: user.avatar_color || '#6B7280'
+                        }}
+                      >
+                        {user.avatar_emoji || (
+                          <span className="text-white font-medium text-sm">
+                            {getInitials(user.nome)}
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-medium">{user.nome}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{user.email}</TableCell>
                   <TableCell className="capitalize">
                     {user.user_roles?.[0]?.role || "-"}
@@ -344,8 +378,18 @@ export function UsuariosTab() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => openAvatarEditor(user)}
+                        className="hover:bg-primary/20"
+                        title="Editar Avatar"
+                      >
+                        <Smile className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => openEditDialog(user)}
                         className="hover:bg-primary/20"
+                        title="Editar Usuário"
                       >
                         <Pencil className="w-4 h-4" />
                       </Button>
@@ -389,6 +433,19 @@ export function UsuariosTab() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Avatar Editor Modal */}
+      {editingAvatarUser && (
+        <AvatarEditor
+          open={avatarEditorOpen}
+          onOpenChange={setAvatarEditorOpen}
+          userId={editingAvatarUser.id}
+          userName={editingAvatarUser.nome}
+          currentEmoji={editingAvatarUser.avatar_emoji}
+          currentColor={editingAvatarUser.avatar_color}
+          onSave={fetchUsuarios}
+        />
+      )}
     </div>
   );
 }

@@ -16,6 +16,8 @@ interface Profile {
   nome: string;
   email: string;
   role: "admin" | "colaborador";
+  avatar_emoji: string | null;
+  avatar_color: string | null;
 }
 
 // Netflix-style avatar colors
@@ -186,6 +188,7 @@ export default function Auth() {
         )}>
           {profiles.map((profile, index) => {
             const isAdmin = profile.role === "admin";
+            const hasCustomAvatar = profile.avatar_emoji && profile.avatar_color;
             const colorClass = getAvatarColor(index, isAdmin);
             
             return (
@@ -197,23 +200,36 @@ export default function Auth() {
               >
                 {/* Avatar */}
                 <div className={cn(
-                  "relative w-24 h-24 md:w-32 md:h-32 rounded-md overflow-hidden",
+                  "relative w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden",
                   "transition-all duration-200 ease-out",
                   "group-hover:ring-4 group-hover:ring-white group-hover:scale-105",
                   "group-focus:ring-4 group-focus:ring-white"
                 )}>
-                  <div className={cn(
-                    "w-full h-full bg-gradient-to-br flex items-center justify-center",
-                    colorClass
-                  )}>
-                    {isAdmin ? (
-                      <Shield className="w-10 h-10 md:w-14 md:h-14 text-white/90" />
-                    ) : (
-                      <span className="text-2xl md:text-4xl font-bold text-white/90">
-                        {getInitials(profile.nome)}
+                  {hasCustomAvatar ? (
+                    // Custom emoji avatar
+                    <div 
+                      className="w-full h-full flex items-center justify-center"
+                      style={{ backgroundColor: profile.avatar_color! }}
+                    >
+                      <span className="text-4xl md:text-5xl">
+                        {profile.avatar_emoji}
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    // Default gradient avatar
+                    <div className={cn(
+                      "w-full h-full bg-gradient-to-br flex items-center justify-center",
+                      colorClass
+                    )}>
+                      {isAdmin ? (
+                        <Shield className="w-10 h-10 md:w-14 md:h-14 text-white/90" />
+                      ) : (
+                        <span className="text-2xl md:text-4xl font-bold text-white/90">
+                          {getInitials(profile.nome)}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   
                   {/* Hover overlay */}
                   <div className={cn(
@@ -256,21 +272,30 @@ export default function Auth() {
             {selectedProfile && (
               <div className="flex flex-col items-center gap-4 mb-4">
                 {/* Selected profile avatar */}
-                <div className={cn(
-                  "w-20 h-20 rounded-md overflow-hidden bg-gradient-to-br flex items-center justify-center",
-                  getAvatarColor(
-                    profiles.findIndex(p => p.id === selectedProfile.id),
-                    selectedProfile.role === "admin"
-                  )
-                )}>
-                  {selectedProfile.role === "admin" ? (
-                    <Shield className="w-10 h-10 text-white/90" />
-                  ) : (
-                    <span className="text-2xl font-bold text-white/90">
-                      {getInitials(selectedProfile.nome)}
-                    </span>
-                  )}
-                </div>
+                {selectedProfile.avatar_emoji && selectedProfile.avatar_color ? (
+                  <div 
+                    className="w-20 h-20 rounded-xl overflow-hidden flex items-center justify-center"
+                    style={{ backgroundColor: selectedProfile.avatar_color }}
+                  >
+                    <span className="text-4xl">{selectedProfile.avatar_emoji}</span>
+                  </div>
+                ) : (
+                  <div className={cn(
+                    "w-20 h-20 rounded-xl overflow-hidden bg-gradient-to-br flex items-center justify-center",
+                    getAvatarColor(
+                      profiles.findIndex(p => p.id === selectedProfile.id),
+                      selectedProfile.role === "admin"
+                    )
+                  )}>
+                    {selectedProfile.role === "admin" ? (
+                      <Shield className="w-10 h-10 text-white/90" />
+                    ) : (
+                      <span className="text-2xl font-bold text-white/90">
+                        {getInitials(selectedProfile.nome)}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             <DialogTitle className="text-white text-xl">
