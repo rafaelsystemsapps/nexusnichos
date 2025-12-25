@@ -102,6 +102,7 @@ export type Database = {
           nicho_id: string
           nome_conta: string
           observacoes: string | null
+          ordem: number | null
           pin: string | null
           plataforma: Database["public"]["Enums"]["plataforma_social"]
           proxima_acao: string | null
@@ -127,6 +128,7 @@ export type Database = {
           nicho_id: string
           nome_conta: string
           observacoes?: string | null
+          ordem?: number | null
           pin?: string | null
           plataforma: Database["public"]["Enums"]["plataforma_social"]
           proxima_acao?: string | null
@@ -152,6 +154,7 @@ export type Database = {
           nicho_id?: string
           nome_conta?: string
           observacoes?: string | null
+          ordem?: number | null
           pin?: string | null
           plataforma?: Database["public"]["Enums"]["plataforma_social"]
           proxima_acao?: string | null
