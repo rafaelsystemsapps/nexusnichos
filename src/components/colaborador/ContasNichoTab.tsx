@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical, KeyRound, Eye, EyeOff, Copy, ExternalLink, ChevronDown, ChevronUp, Phone, Send, Globe } from "lucide-react";
+import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical, KeyRound, Copy, ChevronDown, ChevronUp, Phone, Send, Globe, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -25,12 +25,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface ContasNichoTabProps {
   nichoId: string;
 }
 
-// Ícones por plataforma
+// Icones por plataforma
 const plataformaIcons: Record<string, React.ReactNode> = {
   instagram: <Instagram className="h-4 w-4 text-pink-500" />,
   youtube: <Youtube className="h-4 w-4 text-red-500" />,
@@ -41,6 +44,19 @@ const plataformaIcons: Record<string, React.ReactNode> = {
   telegram: <Send className="h-4 w-4 text-blue-400" />,
   site: <Globe className="h-4 w-4 text-purple-400" />,
 };
+
+const PLATAFORMAS = [
+  { value: "todas", label: "Todas" },
+  { value: "tiktok", label: "TikTok" },
+  { value: "instagram", label: "Instagram" },
+  { value: "youtube", label: "YouTube" },
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "telegram", label: "Telegram" },
+  { value: "site", label: "Site" },
+  { value: "facebook", label: "Facebook" },
+  { value: "twitter", label: "Twitter/X" },
+  { value: "outros", label: "Outros" },
+];
 
 // Status minimalista: ativa, risco, desativada
 type StatusConta = "ativa" | "risco" | "desativada";
@@ -60,6 +76,13 @@ const STATUS_CONFIG: Record<StatusConta, { label: string; className: string }> =
   },
 };
 
+const STATUS_FILTROS = [
+  { value: "todas", label: "Todas" },
+  { value: "ativa", label: "Ativas" },
+  { value: "risco", label: "Risco" },
+  { value: "desativada", label: "Desativadas" },
+];
+
 // Mapeamento do enum antigo para o novo status minimalista
 const mapStatusFromDB = (status: string): StatusConta => {
   if (status === "ativa") return "ativa";
@@ -75,6 +98,145 @@ const mapStatusToDB = (status: StatusConta): string => {
   if (status === "desativada") return "banida"; // banida representa desativada no DB
   return "ativa";
 };
+
+// Componente sortable para cada conta
+interface SortableContaItemProps {
+  conta: any;
+  onEdit: (conta: any) => void;
+  onDelete: (conta: any) => void;
+  onCredenciais: (conta: any) => void;
+  hasCredenciais: (conta: any) => boolean;
+  getStatusDisplay: (status: string) => React.ReactNode;
+}
+
+function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, hasCredenciais, getStatusDisplay }: SortableContaItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: conta.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const status = mapStatusFromDB(conta.status);
+  const needsAction = status === "risco" || status === "desativada";
+
+  return (
+    <div 
+      ref={setNodeRef}
+      style={style}
+      className={`px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-colors ${
+        needsAction ? "bg-destructive/5" : ""
+      }`}
+    >
+      {/* Handle de arrastar */}
+      <div 
+        {...attributes} 
+        {...listeners}
+        className="pt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+      >
+        <GripVertical className="h-4 w-4" />
+      </div>
+
+      {/* Icone da plataforma */}
+      <div className="pt-0.5 text-muted-foreground">
+        {plataformaIcons[conta.plataforma] || (
+          <span className="text-xs font-medium capitalize">{conta.plataforma?.[0]}</span>
+        )}
+      </div>
+      
+      {/* Conteudo principal */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center">
+          <span className="font-medium text-sm truncate w-[130px] shrink-0">{conta.nome_conta}</span>
+          <div className="ml-2">
+            {getStatusDisplay(conta.status)}
+          </div>
+        </div>
+        
+        {/* Telefone para WhatsApp/Telegram */}
+        {(conta.plataforma === "whatsapp" || conta.plataforma === "telegram") && conta.telefone && (
+          <p className="text-xs text-muted-foreground mt-1">
+            <span className="opacity-60">Tel:</span> {conta.telefone}
+          </p>
+        )}
+
+        {/* PIN para Instagram */}
+        {conta.plataforma === "instagram" && conta.pin && (
+          <p className="text-xs text-muted-foreground mt-1">
+            <span className="opacity-60">PIN:</span> ****
+          </p>
+        )}
+
+        {/* URL para Sites */}
+        {conta.plataforma === "site" && conta.url_site && (
+          <p className="text-xs text-muted-foreground mt-1 truncate">
+            <span className="opacity-60">URL:</span> {conta.url_site}
+          </p>
+        )}
+
+        {/* Ultima acao */}
+        {conta.ultima_acao && (
+          <p className="text-xs text-muted-foreground mt-1">
+            <span className="opacity-60">Ultima:</span> {conta.ultima_acao}
+          </p>
+        )}
+        
+        {/* Proxima acao - destaque se necessario */}
+        {conta.proxima_acao && (
+          <p className={`text-xs mt-0.5 ${needsAction ? "text-amber-400 font-medium" : "text-muted-foreground"}`}>
+            <span className="opacity-60">Proxima:</span> {conta.proxima_acao}
+          </p>
+        )}
+      </div>
+
+      {/* Acoes rapidas */}
+      <div className="flex items-center gap-1 shrink-0">
+        {/* Botao de credenciais */}
+        {hasCredenciais(conta) && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onCredenciais(conta)}
+            title="Ver credenciais"
+          >
+            <KeyRound className="h-4 w-4" />
+          </Button>
+        )}
+
+        {/* Menu de acoes */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-popover">
+            <DropdownMenuItem onClick={() => onEdit(conta)}>
+              <Pencil className="h-3.5 w-3.5 mr-2" />
+              Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => onDelete(conta)}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-2" />
+              Remover
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+}
 
 export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const { user } = useAuth();
@@ -101,11 +263,22 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const [contaToDelete, setContaToDelete] = useState<any>(null);
   const [credenciaisOpen, setCredenciaisOpen] = useState(false);
   
-  // Modal de visualização de credenciais
+  // Modal de visualizacao de credenciais
   const [credenciaisModalOpen, setCredenciaisModalOpen] = useState(false);
   const [contaCredenciais, setContaCredenciais] = useState<any>(null);
-  const [senhaVisivel, setSenhaVisivel] = useState(true);
-  const [gmailSenhaVisivel, setGmailSenhaVisivel] = useState(true);
+
+  // Filtros
+  const [filtroStatus, setFiltroStatus] = useState<string>("todas");
+  const [filtroPlataforma, setFiltroPlataforma] = useState<string>("todas");
+
+  // Sensor para drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   useEffect(() => {
     fetchContas();
@@ -117,7 +290,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         .from("contas_redes_sociais")
         .select("*")
         .eq("nicho_id", nichoId)
-        .order("created_at", { ascending: false });
+        .order("ordem", { ascending: true });
 
       if (error) throw error;
       setContas(data || []);
@@ -128,12 +301,48 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     }
   };
 
+  // Filtrar contas
+  const contasFiltradas = useMemo(() => {
+    return contas.filter(conta => {
+      const statusConta = mapStatusFromDB(conta.status);
+      const matchStatus = filtroStatus === "todas" || statusConta === filtroStatus;
+      const matchPlataforma = filtroPlataforma === "todas" || conta.plataforma === filtroPlataforma;
+      return matchStatus && matchPlataforma;
+    });
+  }, [contas, filtroStatus, filtroPlataforma]);
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = contas.findIndex(c => c.id === active.id);
+    const newIndex = contas.findIndex(c => c.id === over.id);
+    
+    const newOrder = arrayMove(contas, oldIndex, newIndex);
+    setContas(newOrder);
+
+    // Atualizar ordem no banco em background
+    const updates = newOrder.map((conta, index) => 
+      supabase
+        .from("contas_redes_sociais")
+        .update({ ordem: index })
+        .eq("id", conta.id)
+    );
+    
+    try {
+      await Promise.all(updates);
+    } catch (error) {
+      toast.error("Erro ao salvar ordem");
+      fetchContas(); // Reverter em caso de erro
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validação: próxima ação obrigatória se status é risco ou desativada
+    // Validacao: proxima acao obrigatoria se status e risco ou desativada
     if ((formData.status === "risco" || formData.status === "desativada") && !formData.proxima_acao.trim()) {
-      toast.error("Próxima ação é obrigatória para contas em risco ou desativadas");
+      toast.error("Proxima acao e obrigatoria para contas em risco ou desativadas");
       return;
     }
 
@@ -154,6 +363,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         pin: formData.pin || null,
         nicho_id: nichoId,
         responsavel_id: user?.id || null,
+        ordem: editingConta ? editingConta.ordem : contas.length,
       };
 
       if (editingConta) {
@@ -216,7 +426,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       url_site: conta.url_site || "",
       pin: conta.pin || "",
     });
-    // Abrir seção de credenciais se já existem dados
+    // Abrir secao de credenciais se ja existem dados
     setCredenciaisOpen(!!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha));
     setDialogOpen(true);
   };
@@ -248,8 +458,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
 
   const openCredenciaisModal = (conta: any) => {
     setContaCredenciais(conta);
-    setSenhaVisivel(true);
-    setGmailSenhaVisivel(true);
     setCredenciaisModalOpen(true);
   };
 
@@ -262,11 +470,11 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     return !!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha || conta.telefone || conta.url_site || conta.pin);
   };
 
-  // Verifica se plataforma precisa de campos específicos
+  // Verifica se plataforma precisa de campos especificos
   const needsTelefone = formData.plataforma === "whatsapp" || formData.plataforma === "telegram";
   const needsUrlSite = formData.plataforma === "site";
   const needsPin = formData.plataforma === "instagram";
-  // Credenciais normais: não é WhatsApp, Telegram ou Instagram
+  // Credenciais normais: nao e WhatsApp, Telegram ou Instagram
   const needsCredenciaisNormais = !needsTelefone && !needsPin;
 
   const getStatusDisplay = (dbStatus: string) => {
@@ -289,359 +497,305 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
 
   return (
     <div className="space-y-4">
-      {/* Header minimalista */}
-      <div className="flex justify-between items-center">
+      {/* Header com filtros */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h2 className="text-xl font-semibold">Controle de Contas</h2>
-          <p className="text-xs text-muted-foreground">Atenção rápida: alguma conta precisa de ação?</p>
+          <p className="text-xs text-muted-foreground">Arraste para reordenar. Filtre por status ou plataforma.</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" onClick={resetForm}>
-              <Plus className="w-4 h-4 mr-1" />
-              Adicionar
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[400px]">
-            <DialogHeader>
-              <DialogTitle>
-                {editingConta ? "Editar Conta" : "Nova Conta"}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+        
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Filtro de Status */}
+          <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+            <SelectTrigger className="h-8 w-[110px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_FILTROS.map(s => (
+                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Filtro de Plataforma */}
+          <Select value={filtroPlataforma} onValueChange={setFiltroPlataforma}>
+            <SelectTrigger className="h-8 w-[120px]">
+              <SelectValue placeholder="Plataforma" />
+            </SelectTrigger>
+            <SelectContent>
+              {PLATAFORMAS.map(p => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" onClick={resetForm}>
+                <Plus className="w-4 h-4 mr-1" />
+                Adicionar
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[400px]">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingConta ? "Editar Conta" : "Nova Conta"}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Plataforma *</Label>
+                    <Select
+                      value={formData.plataforma}
+                      onValueChange={(value) => setFormData({ ...formData, plataforma: value })}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="tiktok">TikTok</SelectItem>
+                        <SelectItem value="instagram">Instagram</SelectItem>
+                        <SelectItem value="youtube">YouTube</SelectItem>
+                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                        <SelectItem value="telegram">Telegram</SelectItem>
+                        <SelectItem value="site">Site</SelectItem>
+                        <SelectItem value="facebook">Facebook</SelectItem>
+                        <SelectItem value="twitter">Twitter/X</SelectItem>
+                        <SelectItem value="outros">Outros</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs">Identificador *</Label>
+                    <Input
+                      className="h-9"
+                      value={formData.nome_conta}
+                      onChange={(e) => setFormData({ ...formData, nome_conta: e.target.value })}
+                      placeholder="Nome interno"
+                      required
+                      maxLength={50}
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label className="text-xs">Plataforma *</Label>
+                  <Label className="text-xs">Status *</Label>
                   <Select
-                    value={formData.plataforma}
-                    onValueChange={(value) => setFormData({ ...formData, plataforma: value })}
+                    value={formData.status}
+                    onValueChange={(value) => setFormData({ ...formData, status: value as StatusConta })}
                   >
                     <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="tiktok">TikTok</SelectItem>
-                      <SelectItem value="instagram">Instagram</SelectItem>
-                      <SelectItem value="youtube">YouTube</SelectItem>
-                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                      <SelectItem value="telegram">Telegram</SelectItem>
-                      <SelectItem value="site">Site</SelectItem>
-                      <SelectItem value="facebook">Facebook</SelectItem>
-                      <SelectItem value="twitter">Twitter/X</SelectItem>
-                      <SelectItem value="outros">Outros</SelectItem>
+                      <SelectItem value="ativa">Ativa</SelectItem>
+                      <SelectItem value="risco">Risco</SelectItem>
+                      <SelectItem value="desativada">Desativada</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label className="text-xs">Identificador *</Label>
+                  <Label className="text-xs">Ultima acao feita</Label>
                   <Input
                     className="h-9"
-                    value={formData.nome_conta}
-                    onChange={(e) => setFormData({ ...formData, nome_conta: e.target.value })}
-                    placeholder="Nome interno"
-                    required
-                    maxLength={50}
+                    value={formData.ultima_acao}
+                    onChange={(e) => setFormData({ ...formData, ultima_acao: e.target.value })}
+                    placeholder="Ex: Postou 3 videos ontem"
+                    maxLength={100}
                   />
                 </div>
-              </div>
 
-              <div>
-                <Label className="text-xs">Status *</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => setFormData({ ...formData, status: value as StatusConta })}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ativa">🟢 Ativa</SelectItem>
-                    <SelectItem value="risco">🟡 Risco</SelectItem>
-                    <SelectItem value="desativada">🔴 Desativada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-xs">Última ação feita</Label>
-                <Input
-                  className="h-9"
-                  value={formData.ultima_acao}
-                  onChange={(e) => setFormData({ ...formData, ultima_acao: e.target.value })}
-                  placeholder="Ex: Postou 3 vídeos ontem"
-                  maxLength={100}
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs">
-                  Próxima ação necessária
-                  {(formData.status === "risco" || formData.status === "desativada") && (
-                    <span className="text-destructive ml-1">*</span>
-                  )}
-                </Label>
-                <Input
-                  className="h-9"
-                  value={formData.proxima_acao}
-                  onChange={(e) => setFormData({ ...formData, proxima_acao: e.target.value })}
-                  placeholder="Ex: Pausar 3 dias, mudar IP"
-                  maxLength={100}
-                  required={formData.status === "risco" || formData.status === "desativada"}
-                />
-              </div>
-
-              {/* Campos específicos para WhatsApp/Telegram */}
-              {needsTelefone && (
                 <div>
-                  <Label className="text-xs">Número de Telefone *</Label>
-                  <Input
-                    className="h-9"
-                    value={formData.telefone}
-                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                    placeholder="Ex: +55 11 99999-9999"
-                    required
-                    maxLength={20}
-                  />
-                </div>
-              )}
-
-              {/* Campo específico para Instagram - apenas PIN */}
-              {needsPin && (
-                <div>
-                  <Label className="text-xs">PIN de Segurança</Label>
-                  <Input
-                    className="h-9"
-                    value={formData.pin}
-                    onChange={(e) => setFormData({ ...formData, pin: e.target.value })}
-                    placeholder="Ex: 1234"
-                    maxLength={10}
-                  />
-                </div>
-              )}
-
-              {/* Campo específico para Sites */}
-              {needsUrlSite && (
-                <div>
-                  <Label className="text-xs">URL do Site *</Label>
-                  <Input
-                    className="h-9"
-                    value={formData.url_site}
-                    onChange={(e) => setFormData({ ...formData, url_site: e.target.value })}
-                    placeholder="https://meusite.com.br"
-                    required
-                    maxLength={200}
-                  />
-                </div>
-              )}
-
-              {/* Seção colapsável de credenciais - apenas para plataformas que precisam */}
-              {needsCredenciaisNormais && (
-                <Collapsible open={credenciaisOpen} onOpenChange={setCredenciaisOpen}>
-                  <CollapsibleTrigger asChild>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      className="w-full justify-between text-muted-foreground hover:text-foreground"
-                    >
-                      <span className="flex items-center gap-2">
-                        <KeyRound className="h-3.5 w-3.5" />
-                        Credenciais de acesso (opcional)
-                      </span>
-                      {credenciaisOpen ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-3 pt-3">
-                    <div>
-                      <Label className="text-xs">Login / Email</Label>
-                      <Input
-                        className="h-9"
-                        value={formData.login_email}
-                        onChange={(e) => setFormData({ ...formData, login_email: e.target.value })}
-                        placeholder="Ex: email@gmail.com"
-                        maxLength={100}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Senha</Label>
-                      <Input
-                        className="h-9"
-                        type="text"
-                        value={formData.senha_acesso}
-                        onChange={(e) => setFormData({ ...formData, senha_acesso: e.target.value })}
-                        placeholder="Senha da conta"
-                        maxLength={100}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">URL de acesso</Label>
-                      <Input
-                        className="h-9"
-                        value={formData.url_conta}
-                        onChange={(e) => setFormData({ ...formData, url_conta: e.target.value })}
-                        placeholder="https://..."
-                        maxLength={200}
-                      />
-                    </div>
-
-                    {/* Gmail - não mostrar para Site */}
-                    {!needsUrlSite && (
-                      <>
-                        <div className="border-t border-border/50 pt-3 mt-2">
-                          <span className="text-xs text-muted-foreground">Gmail vinculado (opcional)</span>
-                        </div>
-
-                        <div>
-                          <Label className="text-xs">Email do Gmail</Label>
-                          <Input
-                            className="h-9"
-                            value={formData.gmail_email}
-                            onChange={(e) => setFormData({ ...formData, gmail_email: e.target.value })}
-                            placeholder="Ex: conta@gmail.com"
-                            maxLength={100}
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Senha do Gmail</Label>
-                          <Input
-                            className="h-9"
-                            type="text"
-                            value={formData.gmail_senha}
-                            onChange={(e) => setFormData({ ...formData, gmail_senha: e.target.value })}
-                            placeholder="Senha do Gmail"
-                            maxLength={100}
-                          />
-                        </div>
-                      </>
+                  <Label className="text-xs">
+                    Proxima acao necessaria
+                    {(formData.status === "risco" || formData.status === "desativada") && (
+                      <span className="text-destructive ml-1">*</span>
                     )}
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
+                  </Label>
+                  <Input
+                    className="h-9"
+                    value={formData.proxima_acao}
+                    onChange={(e) => setFormData({ ...formData, proxima_acao: e.target.value })}
+                    placeholder="Ex: Pausar 3 dias, mudar IP"
+                    maxLength={100}
+                    required={formData.status === "risco" || formData.status === "desativada"}
+                  />
+                </div>
 
-              <Button type="submit" className="w-full" size="sm">
-                {editingConta ? "Atualizar" : "Adicionar"}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+                {/* Campos especificos para WhatsApp/Telegram */}
+                {needsTelefone && (
+                  <div>
+                    <Label className="text-xs">Numero de Telefone *</Label>
+                    <Input
+                      className="h-9"
+                      value={formData.telefone}
+                      onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                      placeholder="Ex: +55 11 99999-9999"
+                      required
+                      maxLength={20}
+                    />
+                  </div>
+                )}
+
+                {/* Campo especifico para Instagram - apenas PIN */}
+                {needsPin && (
+                  <div>
+                    <Label className="text-xs">PIN de Seguranca</Label>
+                    <Input
+                      className="h-9"
+                      value={formData.pin}
+                      onChange={(e) => setFormData({ ...formData, pin: e.target.value })}
+                      placeholder="Ex: 1234"
+                      maxLength={10}
+                    />
+                  </div>
+                )}
+
+                {/* Campo especifico para Sites */}
+                {needsUrlSite && (
+                  <div>
+                    <Label className="text-xs">URL do Site *</Label>
+                    <Input
+                      className="h-9"
+                      value={formData.url_site}
+                      onChange={(e) => setFormData({ ...formData, url_site: e.target.value })}
+                      placeholder="https://meusite.com.br"
+                      required
+                      maxLength={200}
+                    />
+                  </div>
+                )}
+
+                {/* Secao colapsavel de credenciais - apenas para plataformas que precisam */}
+                {needsCredenciaisNormais && (
+                  <Collapsible open={credenciaisOpen} onOpenChange={setCredenciaisOpen}>
+                    <CollapsibleTrigger asChild>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full justify-between text-muted-foreground hover:text-foreground"
+                      >
+                        <span className="flex items-center gap-2">
+                          <KeyRound className="h-3.5 w-3.5" />
+                          Credenciais de acesso (opcional)
+                        </span>
+                        {credenciaisOpen ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-3 pt-3">
+                      <div>
+                        <Label className="text-xs">Login / Email</Label>
+                        <Input
+                          className="h-9"
+                          value={formData.login_email}
+                          onChange={(e) => setFormData({ ...formData, login_email: e.target.value })}
+                          placeholder="Ex: email@gmail.com"
+                          maxLength={100}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Senha</Label>
+                        <Input
+                          className="h-9"
+                          type="text"
+                          value={formData.senha_acesso}
+                          onChange={(e) => setFormData({ ...formData, senha_acesso: e.target.value })}
+                          placeholder="Senha da conta"
+                          maxLength={100}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">URL de acesso</Label>
+                        <Input
+                          className="h-9"
+                          value={formData.url_conta}
+                          onChange={(e) => setFormData({ ...formData, url_conta: e.target.value })}
+                          placeholder="https://..."
+                          maxLength={200}
+                        />
+                      </div>
+
+                      {/* Gmail - nao mostrar para Site */}
+                      {!needsUrlSite && (
+                        <>
+                          <div className="border-t border-border/50 pt-3 mt-2">
+                            <span className="text-xs text-muted-foreground">Gmail vinculado (opcional)</span>
+                          </div>
+
+                          <div>
+                            <Label className="text-xs">Email do Gmail</Label>
+                            <Input
+                              className="h-9"
+                              value={formData.gmail_email}
+                              onChange={(e) => setFormData({ ...formData, gmail_email: e.target.value })}
+                              placeholder="Ex: conta@gmail.com"
+                              maxLength={100}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Senha do Gmail</Label>
+                            <Input
+                              className="h-9"
+                              type="text"
+                              value={formData.gmail_senha}
+                              onChange={(e) => setFormData({ ...formData, gmail_senha: e.target.value })}
+                              placeholder="Senha do Gmail"
+                              maxLength={100}
+                            />
+                          </div>
+                        </>
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
+                <Button type="submit" className="w-full" size="sm">
+                  {editingConta ? "Atualizar" : "Adicionar"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      {/* Lista minimalista */}
-      {contas.length === 0 ? (
+      {/* Lista com drag and drop */}
+      {contasFiltradas.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground text-sm">
-          Nenhuma conta cadastrada.
+          {contas.length === 0 ? "Nenhuma conta cadastrada." : "Nenhuma conta encontrada com os filtros selecionados."}
         </div>
       ) : (
-        <div className="border border-border/50 rounded-lg divide-y divide-border/50 bg-card/50">
-          {contas.map((conta) => {
-            const status = mapStatusFromDB(conta.status);
-            const needsAction = status === "risco" || status === "desativada";
-            
-            return (
-              <div 
-                key={conta.id} 
-                className={`px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-colors ${
-                  needsAction ? "bg-destructive/5" : ""
-                }`}
-              >
-                {/* Ícone da plataforma */}
-                <div className="pt-0.5 text-muted-foreground">
-                  {plataformaIcons[conta.plataforma] || (
-                    <span className="text-xs font-medium capitalize">{conta.plataforma?.[0]}</span>
-                  )}
-                </div>
-                
-                {/* Conteúdo principal */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center">
-                    <span className="font-medium text-sm truncate w-[130px] shrink-0">{conta.nome_conta}</span>
-                    <div className="ml-2">
-                      {getStatusDisplay(conta.status)}
-                    </div>
-                  </div>
-                  
-                  {/* Telefone para WhatsApp/Telegram */}
-                  {(conta.plataforma === "whatsapp" || conta.plataforma === "telegram") && conta.telefone && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      <span className="opacity-60">Tel:</span> {conta.telefone}
-                    </p>
-                  )}
-
-                  {/* PIN para Instagram */}
-                  {conta.plataforma === "instagram" && conta.pin && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      <span className="opacity-60">PIN:</span> ****
-                    </p>
-                  )}
-
-                  {/* URL para Sites */}
-                  {conta.plataforma === "site" && conta.url_site && (
-                    <p className="text-xs text-muted-foreground mt-1 truncate">
-                      <span className="opacity-60">URL:</span> {conta.url_site}
-                    </p>
-                  )}
-
-                  {/* Última ação */}
-                  {conta.ultima_acao && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      <span className="opacity-60">Última:</span> {conta.ultima_acao}
-                    </p>
-                  )}
-                  
-                  {/* Próxima ação - destaque se necessário */}
-                  {conta.proxima_acao && (
-                    <p className={`text-xs mt-0.5 ${needsAction ? "text-amber-400 font-medium" : "text-muted-foreground"}`}>
-                      <span className="opacity-60">Próxima:</span> {conta.proxima_acao}
-                    </p>
-                  )}
-                </div>
-
-                {/* Ações rápidas */}
-                <div className="flex items-center gap-1 shrink-0">
-                  {/* Botão de credenciais */}
-                  {hasCredenciais(conta) && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => openCredenciaisModal(conta)}
-                      title="Ver credenciais"
-                    >
-                      <KeyRound className="h-4 w-4" />
-                    </Button>
-                  )}
-
-                  {/* Menu de ações */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-popover">
-                      <DropdownMenuItem onClick={() => openEditDialog(conta)}>
-                        <Pencil className="h-3.5 w-3.5 mr-2" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => openDeleteDialog(conta)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-3.5 w-3.5 mr-2" />
-                        Remover
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <DndContext 
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext 
+            items={contasFiltradas.map(c => c.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="border border-border/50 rounded-lg divide-y divide-border/50 bg-card/50">
+              {contasFiltradas.map((conta) => (
+                <SortableContaItem
+                  key={conta.id}
+                  conta={conta}
+                  onEdit={openEditDialog}
+                  onDelete={openDeleteDialog}
+                  onCredenciais={openCredenciaisModal}
+                  hasCredenciais={hasCredenciais}
+                  getStatusDisplay={getStatusDisplay}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Delete Confirmation Dialog */}
@@ -793,7 +947,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
             {/* Telefone para WhatsApp/Telegram */}
             {contaCredenciais?.telefone && (
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Número de Telefone</Label>
+                <Label className="text-xs text-muted-foreground">Numero de Telefone</Label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm font-mono">
                     {contaCredenciais.telefone}
@@ -814,7 +968,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
             {/* PIN para Instagram */}
             {contaCredenciais?.pin && (
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">PIN de Segurança</Label>
+                <Label className="text-xs text-muted-foreground">PIN de Seguranca</Label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm font-mono">
                     {contaCredenciais.pin}
