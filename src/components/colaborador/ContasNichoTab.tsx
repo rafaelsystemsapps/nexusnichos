@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical, KeyRound, Eye, EyeOff, Copy, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical, KeyRound, Eye, EyeOff, Copy, ExternalLink, ChevronDown, ChevronUp, Phone, Send, Globe } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -37,7 +37,9 @@ const plataformaIcons: Record<string, React.ReactNode> = {
   twitter: <Twitter className="h-4 w-4" />,
   tiktok: <Music2 className="h-4 w-4" />,
   facebook: <MessageCircle className="h-4 w-4" />,
-  whatsapp: <MessageCircle className="h-4 w-4" />,
+  whatsapp: <Phone className="h-4 w-4 text-green-500" />,
+  telegram: <Send className="h-4 w-4 text-blue-400" />,
+  site: <Globe className="h-4 w-4 text-purple-400" />,
 };
 
 // Status minimalista: ativa, risco, desativada
@@ -91,6 +93,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     url_conta: "",
     gmail_email: "",
     gmail_senha: "",
+    telefone: "",
+    url_site: "",
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contaToDelete, setContaToDelete] = useState<any>(null);
@@ -144,6 +148,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         url_conta: formData.url_conta || null,
         gmail_email: formData.gmail_email || null,
         gmail_senha: formData.gmail_senha || null,
+        telefone: formData.telefone || null,
+        url_site: formData.url_site || null,
         nicho_id: nichoId,
         responsavel_id: user?.id || null,
       };
@@ -183,6 +189,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       url_conta: "",
       gmail_email: "",
       gmail_senha: "",
+      telefone: "",
+      url_site: "",
     });
     setEditingConta(null);
     setCredenciaisOpen(false);
@@ -201,6 +209,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       url_conta: conta.url_conta || "",
       gmail_email: conta.gmail_email || "",
       gmail_senha: conta.gmail_senha || "",
+      telefone: conta.telefone || "",
+      url_site: conta.url_site || "",
     });
     // Abrir seção de credenciais se já existem dados
     setCredenciaisOpen(!!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha));
@@ -245,8 +255,13 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   };
 
   const hasCredenciais = (conta: any) => {
-    return !!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha);
+    return !!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha || conta.telefone || conta.url_site);
   };
+
+  // Verifica se plataforma precisa de campos específicos
+  const needsTelefone = formData.plataforma === "whatsapp" || formData.plataforma === "telegram";
+  const needsUrlSite = formData.plataforma === "site";
+  const needsCredenciaisNormais = !needsTelefone; // Sites ainda podem ter login/senha
 
   const getStatusDisplay = (dbStatus: string) => {
     const status = mapStatusFromDB(dbStatus);
@@ -302,7 +317,9 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                       <SelectItem value="tiktok">TikTok</SelectItem>
                       <SelectItem value="instagram">Instagram</SelectItem>
                       <SelectItem value="youtube">YouTube</SelectItem>
-                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                      <SelectItem value="whatsapp">📱 WhatsApp</SelectItem>
+                      <SelectItem value="telegram">✈️ Telegram</SelectItem>
+                      <SelectItem value="site">🌐 Site</SelectItem>
                       <SelectItem value="facebook">Facebook</SelectItem>
                       <SelectItem value="twitter">Twitter/X</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>
@@ -368,7 +385,37 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                 />
               </div>
 
-              {/* Seção colapsável de credenciais */}
+              {/* Campos específicos para WhatsApp/Telegram */}
+              {needsTelefone && (
+                <div>
+                  <Label className="text-xs">Número de Telefone *</Label>
+                  <Input
+                    className="h-9"
+                    value={formData.telefone}
+                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                    placeholder="Ex: +55 11 99999-9999"
+                    required
+                    maxLength={20}
+                  />
+                </div>
+              )}
+
+              {/* Campo específico para Sites */}
+              {needsUrlSite && (
+                <div>
+                  <Label className="text-xs">URL do Site *</Label>
+                  <Input
+                    className="h-9"
+                    value={formData.url_site}
+                    onChange={(e) => setFormData({ ...formData, url_site: e.target.value })}
+                    placeholder="https://meusite.com.br"
+                    required
+                    maxLength={200}
+                  />
+                </div>
+              )}
+
+              {/* Seção colapsável de credenciais - apenas para plataformas que precisam */}
               <Collapsible open={credenciaisOpen} onOpenChange={setCredenciaisOpen}>
                 <CollapsibleTrigger asChild>
                   <Button 
@@ -492,6 +539,20 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                     </div>
                   </div>
                   
+                  {/* Telefone para WhatsApp/Telegram */}
+                  {(conta.plataforma === "whatsapp" || conta.plataforma === "telegram") && conta.telefone && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      <span className="opacity-60">Tel:</span> {conta.telefone}
+                    </p>
+                  )}
+
+                  {/* URL para Sites */}
+                  {conta.plataforma === "site" && conta.url_site && (
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
+                      <span className="opacity-60">URL:</span> {conta.url_site}
+                    </p>
+                  )}
+
                   {/* Última ação */}
                   {conta.ultima_acao && (
                     <p className="text-xs text-muted-foreground mt-1">
@@ -689,6 +750,53 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                     size="icon"
                     className="shrink-0 h-9 w-9"
                     onClick={() => copyToClipboard(contaCredenciais.url_conta, "URL")}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Telefone para WhatsApp/Telegram */}
+            {contaCredenciais?.telefone && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Número de Telefone</Label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm font-mono">
+                    {contaCredenciais.telefone}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 h-9 w-9"
+                    onClick={() => copyToClipboard(contaCredenciais.telefone, "Telefone")}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* URL do Site */}
+            {contaCredenciais?.url_site && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">URL do Site</Label>
+                <div className="flex items-center gap-2">
+                  <a 
+                    href={contaCredenciais.url_site}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm truncate hover:bg-muted/70 transition-colors"
+                  >
+                    {contaCredenciais.url_site}
+                  </a>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 h-9 w-9"
+                    onClick={() => copyToClipboard(contaCredenciais.url_site, "URL do Site")}
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </Button>

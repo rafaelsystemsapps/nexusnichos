@@ -108,10 +108,12 @@ export type Database = {
           senha_acesso: string | null
           status: Database["public"]["Enums"]["status_conta"] | null
           status_aquecimento: string | null
+          telefone: string | null
           tipo_conteudo: string | null
           ultima_acao: string | null
           updated_at: string | null
           url_conta: string | null
+          url_site: string | null
         }
         Insert: {
           created_at?: string | null
@@ -130,10 +132,12 @@ export type Database = {
           senha_acesso?: string | null
           status?: Database["public"]["Enums"]["status_conta"] | null
           status_aquecimento?: string | null
+          telefone?: string | null
           tipo_conteudo?: string | null
           ultima_acao?: string | null
           updated_at?: string | null
           url_conta?: string | null
+          url_site?: string | null
         }
         Update: {
           created_at?: string | null
@@ -152,10 +156,12 @@ export type Database = {
           senha_acesso?: string | null
           status?: Database["public"]["Enums"]["status_conta"] | null
           status_aquecimento?: string | null
+          telefone?: string | null
           tipo_conteudo?: string | null
           ultima_acao?: string | null
           updated_at?: string | null
           url_conta?: string | null
+          url_site?: string | null
         }
         Relationships: [
           {
@@ -963,6 +969,9 @@ export type Database = {
         | "twitter"
         | "linkedin"
         | "outros"
+        | "whatsapp"
+        | "telegram"
+        | "site"
       status_conta: "ativa" | "pausada" | "banida" | "limitada"
       status_conteudo: "planejado" | "em_producao" | "publicado"
       status_pedido: "pendente" | "enviado" | "cancelado"
@@ -1104,6 +1113,9 @@ export const Constants = {
         "twitter",
         "linkedin",
         "outros",
+        "whatsapp",
+        "telegram",
+        "site",
       ],
       status_conta: ["ativa", "pausada", "banida", "limitada"],
       status_conteudo: ["planejado", "em_producao", "publicado"],
