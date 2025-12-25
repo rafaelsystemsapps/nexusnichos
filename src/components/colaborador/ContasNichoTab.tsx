@@ -488,7 +488,13 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm truncate">{conta.nome_conta}</span>
                     {hasCredenciais(conta) && (
-                      <KeyRound className="h-3 w-3 text-muted-foreground/50" />
+                      <button
+                        onClick={() => openCredenciaisModal(conta)}
+                        className="p-1 rounded hover:bg-muted/50 transition-colors"
+                        title="Ver credenciais"
+                      >
+                        <KeyRound className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                      </button>
                     )}
                     {getStatusDisplay(conta.status)}
                   </div>
