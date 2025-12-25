@@ -253,7 +253,6 @@ export function RadarOportunidadesTab({ nichoId }: RadarOportunidadesTabProps) {
                   onStatusChange={(status) => handleStatusChange(item, status)}
                   onEdit={() => handleEdit(item)}
                   onArchive={() => handleArchive(item)}
-                  onDelete={() => handleDelete(item)}
                 />
               ))}
             </div>

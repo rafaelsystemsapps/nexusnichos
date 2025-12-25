@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Pencil, Archive, Trash2 } from "lucide-react";
+import { Pencil, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface RadarItem {
@@ -11,6 +11,7 @@ interface RadarItem {
   status_termico: string;
   data_validade: string | null;
   observacao: string | null;
+  created_at: string;
 }
 
 interface RadarItemCardProps {
@@ -19,7 +20,6 @@ interface RadarItemCardProps {
   onStatusChange: (status: "quente" | "morno" | "morto") => void;
   onEdit: () => void;
   onArchive: () => void;
-  onDelete: () => void;
 }
 
 const STATUS_CONFIG = {
@@ -54,7 +54,6 @@ export function RadarItemCard({
   onStatusChange,
   onEdit,
   onArchive,
-  onDelete,
 }: RadarItemCardProps) {
   const statusKey = (item.status_termico as keyof typeof STATUS_CONFIG) || "morno";
   const config = STATUS_CONFIG[statusKey];
@@ -98,6 +97,10 @@ export function RadarItemCard({
         </div>
         <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
           <span className="font-medium">{item.plataforma}</span>
+          <span>•</span>
+          <span className="text-muted-foreground/70">
+            {formatDistanceToNow(new Date(item.created_at), { addSuffix: false, locale: ptBR })}
+          </span>
           {item.data_validade && (
             <>
               <span>•</span>
@@ -129,16 +132,9 @@ export function RadarItemCard({
           size="icon"
           onClick={onArchive}
           className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          title="Arquivar"
         >
           <Archive className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onDelete}
-          className="h-8 w-8 text-destructive hover:text-destructive"
-        >
-          <Trash2 className="h-4 w-4" />
         </Button>
       </div>
     </div>
