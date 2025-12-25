@@ -450,6 +450,9 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm truncate">{conta.nome_conta}</span>
+                    {hasCredenciais(conta) && (
+                      <KeyRound className="h-3 w-3 text-muted-foreground/50" />
+                    )}
                     {getStatusDisplay(conta.status)}
                   </div>
                   
@@ -589,6 +592,15 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm truncate">
                     {contaCredenciais.url_conta}
                   </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 h-9 w-9"
+                    onClick={() => copyToClipboard(contaCredenciais.url_conta, "URL")}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
                   <Button
                     type="button"
                     variant="outline"
