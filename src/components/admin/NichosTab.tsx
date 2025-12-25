@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX, Radar, Archive, AlertTriangle, Network, FlaskConical, Lightbulb } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX, Radar, Archive, AlertTriangle, Network, FlaskConical, Lightbulb, Package } from "lucide-react";
 import { toast } from "sonner";
 
 interface NichoWithUser {
@@ -48,6 +48,7 @@ export function NichosTab() {
     descricao: "",
     observacoes: "",
     financeiro_habilitado: false,
+    pedidos_habilitado: false,
     radar_habilitado: false,
     cemiterio_habilitado: false,
     contas_habilitado: true,
@@ -125,6 +126,7 @@ export function NichosTab() {
             descricao: formData.descricao,
             observacoes: formData.observacoes,
             financeiro_habilitado: formData.financeiro_habilitado,
+            pedidos_habilitado: formData.pedidos_habilitado,
             radar_habilitado: formData.radar_habilitado,
             cemiterio_habilitado: formData.cemiterio_habilitado,
             contas_habilitado: formData.contas_habilitado,
@@ -159,6 +161,7 @@ export function NichosTab() {
             descricao: formData.descricao,
             observacoes: formData.observacoes,
             financeiro_habilitado: formData.financeiro_habilitado,
+            pedidos_habilitado: formData.pedidos_habilitado,
             radar_habilitado: formData.radar_habilitado,
             cemiterio_habilitado: formData.cemiterio_habilitado,
             contas_habilitado: formData.contas_habilitado,
@@ -253,6 +256,7 @@ export function NichosTab() {
       descricao: "",
       observacoes: "",
       financeiro_habilitado: false,
+      pedidos_habilitado: false,
       radar_habilitado: false,
       cemiterio_habilitado: false,
       contas_habilitado: true,
@@ -274,6 +278,7 @@ export function NichosTab() {
       descricao: nicho.descricao || "",
       observacoes: nicho.observacoes || "",
       financeiro_habilitado: nicho.financeiro_habilitado || false,
+      pedidos_habilitado: nicho.pedidos_habilitado || false,
       radar_habilitado: nicho.radar_habilitado || false,
       cemiterio_habilitado: nicho.cemiterio_habilitado || false,
       contas_habilitado: nicho.contas_habilitado !== false,
@@ -364,6 +369,25 @@ export function NichosTab() {
                     checked={formData.financeiro_habilitado}
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, financeiro_habilitado: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="pedidos" className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                      Pedidos
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Habilitar gestão e acompanhamento de pedidos
+                    </p>
+                  </div>
+                  <Switch
+                    id="pedidos"
+                    checked={formData.pedidos_habilitado}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, pedidos_habilitado: checked })
                     }
                   />
                 </div>
