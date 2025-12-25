@@ -335,7 +335,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   <SelectContent>
                     <SelectItem value="ativa">🟢 Ativa</SelectItem>
                     <SelectItem value="risco">🟡 Risco</SelectItem>
-                    <SelectItem value="caida">🔴 Caída</SelectItem>
+                    <SelectItem value="desativada">🔴 Desativada</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
