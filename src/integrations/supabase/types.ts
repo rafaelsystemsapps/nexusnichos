@@ -52,6 +52,44 @@ export type Database = {
           },
         ]
       }
+      cemiterio: {
+        Row: {
+          created_at: string
+          data_encerramento: string
+          id: string
+          motivo: string
+          nicho_id: string
+          nome: string
+          observacao: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_encerramento?: string
+          id?: string
+          motivo: string
+          nicho_id: string
+          nome: string
+          observacao?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_encerramento?: string
+          id?: string
+          motivo?: string
+          nicho_id?: string
+          nome?: string
+          observacao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cemiterio_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contas_redes_sociais: {
         Row: {
           created_at: string | null
@@ -254,6 +292,7 @@ export type Database = {
       }
       nichos: {
         Row: {
+          cemiterio_habilitado: boolean
           created_at: string | null
           descricao: string | null
           financeiro_habilitado: boolean
@@ -265,6 +304,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          cemiterio_habilitado?: boolean
           created_at?: string | null
           descricao?: string | null
           financeiro_habilitado?: boolean
@@ -276,6 +316,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          cemiterio_habilitado?: boolean
           created_at?: string | null
           descricao?: string | null
           financeiro_habilitado?: boolean

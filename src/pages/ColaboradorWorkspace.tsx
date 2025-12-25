@@ -11,6 +11,7 @@ import { PedidosTab } from "@/components/colaborador/PedidosTab";
 import { ConfiguracoesNichoTab } from "@/components/colaborador/ConfiguracoesNichoTab";
 import { LogisticaSemanalTab } from "@/components/colaborador/LogisticaSemanalTab";
 import { RadarOportunidadesTab } from "@/components/colaborador/RadarOportunidadesTab";
+import { CemiterioTab } from "@/components/colaborador/CemiterioTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
 
@@ -75,6 +76,7 @@ export default function ColaboradorWorkspace() {
     if (subPath === "financeiro") return "Financeiro";
     if (subPath === "pedidos") return "Gestão de Pedidos";
     if (subPath === "radar") return "Radar de Oportunidades";
+    if (subPath === "cemiterio") return "Cemitério";
     if (subPath === "configuracoes") return "Configurações";
     return "Workspace";
   };
@@ -101,6 +103,9 @@ export default function ColaboradorWorkspace() {
     if (subPath === "radar" && nicho.radar_habilitado) {
       return <RadarOportunidadesTab nichoId={nichoId!} />;
     }
+    if (subPath === "cemiterio" && nicho.cemiterio_habilitado) {
+      return <CemiterioTab nichoId={nichoId!} />;
+    }
     if (subPath === "configuracoes") {
       return (
         <ConfiguracoesNichoTab 
@@ -122,6 +127,7 @@ export default function ColaboradorWorkspace() {
       financeiroHabilitado={nicho.financeiro_habilitado}
       pedidosHabilitado={nicho.pedidos_habilitado}
       radarHabilitado={nicho.radar_habilitado}
+      cemiterioHabilitado={nicho.cemiterio_habilitado}
     >
       {renderContent()}
     </MainLayout>

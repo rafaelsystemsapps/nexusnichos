@@ -12,9 +12,10 @@ export interface MainLayoutProps {
   financeiroHabilitado?: boolean;
   pedidosHabilitado?: boolean;
   radarHabilitado?: boolean;
+  cemiterioHabilitado?: boolean;
 }
 
-export function MainLayout({ children, nichoId, nichoNome, title, subtitle, financeiroHabilitado, pedidosHabilitado, radarHabilitado }: MainLayoutProps) {
+export function MainLayout({ children, nichoId, nichoNome, title, subtitle, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado }: MainLayoutProps) {
   const isIOSMobile = useIsIOSMobile();
 
   return (
@@ -22,7 +23,7 @@ export function MainLayout({ children, nichoId, nichoNome, title, subtitle, fina
       "min-h-screen bg-background",
       isIOSMobile && "ios-safe-area"
     )}>
-      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} financeiroHabilitado={financeiroHabilitado} pedidosHabilitado={pedidosHabilitado} radarHabilitado={radarHabilitado} />
+      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} financeiroHabilitado={financeiroHabilitado} pedidosHabilitado={pedidosHabilitado} radarHabilitado={radarHabilitado} cemiterioHabilitado={cemiterioHabilitado} />
       
       <main className={cn(
         "min-h-screen",
