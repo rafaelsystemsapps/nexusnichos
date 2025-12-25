@@ -15,7 +15,8 @@ import {
   GitBranch, 
   FlaskConical, 
   BookOpen, 
-  UserCheck 
+  UserCheck,
+  Briefcase
 } from "lucide-react";
 import { OrdemAbasEditor } from "./OrdemAbasEditor";
 
@@ -32,6 +33,7 @@ interface ConfiguracoesNichoTabProps {
     teste_rapido_habilitado?: boolean;
     logs_aprendizado_habilitado?: boolean;
     alertas_habilitado?: boolean;
+    clientes_habilitado?: boolean;
     ordem_abas?: string[] | null;
   };
   onConfigUpdate: () => void;
@@ -62,6 +64,14 @@ const MODULOS_CONFIG = [
     description: "Gerencie suas contas de redes sociais",
     icon: UserCheck,
     color: "blue",
+  },
+  {
+    id: "clientes",
+    dbField: "clientes_habilitado",
+    label: "Gestão de Clientes",
+    description: "Gerencie clientes e influenciadores com metas semanais",
+    icon: Briefcase,
+    color: "purple",
   },
   {
     id: "time",
@@ -140,6 +150,7 @@ const COLOR_CLASSES: Record<string, { bg: string; text: string }> = {
   lime: { bg: "bg-lime-500/10", text: "text-lime-500" },
   indigo: { bg: "bg-indigo-500/10", text: "text-indigo-500" },
   slate: { bg: "bg-slate-500/10", text: "text-slate-500" },
+  purple: { bg: "bg-purple-500/10", text: "text-purple-500" },
 };
 
 export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: ConfiguracoesNichoTabProps) {
