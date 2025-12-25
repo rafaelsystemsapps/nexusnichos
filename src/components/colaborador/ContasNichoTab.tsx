@@ -403,10 +403,10 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                     <Label className="text-xs">Senha</Label>
                     <Input
                       className="h-9"
-                      type="password"
+                      type="text"
                       value={formData.senha_acesso}
                       onChange={(e) => setFormData({ ...formData, senha_acesso: e.target.value })}
-                      placeholder="••••••••"
+                      placeholder="Senha da conta"
                       maxLength={100}
                     />
                   </div>
