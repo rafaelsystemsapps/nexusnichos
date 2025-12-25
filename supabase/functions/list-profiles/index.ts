@@ -10,6 +10,8 @@ interface ProfileWithRole {
   nome: string;
   email: string;
   role: "admin" | "colaborador";
+  avatar_emoji: string | null;
+  avatar_color: string | null;
 }
 
 Deno.serve(async (req) => {
@@ -26,10 +28,10 @@ Deno.serve(async (req) => {
 
     console.log("Fetching profiles with roles...");
 
-    // Fetch all profiles
+    // Fetch all profiles with avatar fields
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, nome, email");
+      .select("id, nome, email, avatar_emoji, avatar_color");
 
     if (profilesError) {
       console.error("Error fetching profiles:", profilesError);
@@ -59,6 +61,8 @@ Deno.serve(async (req) => {
         nome: profile.nome,
         email: profile.email,
         role: (rolesMap.get(profile.id) || "colaborador") as "admin" | "colaborador",
+        avatar_emoji: profile.avatar_emoji || null,
+        avatar_color: profile.avatar_color || null,
       }))
       // Sort: admins first, then alphabetically by name
       .sort((a, b) => {
