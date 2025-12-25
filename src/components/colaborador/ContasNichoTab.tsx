@@ -568,7 +568,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
 
       {/* Modal de Credenciais */}
       <Dialog open={credenciaisModalOpen} onOpenChange={setCredenciaisModalOpen}>
-        <DialogContent className="sm:max-w-[360px]">
+        <DialogContent className="sm:max-w-[420px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <KeyRound className="h-4 w-4" />
@@ -673,9 +673,14 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">URL de Acesso</Label>
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm truncate">
+                  <a 
+                    href={contaCredenciais.url_conta}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm truncate hover:bg-muted/70 transition-colors"
+                  >
                     {contaCredenciais.url_conta}
-                  </div>
+                  </a>
                   <Button
                     type="button"
                     variant="outline"
@@ -684,15 +689,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                     onClick={() => copyToClipboard(contaCredenciais.url_conta, "URL")}
                   >
                     <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="shrink-0 h-9 w-9"
-                    onClick={() => window.open(contaCredenciais.url_conta, "_blank")}
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>
