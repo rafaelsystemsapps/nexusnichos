@@ -100,10 +100,12 @@ export type Database = {
           nome_conta: string
           observacoes: string | null
           plataforma: Database["public"]["Enums"]["plataforma_social"]
+          proxima_acao: string | null
           responsavel_id: string | null
           status: Database["public"]["Enums"]["status_conta"] | null
           status_aquecimento: string | null
           tipo_conteudo: string | null
+          ultima_acao: string | null
           updated_at: string | null
           url_conta: string | null
         }
@@ -116,10 +118,12 @@ export type Database = {
           nome_conta: string
           observacoes?: string | null
           plataforma: Database["public"]["Enums"]["plataforma_social"]
+          proxima_acao?: string | null
           responsavel_id?: string | null
           status?: Database["public"]["Enums"]["status_conta"] | null
           status_aquecimento?: string | null
           tipo_conteudo?: string | null
+          ultima_acao?: string | null
           updated_at?: string | null
           url_conta?: string | null
         }
@@ -132,10 +136,12 @@ export type Database = {
           nome_conta?: string
           observacoes?: string | null
           plataforma?: Database["public"]["Enums"]["plataforma_social"]
+          proxima_acao?: string | null
           responsavel_id?: string | null
           status?: Database["public"]["Enums"]["status_conta"] | null
           status_aquecimento?: string | null
           tipo_conteudo?: string | null
+          ultima_acao?: string | null
           updated_at?: string | null
           url_conta?: string | null
         }
