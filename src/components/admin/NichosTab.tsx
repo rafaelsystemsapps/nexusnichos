@@ -322,24 +322,6 @@ export function NichosTab() {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="descricao">Descrição</Label>
-                <Textarea
-                  id="descricao"
-                  value={formData.descricao}
-                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="observacoes">Observações</Label>
-                <Textarea
-                  id="observacoes"
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                />
-              </div>
-
               <div className="space-y-3">
                 <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
                   <div className="space-y-0.5">
