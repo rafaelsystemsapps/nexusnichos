@@ -474,8 +474,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const needsTelefone = formData.plataforma === "whatsapp" || formData.plataforma === "telegram";
   const needsUrlSite = formData.plataforma === "site";
   const needsPin = formData.plataforma === "instagram" || formData.plataforma === "whatsapp" || formData.plataforma === "telegram";
-  // Credenciais normais: nao e WhatsApp, Telegram ou Instagram
-  const needsCredenciaisNormais = !needsTelefone && !needsPin;
+  // Credenciais normais: nao e WhatsApp ou Telegram (Instagram precisa de credenciais + PIN)
+  const needsCredenciaisNormais = !needsTelefone && formData.plataforma !== "site";
 
   const getStatusDisplay = (dbStatus: string) => {
     const status = mapStatusFromDB(dbStatus);
