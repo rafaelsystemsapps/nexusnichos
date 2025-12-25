@@ -46,39 +46,39 @@ export function CemiterioItemCard({ item, onDelete }: CemiterioItemCardProps) {
 
   return (
     <>
-      <Card className="bg-muted/10 border-border/15 hover:bg-muted/15 transition-colors">
+      <Card className="bg-muted/5 border-border/10 opacity-60 hover:opacity-80 transition-opacity">
         <div className="flex items-start justify-between p-4">
           <div className="flex-1 min-w-0">
             {/* Nome do ativo */}
-            <h3 className="font-medium text-muted-foreground truncate">
+            <h3 className="font-medium text-muted-foreground/70 truncate">
               {item.nome}
             </h3>
             
             {/* Motivo e data */}
             <div className="flex items-center gap-3 mt-1.5 text-sm">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted/30 text-muted-foreground/70">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted/20 text-muted-foreground/50">
                 <MotivoIcon className="h-3 w-3" />
                 {motivo.label}
               </span>
-              <span className="text-muted-foreground/50 text-xs">
+              <span className="text-muted-foreground/40 text-xs">
                 {format(new Date(item.data_encerramento), "dd MMM yyyy", { locale: ptBR })}
               </span>
             </div>
 
             {/* Observação */}
             {item.observacao && (
-              <p className="mt-2 text-sm text-muted-foreground/50 truncate">
+              <p className="mt-2 text-sm text-muted-foreground/40 truncate">
                 {item.observacao}
               </p>
             )}
           </div>
 
-          {/* Botão excluir (discreto) */}
+          {/* Botão excluir (muito discreto) */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setDeleteOpen(true)}
-            className="h-8 w-8 opacity-30 hover:opacity-100 text-muted-foreground hover:text-destructive shrink-0"
+            className="h-8 w-8 opacity-20 hover:opacity-100 text-muted-foreground hover:text-destructive shrink-0"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
