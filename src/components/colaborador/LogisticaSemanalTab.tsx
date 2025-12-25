@@ -242,21 +242,23 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
             }
           }
         } else {
-          // Tarefa não-diária: criar X tarefas com dia_semana negativo (-1, -2, etc.)
-          const tarefasExistentes = tarefas.filter(
-            (t) => t.template_id === template.id && t.dia_semana < 0
-          );
-          const quantidadeFaltando = vezes - tarefasExistentes.length;
+          // Tarefa não-diária: gerar 7 tarefas também (uma por dia), mas só pode concluir X vezes
+          for (let dia = 0; dia < 7; dia++) {
+            const dataTarefa = addDays(semanaInicio, dia);
+            
+            const existe = tarefas.some(
+              (t) => t.template_id === template.id && t.dia_semana === dia
+            );
 
-          for (let i = 0; i < quantidadeFaltando; i++) {
-            const novoDiaSemana = -(tarefasExistentes.length + i + 1);
-            novasTarefas.push({
-              semana_id: semanaAtual.id,
-              template_id: template.id,
-              data: format(semanaInicio, "yyyy-MM-dd"),
-              dia_semana: novoDiaSemana,
-              status: "pendente" as const,
-            });
+            if (!existe) {
+              novasTarefas.push({
+                semana_id: semanaAtual.id,
+                template_id: template.id,
+                data: format(dataTarefa, "yyyy-MM-dd"),
+                dia_semana: dia,
+                status: "pendente" as const,
+              });
+            }
           }
         }
       }
@@ -639,19 +641,24 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                 {templatesNaoDiarios.map((template) => {
                   const vezes = template.vezes_por_semana ?? 1;
                   const tarefasDoTemplate = tarefas.filter(
-                    (t) => t.template_id === template.id && t.dia_semana < 0
+                    (t) => t.template_id === template.id && t.dia_semana >= 0
                   );
                   const concluidas = tarefasDoTemplate.filter(t => t.status === "concluida").length;
-                  const total = tarefasDoTemplate.length;
+                  const limitAtingido = concluidas >= vezes;
 
                   return (
-                    <tr key={template.id} className="border-b border-border/30 hover:bg-muted/30 group bg-primary/5">
+                    <tr key={template.id} className="border-b border-border/30 hover:bg-muted/30 group">
                       <td className="p-4">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="font-medium flex items-center gap-2">
                               {template.titulo}
-                              <Badge variant="secondary" className="text-xs">{vezes}x/sem</Badge>
+                              <Badge 
+                                variant={limitAtingido ? "default" : "secondary"} 
+                                className={cn("text-xs", limitAtingido && "bg-green-500/20 text-green-500")}
+                              >
+                                {concluidas}/{vezes}
+                              </Badge>
                             </div>
                             {template.conta && (
                               <Badge variant="outline" className="mt-1 text-xs">
@@ -669,49 +676,64 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                           </Button>
                         </div>
                       </td>
-                      <td colSpan={7} className="p-2">
-                        {total > 0 ? (
-                          <div className="flex items-center justify-center gap-2">
-                            <div className="flex gap-1">
-                              {tarefasDoTemplate.map((tarefa, idx) => {
-                                const StatusIcon = STATUS_CONFIG[tarefa.status].icon;
-                                const statusConfig = STATUS_CONFIG[tarefa.status];
-                                return (
-                                  <Select
-                                    key={tarefa.id}
-                                    value={tarefa.status}
-                                    onValueChange={(v) => atualizarStatus(tarefa.id, v as TarefaDiaria["status"])}
-                                  >
-                                    <SelectTrigger className={cn("w-10 h-10 p-0 border-none", statusConfig.color)}>
-                                      <StatusIcon className="h-4 w-4" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {STATUS_SELECIONAVEIS.map((key) => {
-                                        const config = STATUS_CONFIG[key];
-                                        return (
-                                          <SelectItem key={key} value={key}>
-                                            <div className="flex items-center gap-2">
-                                              <config.icon className="h-4 w-4" />
-                                              {config.label}
-                                            </div>
-                                          </SelectItem>
-                                        );
-                                      })}
-                                    </SelectContent>
-                                  </Select>
-                                );
-                              })}
-                            </div>
-                            <span className="text-sm text-muted-foreground ml-2">
-                              {concluidas}/{vezes} concluídas
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="h-10 flex items-center justify-center text-muted-foreground/30">
-                            —
-                          </div>
-                        )}
-                      </td>
+                      {DIAS_SEMANA.map((_, diaIndex) => {
+                        const tarefa = getTarefaParaDia(template.id, diaIndex);
+                        const StatusIcon = tarefa ? STATUS_CONFIG[tarefa.status].icon : Circle;
+                        const statusConfig = tarefa ? STATUS_CONFIG[tarefa.status] : STATUS_CONFIG.pendente;
+                        const estaConcluida = tarefa?.status === "concluida";
+                        const podeMarcarConcluida = !limitAtingido || estaConcluida;
+
+                        return (
+                          <td key={diaIndex} className="text-center p-2">
+                            {tarefa ? (
+                              <Select
+                                value={tarefa.status}
+                                onValueChange={(v) => {
+                                  // Se está tentando marcar como concluída e já atingiu o limite
+                                  if (v === "concluida" && !podeMarcarConcluida) {
+                                    toast.info(`Limite de ${vezes}x por semana atingido!`);
+                                    return;
+                                  }
+                                  atualizarStatus(tarefa.id, v as TarefaDiaria["status"]);
+                                }}
+                              >
+                                <SelectTrigger 
+                                  className={cn(
+                                    "w-full h-10 border-none", 
+                                    statusConfig.color,
+                                    limitAtingido && !estaConcluida && "opacity-40"
+                                  )}
+                                >
+                                  <StatusIcon className="h-4 w-4" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {STATUS_SELECIONAVEIS.map((key) => {
+                                    const config = STATUS_CONFIG[key];
+                                    const disabled = key === "concluida" && !podeMarcarConcluida;
+                                    return (
+                                      <SelectItem 
+                                        key={key} 
+                                        value={key}
+                                        disabled={disabled}
+                                      >
+                                        <div className={cn("flex items-center gap-2", disabled && "opacity-50")}>
+                                          <config.icon className="h-4 w-4" />
+                                          {config.label}
+                                          {disabled && " (limite)"}
+                                        </div>
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <div className="h-10 flex items-center justify-center text-muted-foreground/30">
+                                —
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}
