@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX, Radar, Archive, AlertTriangle, Network, FlaskConical } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, User, Mail, Lock, UserX, Radar, Archive, AlertTriangle, Network, FlaskConical, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 
 interface NichoWithUser {
@@ -25,6 +25,7 @@ interface NichoWithUser {
   alertas_habilitado: boolean;
   mapa_dependencia_habilitado: boolean;
   teste_rapido_habilitado: boolean;
+  logs_aprendizado_habilitado: boolean;
   created_at: string | null;
   updated_at: string | null;
   usuario?: {
@@ -53,6 +54,7 @@ export function NichosTab() {
     alertas_habilitado: false,
     mapa_dependencia_habilitado: false,
     teste_rapido_habilitado: false,
+    logs_aprendizado_habilitado: false,
     usuario_nome: "",
     usuario_email: "",
     usuario_senha: "",
@@ -129,6 +131,7 @@ export function NichosTab() {
             alertas_habilitado: formData.alertas_habilitado,
             mapa_dependencia_habilitado: formData.mapa_dependencia_habilitado,
             teste_rapido_habilitado: formData.teste_rapido_habilitado,
+            logs_aprendizado_habilitado: formData.logs_aprendizado_habilitado,
           })
           .eq("id", editingNicho.id);
 
@@ -162,6 +165,7 @@ export function NichosTab() {
             alertas_habilitado: formData.alertas_habilitado,
             mapa_dependencia_habilitado: formData.mapa_dependencia_habilitado,
             teste_rapido_habilitado: formData.teste_rapido_habilitado,
+            logs_aprendizado_habilitado: formData.logs_aprendizado_habilitado,
           })
           .select()
           .single();
@@ -255,6 +259,7 @@ export function NichosTab() {
       alertas_habilitado: false,
       mapa_dependencia_habilitado: false,
       teste_rapido_habilitado: false,
+      logs_aprendizado_habilitado: false,
       usuario_nome: "",
       usuario_email: "",
       usuario_senha: "",
@@ -275,6 +280,7 @@ export function NichosTab() {
       alertas_habilitado: nicho.alertas_habilitado || false,
       mapa_dependencia_habilitado: nicho.mapa_dependencia_habilitado || false,
       teste_rapido_habilitado: nicho.teste_rapido_habilitado || false,
+      logs_aprendizado_habilitado: nicho.logs_aprendizado_habilitado || false,
       usuario_nome: "",
       usuario_email: "",
       usuario_senha: "",
@@ -447,6 +453,25 @@ export function NichosTab() {
                     checked={formData.teste_rapido_habilitado}
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, teste_rapido_habilitado: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="logs_aprendizado" className="flex items-center gap-2">
+                      <Lightbulb className="h-4 w-4 text-muted-foreground" />
+                      Logs de Aprendizado
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Captura de aprendizado diário
+                    </p>
+                  </div>
+                  <Switch
+                    id="logs_aprendizado"
+                    checked={formData.logs_aprendizado_habilitado}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, logs_aprendizado_habilitado: checked })
                     }
                   />
                 </div>
