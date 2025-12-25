@@ -763,6 +763,7 @@ export type Database = {
           conta_id: string | null
           created_at: string
           descricao: string | null
+          frequencia: string
           id: string
           nicho_id: string
           ordem: number
@@ -774,6 +775,7 @@ export type Database = {
           conta_id?: string | null
           created_at?: string
           descricao?: string | null
+          frequencia?: string
           id?: string
           nicho_id: string
           ordem?: number
@@ -785,6 +787,7 @@ export type Database = {
           conta_id?: string | null
           created_at?: string
           descricao?: string | null
+          frequencia?: string
           id?: string
           nicho_id?: string
           ordem?: number

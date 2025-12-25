@@ -51,6 +51,7 @@ interface TarefaTemplate {
   conta_id: string | null;
   ativa: boolean;
   ordem: number;
+  frequencia: string;
   conta?: {
     nome_conta: string;
     plataforma: string;
@@ -159,6 +160,7 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
           conta_id,
           ativa,
           ordem,
+          frequencia,
           conta:conta_id (
             nome_conta,
             plataforma
@@ -218,22 +220,40 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
       const novasTarefas = [];
 
       for (const template of templates) {
-        for (let dia = 0; dia < 7; dia++) {
-          const dataTarefa = addDays(semanaInicio, dia);
-          
-          // Verificar se já existe
+        if (template.frequencia === "semanal") {
+          // Tarefa semanal: apenas 1 tarefa por semana (dia_semana = -1)
           const existe = tarefas.some(
-            (t) => t.template_id === template.id && t.dia_semana === dia
+            (t) => t.template_id === template.id && t.dia_semana === -1
           );
 
           if (!existe) {
             novasTarefas.push({
               semana_id: semanaAtual.id,
               template_id: template.id,
-              data: format(dataTarefa, "yyyy-MM-dd"),
-              dia_semana: dia,
+              data: format(semanaInicio, "yyyy-MM-dd"),
+              dia_semana: -1, // -1 indica tarefa semanal
               status: "pendente" as const,
             });
+          }
+        } else {
+          // Tarefa diária: 7 tarefas por semana
+          for (let dia = 0; dia < 7; dia++) {
+            const dataTarefa = addDays(semanaInicio, dia);
+            
+            // Verificar se já existe
+            const existe = tarefas.some(
+              (t) => t.template_id === template.id && t.dia_semana === dia
+            );
+
+            if (!existe) {
+              novasTarefas.push({
+                semana_id: semanaAtual.id,
+                template_id: template.id,
+                data: format(dataTarefa, "yyyy-MM-dd"),
+                dia_semana: dia,
+                status: "pendente" as const,
+              });
+            }
           }
         }
       }
@@ -356,11 +376,19 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
     return tarefas.find((t) => t.template_id === templateId && t.dia_semana === diaSemana);
   };
 
+  const getTarefaSemanal = (templateId: string) => {
+    return tarefas.find((t) => t.template_id === templateId && t.dia_semana === -1);
+  };
+
   const templatesFiltrados = contaFiltro === "todas"
     ? templates
     : contaFiltro === "geral"
     ? templates.filter((t) => !t.conta_id)
     : templates.filter((t) => t.conta_id === contaFiltro);
+
+  // Separar templates diários e semanais
+  const templatesDiarios = templatesFiltrados.filter(t => t.frequencia !== "semanal");
+  const templatesSemanais = templatesFiltrados.filter(t => t.frequencia === "semanal");
 
   if (loading) {
     return (
@@ -477,6 +505,9 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                         <div className="min-w-0 flex-1">
                           <p className={`font-medium truncate ${!template.ativa && "text-muted-foreground"}`}>
                             {template.titulo}
+                            {template.frequencia === "semanal" && (
+                              <Badge variant="secondary" className="ml-2 text-xs">Semanal</Badge>
+                            )}
                           </p>
                           <p className="text-sm text-muted-foreground truncate">
                             {template.conta 
@@ -540,7 +571,8 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                 </tr>
               </thead>
               <tbody>
-                {templatesFiltrados.map((template) => (
+                {/* Templates diários */}
+                {templatesDiarios.map((template) => (
                   <tr key={template.id} className="border-b border-border/30 hover:bg-muted/30 group">
                     <td className="p-4">
                       <div className="flex items-center justify-between">
@@ -601,6 +633,73 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                     })}
                   </tr>
                 ))}
+
+                {/* Templates semanais */}
+                {templatesSemanais.map((template) => {
+                  const tarefa = getTarefaSemanal(template.id);
+                  const StatusIcon = tarefa ? STATUS_CONFIG[tarefa.status].icon : Circle;
+                  const statusConfig = tarefa ? STATUS_CONFIG[tarefa.status] : STATUS_CONFIG.pendente;
+
+                  return (
+                    <tr key={template.id} className="border-b border-border/30 hover:bg-muted/30 group bg-primary/5">
+                      <td className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium flex items-center gap-2">
+                              {template.titulo}
+                              <Badge variant="secondary" className="text-xs">Semanal</Badge>
+                            </div>
+                            {template.conta && (
+                              <Badge variant="outline" className="mt-1 text-xs">
+                                @{template.conta.nome_conta}
+                              </Badge>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                            onClick={() => setTemplateParaDeletar(template)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                      <td colSpan={7} className="text-center p-2">
+                        {tarefa ? (
+                          <Select
+                            value={tarefa.status}
+                            onValueChange={(v) => atualizarStatus(tarefa.id, v as TarefaDiaria["status"])}
+                          >
+                            <SelectTrigger className={cn("w-full max-w-xs mx-auto h-10", statusConfig.color)}>
+                              <div className="flex items-center gap-2">
+                                <StatusIcon className="h-4 w-4" />
+                                <span>{statusConfig.label}</span>
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {STATUS_SELECIONAVEIS.map((key) => {
+                                const config = STATUS_CONFIG[key];
+                                return (
+                                  <SelectItem key={key} value={key}>
+                                    <div className="flex items-center gap-2">
+                                      <config.icon className="h-4 w-4" />
+                                      {config.label}
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="h-10 flex items-center justify-center text-muted-foreground/30">
+                            —
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </CardContent>
