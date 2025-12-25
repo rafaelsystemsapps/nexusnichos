@@ -15,6 +15,7 @@ import {
   Package,
   ChevronDown,
   Radio,
+  Archive,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -38,9 +39,10 @@ interface AppSidebarProps {
   financeiroHabilitado?: boolean;
   pedidosHabilitado?: boolean;
   radarHabilitado?: boolean;
+  cemiterioHabilitado?: boolean;
 }
 
-export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHabilitado, radarHabilitado }: AppSidebarProps) {
+export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -105,6 +107,15 @@ export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHa
       title: "Radar",
       href: `/workspace/${nichoId}/radar`,
       icon: Radio,
+    });
+  }
+
+  // Adiciona Cemitério se habilitado (visual discreto)
+  if (cemiterioHabilitado) {
+    colaboradorNavItems.push({
+      title: "Cemitério",
+      href: `/workspace/${nichoId}/cemiterio`,
+      icon: Archive,
     });
   }
 
