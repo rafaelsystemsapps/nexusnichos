@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsIOSMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 import {
   FileText,
   Share2,
@@ -11,8 +13,17 @@ import {
   DollarSign,
   CalendarCheck,
   Package,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { AvatarEditor } from "@/components/admin/AvatarEditor";
 
 interface NavItem {
   title: string;
@@ -29,9 +40,37 @@ interface AppSidebarProps {
 
 export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHabilitado }: AppSidebarProps) {
   const location = useLocation();
-  const { role, signOut } = useAuth();
+  const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
   const isIOSMobile = useIsIOSMobile();
+  
+  const [profile, setProfile] = useState<{ nome: string; avatar_emoji: string | null; avatar_color: string | null } | null>(null);
+  const [avatarEditorOpen, setAvatarEditorOpen] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchProfile();
+    }
+  }, [user?.id]);
+
+  const fetchProfile = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("nome, avatar_emoji, avatar_color")
+      .eq("id", user.id)
+      .single();
+    if (data) setProfile(data);
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const colaboradorNavItems: NavItem[] = [
     { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard },
@@ -150,14 +189,55 @@ export function AppSidebar({ nichoId, nichoNome, financeiroHabilitado, pedidosHa
           ))}
         </nav>
 
-        {/* Logout */}
-        <button
-          onClick={signOut}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Sair</span>
-        </button>
+        {/* Profile Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-muted/50 transition-colors">
+              {/* Avatar */}
+              <div 
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
+                style={{ backgroundColor: profile?.avatar_color || '#6B7280' }}
+              >
+                {profile?.avatar_emoji || (
+                  <span className="text-white font-medium text-xs">
+                    {profile?.nome ? getInitials(profile.nome) : "?"}
+                  </span>
+                )}
+              </div>
+              <span className="text-sm text-muted-foreground max-w-[100px] truncate">
+                {profile?.nome || "Usuário"}
+              </span>
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => setAvatarEditorOpen(true)}>
+              <Settings className="h-4 w-4 mr-2" />
+              Editar Perfil
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={signOut}
+              className="text-destructive focus:text-destructive"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Avatar Editor Modal */}
+        {user && profile && (
+          <AvatarEditor
+            open={avatarEditorOpen}
+            onOpenChange={setAvatarEditorOpen}
+            userId={user.id}
+            userName={profile.nome}
+            currentEmoji={profile.avatar_emoji}
+            currentColor={profile.avatar_color}
+            onSave={fetchProfile}
+          />
+        )}
       </div>
     </header>
   );
