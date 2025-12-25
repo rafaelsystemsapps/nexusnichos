@@ -89,6 +89,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     login_email: "",
     senha_acesso: "",
     url_conta: "",
+    gmail_email: "",
+    gmail_senha: "",
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contaToDelete, setContaToDelete] = useState<any>(null);
@@ -97,7 +99,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   // Modal de visualização de credenciais
   const [credenciaisModalOpen, setCredenciaisModalOpen] = useState(false);
   const [contaCredenciais, setContaCredenciais] = useState<any>(null);
-  const [senhaVisivel, setSenhaVisivel] = useState(false);
+  const [senhaVisivel, setSenhaVisivel] = useState(true);
+  const [gmailSenhaVisivel, setGmailSenhaVisivel] = useState(true);
 
   useEffect(() => {
     fetchContas();
@@ -139,6 +142,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         login_email: formData.login_email || null,
         senha_acesso: formData.senha_acesso || null,
         url_conta: formData.url_conta || null,
+        gmail_email: formData.gmail_email || null,
+        gmail_senha: formData.gmail_senha || null,
         nicho_id: nichoId,
         responsavel_id: user?.id || null,
       };
@@ -176,6 +181,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       login_email: "",
       senha_acesso: "",
       url_conta: "",
+      gmail_email: "",
+      gmail_senha: "",
     });
     setEditingConta(null);
     setCredenciaisOpen(false);
@@ -192,9 +199,11 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       login_email: conta.login_email || "",
       senha_acesso: conta.senha_acesso || "",
       url_conta: conta.url_conta || "",
+      gmail_email: conta.gmail_email || "",
+      gmail_senha: conta.gmail_senha || "",
     });
     // Abrir seção de credenciais se já existem dados
-    setCredenciaisOpen(!!(conta.login_email || conta.senha_acesso || conta.url_conta));
+    setCredenciaisOpen(!!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha));
     setDialogOpen(true);
   };
 
@@ -225,7 +234,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
 
   const openCredenciaisModal = (conta: any) => {
     setContaCredenciais(conta);
-    setSenhaVisivel(false);
+    setSenhaVisivel(true);
+    setGmailSenhaVisivel(true);
     setCredenciaisModalOpen(true);
   };
 
@@ -235,7 +245,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   };
 
   const hasCredenciais = (conta: any) => {
-    return !!(conta.login_email || conta.senha_acesso || conta.url_conta);
+    return !!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha);
   };
 
   const getStatusDisplay = (dbStatus: string) => {
@@ -410,6 +420,33 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                       maxLength={200}
                     />
                   </div>
+
+                  {/* Separador visual para Gmail */}
+                  <div className="border-t border-border/50 pt-3 mt-2">
+                    <span className="text-xs text-muted-foreground">Gmail vinculado (opcional)</span>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs">Email do Gmail</Label>
+                    <Input
+                      className="h-9"
+                      value={formData.gmail_email}
+                      onChange={(e) => setFormData({ ...formData, gmail_email: e.target.value })}
+                      placeholder="Ex: conta@gmail.com"
+                      maxLength={100}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Senha do Gmail</Label>
+                    <Input
+                      className="h-9"
+                      type="text"
+                      value={formData.gmail_senha}
+                      onChange={(e) => setFormData({ ...formData, gmail_senha: e.target.value })}
+                      placeholder="Senha do Gmail"
+                      maxLength={100}
+                    />
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
 
@@ -582,6 +619,64 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   </Button>
                 </div>
               </div>
+            )}
+
+            {/* Gmail vinculado */}
+            {(contaCredenciais?.gmail_email || contaCredenciais?.gmail_senha) && (
+              <>
+                <div className="border-t border-border/30 pt-3">
+                  <span className="text-xs text-muted-foreground font-medium">Gmail vinculado</span>
+                </div>
+
+                {contaCredenciais?.gmail_email && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Email Gmail</Label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm font-mono">
+                        {contaCredenciais.gmail_email}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0 h-9 w-9"
+                        onClick={() => copyToClipboard(contaCredenciais.gmail_email, "Email Gmail")}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {contaCredenciais?.gmail_senha && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Senha Gmail</Label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm font-mono">
+                        {gmailSenhaVisivel ? contaCredenciais.gmail_senha : "••••••••••••"}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0 h-9 w-9"
+                        onClick={() => setGmailSenhaVisivel(!gmailSenhaVisivel)}
+                      >
+                        {gmailSenhaVisivel ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0 h-9 w-9"
+                        onClick={() => copyToClipboard(contaCredenciais.gmail_senha, "Senha Gmail")}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* URL de acesso */}
