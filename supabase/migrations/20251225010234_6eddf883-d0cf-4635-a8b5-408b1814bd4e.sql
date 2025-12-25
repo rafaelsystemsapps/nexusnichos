@@ -1,0 +1,1 @@
+ALTER TABLE nichos ALTER COLUMN contas_habilitado SET DEFAULT false;
