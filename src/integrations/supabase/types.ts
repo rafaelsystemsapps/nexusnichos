@@ -299,6 +299,7 @@ export type Database = {
       nichos: {
         Row: {
           cemiterio_habilitado: boolean
+          contas_habilitado: boolean
           created_at: string | null
           descricao: string | null
           financeiro_habilitado: boolean
@@ -311,6 +312,7 @@ export type Database = {
         }
         Insert: {
           cemiterio_habilitado?: boolean
+          contas_habilitado?: boolean
           created_at?: string | null
           descricao?: string | null
           financeiro_habilitado?: boolean
@@ -323,6 +325,7 @@ export type Database = {
         }
         Update: {
           cemiterio_habilitado?: boolean
+          contas_habilitado?: boolean
           created_at?: string | null
           descricao?: string | null
           financeiro_habilitado?: boolean

@@ -85,7 +85,7 @@ export default function ColaboradorWorkspace() {
     if (!subPath || subPath === "") {
       return <DashboardNichoTab nichoId={nichoId!} />;
     }
-    if (subPath === "contas") {
+    if (subPath === "contas" && nicho.contas_habilitado !== false) {
       return <ContasNichoTab nichoId={nichoId!} />;
     }
     if (subPath === "logistica") {
@@ -124,6 +124,7 @@ export default function ColaboradorWorkspace() {
       nichoNome={nicho.nome}
       title={getPageTitle()}
       subtitle={`Workspace: ${nicho.nome}`}
+      contasHabilitado={nicho.contas_habilitado}
       financeiroHabilitado={nicho.financeiro_habilitado}
       pedidosHabilitado={nicho.pedidos_habilitado}
       radarHabilitado={nicho.radar_habilitado}
