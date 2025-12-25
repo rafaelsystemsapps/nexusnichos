@@ -94,6 +94,8 @@ export type Database = {
         Row: {
           created_at: string | null
           data_criacao_conta: string | null
+          gmail_email: string | null
+          gmail_senha: string | null
           id: string
           login_email: string | null
           media_videos: number | null
@@ -114,6 +116,8 @@ export type Database = {
         Insert: {
           created_at?: string | null
           data_criacao_conta?: string | null
+          gmail_email?: string | null
+          gmail_senha?: string | null
           id?: string
           login_email?: string | null
           media_videos?: number | null
@@ -134,6 +138,8 @@ export type Database = {
         Update: {
           created_at?: string | null
           data_criacao_conta?: string | null
+          gmail_email?: string | null
+          gmail_senha?: string | null
           id?: string
           login_email?: string | null
           media_videos?: number | null
