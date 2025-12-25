@@ -22,6 +22,7 @@ interface Template {
   conta_id: string | null;
   ativa: boolean;
   ordem: number;
+  frequencia?: string;
 }
 
 interface TemplateFormProps {
@@ -37,6 +38,7 @@ export function TemplateForm({ open, onOpenChange, nichoId, template, contas, on
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [contaId, setContaId] = useState<string>("geral");
+  const [frequencia, setFrequencia] = useState<string>("diaria");
   const [ativa, setAtiva] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -45,11 +47,13 @@ export function TemplateForm({ open, onOpenChange, nichoId, template, contas, on
       setTitulo(template.titulo);
       setDescricao(template.descricao || "");
       setContaId(template.conta_id || "geral");
+      setFrequencia(template.frequencia || "diaria");
       setAtiva(template.ativa);
     } else {
       setTitulo("");
       setDescricao("");
       setContaId("geral");
+      setFrequencia("diaria");
       setAtiva(true);
     }
   }, [template, open]);
@@ -69,6 +73,7 @@ export function TemplateForm({ open, onOpenChange, nichoId, template, contas, on
         titulo: titulo.trim(),
         descricao: descricao.trim() || null,
         conta_id: contaId === "geral" ? null : contaId,
+        frequencia,
         ativa,
         nicho_id: nichoId,
       };
@@ -143,6 +148,25 @@ export function TemplateForm({ open, onOpenChange, nichoId, template, contas, on
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="frequencia">Frequência</Label>
+            <Select value={frequencia} onValueChange={setFrequencia}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a frequência" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="diaria">Diária (7x por semana)</SelectItem>
+                <SelectItem value="semanal">Semanal (1x por semana)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {frequencia === "semanal" 
+                ? "Uma única tarefa para completar durante toda a semana"
+                : "Uma tarefa para cada dia da semana"
+              }
+            </p>
           </div>
 
           <div className="flex items-center justify-between p-3 rounded-lg bg-surface/50 border border-border/30">
