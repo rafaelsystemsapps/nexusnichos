@@ -10,7 +10,7 @@ interface AlertasRiscoProps {
 
 interface Alerta {
   id: string;
-  tipo: "contas_risco" | "execucao_atrasando" | "conta_caida_sem_acao";
+  tipo: "contas_risco" | "execucao_atrasando" | "conta_desativada_sem_acao";
   texto: string;
   cor: "vermelho" | "amarelo";
   rota: string;
@@ -78,19 +78,19 @@ export function AlertasRisco({ nichoId }: AlertasRiscoProps) {
         }
       }
 
-      // 3. Conta caída sem ação (banida e sem proxima_acao)
-      const { data: contasCaidas } = await supabase
+      // 3. Conta desativada sem ação (banida e sem proxima_acao)
+      const { data: contasDesativadas } = await supabase
         .from("contas_redes_sociais")
         .select("id, nome_conta")
         .eq("nicho_id", nichoId)
         .eq("status", "banida")
         .is("proxima_acao", null);
 
-      if (contasCaidas && contasCaidas.length > 0) {
+      if (contasDesativadas && contasDesativadas.length > 0) {
         alertasCalculados.push({
-          id: "conta_caida_sem_acao",
-          tipo: "conta_caida_sem_acao",
-          texto: "Conta caída sem ação",
+          id: "conta_desativada_sem_acao",
+          tipo: "conta_desativada_sem_acao",
+          texto: "Conta desativada sem ação",
           cor: "vermelho",
           rota: `/workspace/${nichoId}/contas`,
         });

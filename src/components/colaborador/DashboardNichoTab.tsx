@@ -108,7 +108,7 @@ export function DashboardNichoTab({ nichoId, alertasHabilitado = false }: Dashbo
         setTarefasHoje([]);
       }
 
-      // Contas precisando de ação (limitada = risco, banida = caída)
+      // Contas precisando de ação (limitada = risco, banida = desativada)
       const { data: contasData } = await supabase
         .from("contas_redes_sociais")
         .select("id, nome_conta, plataforma, status, proxima_acao")
@@ -149,7 +149,7 @@ export function DashboardNichoTab({ nichoId, alertasHabilitado = false }: Dashbo
 
   const getStatusLabel = (status: string) => {
     if (status === "limitada") return "Risco";
-    if (status === "banida") return "Caída";
+    if (status === "banida") return "Desativada";
     return status;
   };
 
