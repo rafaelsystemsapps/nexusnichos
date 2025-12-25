@@ -473,7 +473,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   // Verifica se plataforma precisa de campos especificos
   const needsTelefone = formData.plataforma === "whatsapp" || formData.plataforma === "telegram";
   const needsUrlSite = formData.plataforma === "site";
-  const needsPin = formData.plataforma === "instagram";
+  const needsPin = formData.plataforma === "instagram" || formData.plataforma === "whatsapp" || formData.plataforma === "telegram";
   // Credenciais normais: nao e WhatsApp, Telegram ou Instagram
   const needsCredenciaisNormais = !needsTelefone && !needsPin;
 
