@@ -97,7 +97,7 @@ export default function ColaboradorWorkspace() {
     if (subPath === "logistica") {
       return <LogisticaSemanalTab nichoId={nichoId!} />;
     }
-    if (subPath === "time") {
+    if (subPath === "time" && nicho.time_habilitado !== false) {
       return <TimeNichoTab nichoId={nichoId!} />;
     }
     if (subPath === "financeiro" && nicho.financeiro_habilitado) {
@@ -147,6 +147,7 @@ export default function ColaboradorWorkspace() {
       mapaDependenciaHabilitado={nicho.mapa_dependencia_habilitado}
       testeRapidoHabilitado={nicho.teste_rapido_habilitado}
       logsAprendizadoHabilitado={nicho.logs_aprendizado_habilitado}
+      timeHabilitado={nicho.time_habilitado}
     >
       {renderContent()}
     </MainLayout>

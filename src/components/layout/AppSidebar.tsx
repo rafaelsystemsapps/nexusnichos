@@ -47,9 +47,10 @@ interface AppSidebarProps {
   mapaDependenciaHabilitado?: boolean;
   testeRapidoHabilitado?: boolean;
   logsAprendizadoHabilitado?: boolean;
+  timeHabilitado?: boolean;
 }
 
-export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado }: AppSidebarProps) {
+export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, timeHabilitado }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -96,11 +97,19 @@ export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHab
     });
   }
 
-  // Sempre adiciona Logística e Time
+  // Sempre adiciona Logística
   colaboradorNavItems.push(
-    { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck },
-    { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users }
+    { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck }
   );
+
+  // Adiciona Time se habilitado
+  if (timeHabilitado !== false) {
+    colaboradorNavItems.push({
+      title: "Time",
+      href: `/workspace/${nichoId}/time`,
+      icon: Users,
+    });
+  }
 
   // Adiciona Financeiro se habilitado
   if (financeiroHabilitado) {

@@ -348,6 +348,7 @@ export type Database = {
           pedidos_habilitado: boolean
           radar_habilitado: boolean
           teste_rapido_habilitado: boolean
+          time_habilitado: boolean
           updated_at: string | null
         }
         Insert: {
@@ -366,6 +367,7 @@ export type Database = {
           pedidos_habilitado?: boolean
           radar_habilitado?: boolean
           teste_rapido_habilitado?: boolean
+          time_habilitado?: boolean
           updated_at?: string | null
         }
         Update: {
@@ -384,6 +386,7 @@ export type Database = {
           pedidos_habilitado?: boolean
           radar_habilitado?: boolean
           teste_rapido_habilitado?: boolean
+          time_habilitado?: boolean
           updated_at?: string | null
         }
         Relationships: []
