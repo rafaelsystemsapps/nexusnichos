@@ -51,7 +51,7 @@ interface TarefaTemplate {
   conta_id: string | null;
   ativa: boolean;
   ordem: number;
-  frequencia: string;
+  vezes_por_semana: number;
   conta?: {
     nome_conta: string;
     plataforma: string;
@@ -160,7 +160,7 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
           conta_id,
           ativa,
           ordem,
-          frequencia,
+          vezes_por_semana,
           conta:conta_id (
             nome_conta,
             plataforma
@@ -220,27 +220,13 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
       const novasTarefas = [];
 
       for (const template of templates) {
-        if (template.frequencia === "semanal") {
-          // Tarefa semanal: apenas 1 tarefa por semana (dia_semana = -1)
-          const existe = tarefas.some(
-            (t) => t.template_id === template.id && t.dia_semana === -1
-          );
-
-          if (!existe) {
-            novasTarefas.push({
-              semana_id: semanaAtual.id,
-              template_id: template.id,
-              data: format(semanaInicio, "yyyy-MM-dd"),
-              dia_semana: -1, // -1 indica tarefa semanal
-              status: "pendente" as const,
-            });
-          }
-        } else {
+        const vezes = template.vezes_por_semana ?? 7;
+        
+        if (vezes === 7) {
           // Tarefa diária: 7 tarefas por semana
           for (let dia = 0; dia < 7; dia++) {
             const dataTarefa = addDays(semanaInicio, dia);
             
-            // Verificar se já existe
             const existe = tarefas.some(
               (t) => t.template_id === template.id && t.dia_semana === dia
             );
@@ -254,6 +240,23 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                 status: "pendente" as const,
               });
             }
+          }
+        } else {
+          // Tarefa não-diária: criar X tarefas com dia_semana negativo (-1, -2, etc.)
+          const tarefasExistentes = tarefas.filter(
+            (t) => t.template_id === template.id && t.dia_semana < 0
+          );
+          const quantidadeFaltando = vezes - tarefasExistentes.length;
+
+          for (let i = 0; i < quantidadeFaltando; i++) {
+            const novoDiaSemana = -(tarefasExistentes.length + i + 1);
+            novasTarefas.push({
+              semana_id: semanaAtual.id,
+              template_id: template.id,
+              data: format(semanaInicio, "yyyy-MM-dd"),
+              dia_semana: novoDiaSemana,
+              status: "pendente" as const,
+            });
           }
         }
       }
@@ -376,19 +379,15 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
     return tarefas.find((t) => t.template_id === templateId && t.dia_semana === diaSemana);
   };
 
-  const getTarefaSemanal = (templateId: string) => {
-    return tarefas.find((t) => t.template_id === templateId && t.dia_semana === -1);
-  };
-
   const templatesFiltrados = contaFiltro === "todas"
     ? templates
     : contaFiltro === "geral"
     ? templates.filter((t) => !t.conta_id)
     : templates.filter((t) => t.conta_id === contaFiltro);
 
-  // Separar templates diários e semanais
-  const templatesDiarios = templatesFiltrados.filter(t => t.frequencia !== "semanal");
-  const templatesSemanais = templatesFiltrados.filter(t => t.frequencia === "semanal");
+  // Separar templates diários e não-diários
+  const templatesDiarios = templatesFiltrados.filter(t => (t.vezes_por_semana ?? 7) === 7);
+  const templatesNaoDiarios = templatesFiltrados.filter(t => (t.vezes_por_semana ?? 7) < 7);
 
   if (loading) {
     return (
@@ -505,8 +504,10 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                         <div className="min-w-0 flex-1">
                           <p className={`font-medium truncate ${!template.ativa && "text-muted-foreground"}`}>
                             {template.titulo}
-                            {template.frequencia === "semanal" && (
-                              <Badge variant="secondary" className="ml-2 text-xs">Semanal</Badge>
+                            {(template.vezes_por_semana ?? 7) < 7 && (
+                              <Badge variant="secondary" className="ml-2 text-xs">
+                                {template.vezes_por_semana}x/sem
+                              </Badge>
                             )}
                           </p>
                           <p className="text-sm text-muted-foreground truncate">
@@ -634,11 +635,14 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                   </tr>
                 ))}
 
-                {/* Templates semanais */}
-                {templatesSemanais.map((template) => {
-                  const tarefa = getTarefaSemanal(template.id);
-                  const StatusIcon = tarefa ? STATUS_CONFIG[tarefa.status].icon : Circle;
-                  const statusConfig = tarefa ? STATUS_CONFIG[tarefa.status] : STATUS_CONFIG.pendente;
+                {/* Templates não-diários (1-6x por semana) */}
+                {templatesNaoDiarios.map((template) => {
+                  const vezes = template.vezes_por_semana ?? 1;
+                  const tarefasDoTemplate = tarefas.filter(
+                    (t) => t.template_id === template.id && t.dia_semana < 0
+                  );
+                  const concluidas = tarefasDoTemplate.filter(t => t.status === "concluida").length;
+                  const total = tarefasDoTemplate.length;
 
                   return (
                     <tr key={template.id} className="border-b border-border/30 hover:bg-muted/30 group bg-primary/5">
@@ -647,7 +651,7 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                           <div>
                             <div className="font-medium flex items-center gap-2">
                               {template.titulo}
-                              <Badge variant="secondary" className="text-xs">Semanal</Badge>
+                              <Badge variant="secondary" className="text-xs">{vezes}x/sem</Badge>
                             </div>
                             {template.conta && (
                               <Badge variant="outline" className="mt-1 text-xs">
@@ -665,32 +669,43 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
                           </Button>
                         </div>
                       </td>
-                      <td colSpan={7} className="text-center p-2">
-                        {tarefa ? (
-                          <Select
-                            value={tarefa.status}
-                            onValueChange={(v) => atualizarStatus(tarefa.id, v as TarefaDiaria["status"])}
-                          >
-                            <SelectTrigger className={cn("w-full max-w-xs mx-auto h-10", statusConfig.color)}>
-                              <div className="flex items-center gap-2">
-                                <StatusIcon className="h-4 w-4" />
-                                <span>{statusConfig.label}</span>
-                              </div>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {STATUS_SELECIONAVEIS.map((key) => {
-                                const config = STATUS_CONFIG[key];
+                      <td colSpan={7} className="p-2">
+                        {total > 0 ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="flex gap-1">
+                              {tarefasDoTemplate.map((tarefa, idx) => {
+                                const StatusIcon = STATUS_CONFIG[tarefa.status].icon;
+                                const statusConfig = STATUS_CONFIG[tarefa.status];
                                 return (
-                                  <SelectItem key={key} value={key}>
-                                    <div className="flex items-center gap-2">
-                                      <config.icon className="h-4 w-4" />
-                                      {config.label}
-                                    </div>
-                                  </SelectItem>
+                                  <Select
+                                    key={tarefa.id}
+                                    value={tarefa.status}
+                                    onValueChange={(v) => atualizarStatus(tarefa.id, v as TarefaDiaria["status"])}
+                                  >
+                                    <SelectTrigger className={cn("w-10 h-10 p-0 border-none", statusConfig.color)}>
+                                      <StatusIcon className="h-4 w-4" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {STATUS_SELECIONAVEIS.map((key) => {
+                                        const config = STATUS_CONFIG[key];
+                                        return (
+                                          <SelectItem key={key} value={key}>
+                                            <div className="flex items-center gap-2">
+                                              <config.icon className="h-4 w-4" />
+                                              {config.label}
+                                            </div>
+                                          </SelectItem>
+                                        );
+                                      })}
+                                    </SelectContent>
+                                  </Select>
                                 );
                               })}
-                            </SelectContent>
-                          </Select>
+                            </div>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              {concluidas}/{vezes} concluídas
+                            </span>
+                          </div>
                         ) : (
                           <div className="h-10 flex items-center justify-center text-muted-foreground/30">
                             —
