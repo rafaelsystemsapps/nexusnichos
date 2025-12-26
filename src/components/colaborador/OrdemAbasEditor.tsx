@@ -36,6 +36,8 @@ import {
   Settings,
   Move,
   Bell,
+  Smartphone,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +56,7 @@ interface OrdemAbasEditorProps {
     contas_habilitado?: boolean;
     time_habilitado?: boolean;
     clientes_habilitado?: boolean;
+    apps_habilitado?: boolean;
     financeiro_habilitado?: boolean;
     pedidos_habilitado?: boolean;
     radar_habilitado?: boolean;
@@ -72,6 +75,7 @@ const DEFAULT_ORDER = [
   "logistica",
   "time",
   "clientes",
+  "apps",
   "financeiro",
   "pedidos",
   "radar",
@@ -88,7 +92,8 @@ const ABA_CONFIG: Record<string, { title: string; icon: React.ComponentType<{ cl
   contas: { title: "Contas", icon: Share2 },
   logistica: { title: "Logística", icon: CalendarCheck },
   time: { title: "Time", icon: Users },
-  clientes: { title: "Clientes", icon: Users },
+  clientes: { title: "Clientes", icon: Briefcase },
+  apps: { title: "Apps", icon: Smartphone },
   financeiro: { title: "Financeiro", icon: DollarSign },
   pedidos: { title: "Pedidos", icon: Package },
   radar: { title: "Radar", icon: Radio },
@@ -181,6 +186,7 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
       logistica: true, // sempre habilitado
       time: nicho.time_habilitado !== false,
       clientes: nicho.clientes_habilitado === true,
+      apps: nicho.apps_habilitado === true,
       financeiro: nicho.financeiro_habilitado === true,
       pedidos: nicho.pedidos_habilitado === true,
       radar: nicho.radar_habilitado === true,
@@ -263,6 +269,7 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
       logistica: true,
       time: nicho.time_habilitado !== false,
       clientes: nicho.clientes_habilitado === true,
+      apps: nicho.apps_habilitado === true,
       financeiro: nicho.financeiro_habilitado === true,
       pedidos: nicho.pedidos_habilitado === true,
       radar: nicho.radar_habilitado === true,
