@@ -671,6 +671,7 @@ export type Database = {
           mapa_dependencia_habilitado: boolean
           nome: string
           observacoes: string | null
+          offer_vault_habilitado: boolean
           ordem_abas: string[] | null
           pedidos_habilitado: boolean
           radar_habilitado: boolean
@@ -695,6 +696,7 @@ export type Database = {
           mapa_dependencia_habilitado?: boolean
           nome: string
           observacoes?: string | null
+          offer_vault_habilitado?: boolean
           ordem_abas?: string[] | null
           pedidos_habilitado?: boolean
           radar_habilitado?: boolean
@@ -719,6 +721,7 @@ export type Database = {
           mapa_dependencia_habilitado?: boolean
           nome?: string
           observacoes?: string | null
+          offer_vault_habilitado?: boolean
           ordem_abas?: string[] | null
           pedidos_habilitado?: boolean
           radar_habilitado?: boolean
@@ -727,6 +730,56 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      offer_vault: {
+        Row: {
+          aprendizado: string | null
+          como_testar: string | null
+          created_at: string
+          id: string
+          nicho_id: string
+          origem_plataforma: string
+          origem_url: string | null
+          pais: string
+          status_oferta: string
+          titulo_curto: string
+          updated_at: string
+        }
+        Insert: {
+          aprendizado?: string | null
+          como_testar?: string | null
+          created_at?: string
+          id?: string
+          nicho_id: string
+          origem_plataforma?: string
+          origem_url?: string | null
+          pais?: string
+          status_oferta?: string
+          titulo_curto: string
+          updated_at?: string
+        }
+        Update: {
+          aprendizado?: string | null
+          como_testar?: string | null
+          created_at?: string
+          id?: string
+          nicho_id?: string
+          origem_plataforma?: string
+          origem_url?: string | null
+          pais?: string
+          status_oferta?: string
+          titulo_curto?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_vault_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pedidos: {
         Row: {

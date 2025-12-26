@@ -18,7 +18,8 @@ import {
   UserCheck,
   Briefcase,
   Smartphone,
-  LayoutDashboard
+  LayoutDashboard,
+  Gem,
 } from "lucide-react";
 import { OrdemAbasEditor } from "./OrdemAbasEditor";
 
@@ -38,6 +39,7 @@ interface ConfiguracoesNichoTabProps {
     alertas_habilitado?: boolean;
     clientes_habilitado?: boolean;
     apps_habilitado?: boolean;
+    offer_vault_habilitado?: boolean;
     ordem_abas?: string[] | null;
   };
   onConfigUpdate: () => void;
@@ -110,6 +112,14 @@ const MODULOS_CONFIG = [
     description: "Monitore tendências e oportunidades do mercado",
     icon: Radio,
     color: "cyan",
+  },
+  {
+    id: "offer_vault",
+    dbField: "offer_vault_habilitado",
+    label: "OfferVault",
+    description: "Cofre de ofertas - memória estratégica do mercado",
+    icon: Gem,
+    color: "amber",
   },
   {
     id: "alertas",

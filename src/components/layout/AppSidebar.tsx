@@ -20,6 +20,7 @@ import {
   Lightbulb,
   Bell,
   UserCheck,
+  Gem,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -51,6 +52,7 @@ interface AppSidebarProps {
   lembretesHojeHabilitado?: boolean;
   timeHabilitado?: boolean;
   clientesHabilitado?: boolean;
+  offerVaultHabilitado?: boolean;
   ordemAbas?: string[] | null;
 }
 
@@ -61,6 +63,7 @@ const DEFAULT_ORDER = [
   "time",
   "clientes",
   "pedidos",
+  "offervault",
   "radar",
   "cemiterio",
   "mapa",
@@ -70,7 +73,7 @@ const DEFAULT_ORDER = [
   "configuracoes",
 ];
 
-function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, ordemAbas }: AppSidebarProps) {
+function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, offerVaultHabilitado, ordemAbas }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -97,6 +100,7 @@ function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHa
     time: { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users, enabled: timeHabilitado !== false },
     clientes: { title: "Clientes & Apps", href: `/workspace/${nichoId}/clientes`, icon: UserCheck, enabled: clientesHabilitado === true },
     pedidos: { title: "Pedidos", href: `/workspace/${nichoId}/pedidos`, icon: Package, enabled: pedidosHabilitado === true },
+    offervault: { title: "OfferVault", href: `/workspace/${nichoId}/offervault`, icon: Gem, enabled: offerVaultHabilitado === true },
     radar: { title: "Radar", href: `/workspace/${nichoId}/radar`, icon: Radio, enabled: radarHabilitado === true },
     cemiterio: { title: "Cemitério", href: `/workspace/${nichoId}/cemiterio`, icon: Archive, enabled: cemiterioHabilitado === true },
     mapa: { title: "Mapa", href: `/workspace/${nichoId}/mapa-dependencia`, icon: Network, enabled: mapaDependenciaHabilitado === true },
@@ -104,7 +108,7 @@ function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHa
     aprendizado: { title: "Aprendizado", href: `/workspace/${nichoId}/aprendizado`, icon: Lightbulb, enabled: logsAprendizadoHabilitado === true },
     lembretes: { title: "Lembretes", href: `/workspace/${nichoId}/lembretes`, icon: Bell, enabled: lembretesHojeHabilitado === true },
     configuracoes: { title: "Configurações", href: `/workspace/${nichoId}/configuracoes`, icon: Settings, enabled: true },
-  }), [nichoId, dashboardHabilitado, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado]);
+  }), [nichoId, dashboardHabilitado, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, offerVaultHabilitado]);
 
   // Usa ordem customizada ou padrão - memoized
   const navItems = useMemo(() => {
