@@ -6,8 +6,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical, KeyRound, Copy, ChevronDown, ChevronUp, Phone, Send, Globe, GripVertical, Flame, Snowflake, Thermometer, CheckCircle2, Rocket, AlertTriangle } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical, KeyRound, Copy, ChevronDown, ChevronUp, Phone, Send, Globe, GripVertical, Flame, Snowflake, Thermometer, CheckCircle2, Rocket, AlertTriangle, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { format, differenceInDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +33,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { differenceInDays } from "date-fns";
+
 
 interface ContasNichoTabProps {
   nichoId: string;
@@ -819,6 +824,43 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                     maxLength={100}
                     required={formData.status === "risco" || formData.status === "desativada"}
                   />
+                </div>
+
+                {/* Campo de Data de Criação da Conta */}
+                <div>
+                  <Label className="text-xs">Data de criação da conta</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className={cn(
+                          "w-full h-9 justify-start text-left font-normal",
+                          !formData.data_criacao_conta && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.data_criacao_conta 
+                          ? format(new Date(formData.data_criacao_conta), "dd/MM/yyyy", { locale: ptBR })
+                          : <span>Selecione a data</span>
+                        }
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-50" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData.data_criacao_conta ? new Date(formData.data_criacao_conta) : undefined}
+                        onSelect={(date) => setFormData({ 
+                          ...formData, 
+                          data_criacao_conta: date ? format(date, "yyyy-MM-dd") : "" 
+                        })}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {/* Campos especificos para WhatsApp/Telegram */}
