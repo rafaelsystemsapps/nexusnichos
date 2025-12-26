@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Search, Users, Filter, Percent, DollarSign, Target, Smartphone } from "lucide-react";
+import { Plus, Search, Users, Filter, Percent, DollarSign, Target, Smartphone, Wallet } from "lucide-react";
 import { ClienteCard } from "./ClienteCard";
 import { ClienteForm } from "./ClienteForm";
 import { ProspectsTab } from "./ProspectsTab";
 import { AplicativosTab } from "./AplicativosTab";
+import { FinanceiroTab } from "./FinanceiroTab";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useClientes, useUpdateClienteOrdem, useInvalidateClientes } from "@/hooks/queries";
@@ -160,7 +161,7 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
     <div className="space-y-6 tab-content">
       {/* Sub-Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-[500px] grid-cols-3">
+        <TabsList className="grid w-full max-w-[600px] grid-cols-4">
           <TabsTrigger value="clientes" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Clientes
@@ -172,6 +173,10 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
           <TabsTrigger value="prospeccao" className="flex items-center gap-2">
             <Target className="h-4 w-4" />
             Prospecção
+          </TabsTrigger>
+          <TabsTrigger value="financeiro" className="flex items-center gap-2">
+            <Wallet className="h-4 w-4" />
+            Financeiro
           </TabsTrigger>
         </TabsList>
 
@@ -333,6 +338,10 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
 
         <TabsContent value="prospeccao" className="mt-6 tab-content">
           <ProspectsTab nichoId={nichoId} />
+        </TabsContent>
+
+        <TabsContent value="financeiro" className="mt-6 tab-content">
+          <FinanceiroTab nichoId={nichoId} />
         </TabsContent>
       </Tabs>
     </div>
