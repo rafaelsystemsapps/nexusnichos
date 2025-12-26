@@ -232,12 +232,13 @@ interface SortableContaItemProps {
   onDelete: (conta: any) => void;
   onCredenciais: (conta: any) => void;
   onToggleAquecimento: (conta: any) => void;
+  onSelectPlano: (conta: any, dias: number) => void;
   hasCredenciais: (conta: any) => boolean;
   getStatusDisplay: (status: string) => React.ReactNode;
   getFaseDisplay: (conta: any) => React.ReactNode;
 }
 
-function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, onToggleAquecimento, hasCredenciais, getStatusDisplay, getFaseDisplay }: SortableContaItemProps) {
+function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, onToggleAquecimento, onSelectPlano, hasCredenciais, getStatusDisplay, getFaseDisplay }: SortableContaItemProps) {
   const {
     attributes,
     listeners,
@@ -361,20 +362,70 @@ function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, onToggleAqu
 
       {/* Acoes rapidas */}
       <div className="flex items-center gap-1 shrink-0">
-        {/* Toggle de aquecimento - só mostra se tem plano definido */}
-        {conta.aquecimento_meta_dias && faseAquecimento !== 'aquecida' && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "h-8 w-8",
-              conta.aquecimento_ativo ? "text-orange-400 hover:text-orange-300" : "text-muted-foreground"
-            )}
-            onClick={() => onToggleAquecimento(conta)}
-            title={conta.aquecimento_ativo ? "Pausar aquecimento" : "Iniciar aquecimento"}
-          >
-            {conta.aquecimento_ativo ? <Flame className="h-4 w-4" /> : <Power className="h-4 w-4" />}
-          </Button>
+        {/* Seletor de plano + Toggle de aquecimento */}
+        {faseAquecimento !== 'aquecida' && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-8 w-8",
+                  conta.aquecimento_ativo ? "text-orange-400 hover:text-orange-300" : "text-muted-foreground"
+                )}
+                title={conta.aquecimento_meta_dias 
+                  ? `Plano: ${conta.aquecimento_meta_dias} dias` 
+                  : "Definir plano de aquecimento"
+                }
+              >
+                {conta.aquecimento_ativo ? <Flame className="h-4 w-4" /> : <Thermometer className="h-4 w-4" />}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover w-48">
+              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                Plano de Aquecimento
+              </div>
+              {PLANOS_AQUECIMENTO.map(p => (
+                <DropdownMenuItem 
+                  key={p.value}
+                  onClick={() => onSelectPlano(conta, p.value)}
+                  className={cn(
+                    conta.aquecimento_meta_dias === p.value && "bg-accent"
+                  )}
+                >
+                  {p.label}
+                </DropdownMenuItem>
+              ))}
+              {conta.aquecimento_meta_dias && (
+                <>
+                  <div className="my-1 border-t border-border" />
+                  <DropdownMenuItem 
+                    onClick={() => onToggleAquecimento(conta)}
+                    className={conta.aquecimento_ativo ? "text-amber-400" : "text-emerald-400"}
+                  >
+                    {conta.aquecimento_ativo ? (
+                      <>
+                        <Pause className="h-3.5 w-3.5 mr-2" />
+                        Pausar aquecimento
+                      </>
+                    ) : (
+                      <>
+                        <Power className="h-3.5 w-3.5 mr-2" />
+                        Iniciar aquecimento
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
+        {/* Badge de aquecida */}
+        {faseAquecimento === 'aquecida' && (
+          <span className="text-emerald-400" title="Conta aquecida">
+            <CheckCircle2 className="h-4 w-4" />
+          </span>
         )}
 
         {/* Botao de credenciais */}
@@ -662,6 +713,23 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     }
   };
 
+  // Selecionar plano de aquecimento rapidamente
+  const handleSelectPlano = async (conta: any, dias: number) => {
+    try {
+      const { error } = await supabase
+        .from("contas_redes_sociais")
+        .update({ aquecimento_meta_dias: dias })
+        .eq("id", conta.id);
+
+      if (error) throw error;
+      
+      toast.success(`Plano de ${dias} dias definido!`);
+      fetchContas();
+    } catch (error: any) {
+      toast.error("Erro: " + error.message);
+    }
+  };
+
   const handleDelete = async () => {
     if (!contaToDelete) return;
     
@@ -935,56 +1003,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   </Popover>
                 </div>
 
-                {/* === SEÇÃO DE AQUECIMENTO === */}
-                <div className="border border-border/50 rounded-lg p-3 space-y-3 bg-muted/20">
-                  <div className="flex items-center gap-2">
-                    <Flame className="h-4 w-4 text-orange-400" />
-                    <span className="text-sm font-medium">Aquecimento</span>
-                  </div>
-                  
-                  {/* Seletor de plano */}
-                  <div>
-                    <Label className="text-xs">Plano de aquecimento</Label>
-                    <Select
-                      value={formData.aquecimento_meta_dias?.toString() || ""}
-                      onValueChange={(value) => setFormData({ 
-                        ...formData, 
-                        aquecimento_meta_dias: value ? parseInt(value) : null 
-                      })}
-                    >
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Selecione um plano" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PLANOS_AQUECIMENTO.map(p => (
-                          <SelectItem key={p.value} value={p.value.toString()}>
-                            {p.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Toggle de aquecimento - só aparece se tem plano selecionado */}
-                  {formData.aquecimento_meta_dias && (
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-xs">Aquecimento ativo</Label>
-                        <p className="text-xs text-muted-foreground">
-                          {formData.aquecimento_ativo 
-                            ? "Contador em andamento" 
-                            : "Ative para iniciar o contador"
-                          }
-                        </p>
-                      </div>
-                      <Switch
-                        checked={formData.aquecimento_ativo}
-                        onCheckedChange={(checked) => setFormData({ ...formData, aquecimento_ativo: checked })}
-                      />
-                    </div>
-                  )}
-                </div>
-
                 {/* Campos especificos para WhatsApp/Telegram */}
                 {needsTelefone && (
                   <div>
@@ -1150,6 +1168,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   onDelete={openDeleteDialog}
                   onCredenciais={openCredenciaisModal}
                   onToggleAquecimento={handleToggleAquecimento}
+                  onSelectPlano={handleSelectPlano}
                   hasCredenciais={hasCredenciais}
                   getStatusDisplay={getStatusDisplay}
                   getFaseDisplay={getFaseDisplay}
