@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +14,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MoreHorizontal, Pencil, Trash2, Link2, Users, Clock } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Link2, Users, Clock, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export interface AppLabApp {
@@ -31,6 +30,12 @@ export interface AppLabApp {
   created_at: string;
   updated_at: string;
   links_count?: number;
+  links_summary?: {
+    "7_dias": number;
+    "30_dias": number;
+    "3_meses": number;
+    expirados: number;
+  };
 }
 
 interface AppLabCardProps {
@@ -83,6 +88,12 @@ const STATUS_OPTIONS: AppLabApp["status_teste"][] = [
   "descartado",
 ];
 
+const DURACAO_CONFIG = {
+  "7_dias": { label: "7d", emoji: "🧪", color: "text-amber-500", bg: "bg-amber-500/20" },
+  "30_dias": { label: "30d", emoji: "🔬", color: "text-blue-500", bg: "bg-blue-500/20" },
+  "3_meses": { label: "3m", emoji: "🧫", color: "text-purple-500", bg: "bg-purple-500/20" },
+};
+
 export function AppLabCard({
   app,
   onEdit,
@@ -91,6 +102,8 @@ export function AppLabCard({
   onStatusChange,
 }: AppLabCardProps) {
   const statusConfig = STATUS_CONFIG[app.status_teste];
+  const summary = app.links_summary;
+  const hasExpirados = summary && summary.expirados > 0;
 
   return (
     <Card
@@ -169,6 +182,69 @@ export function AppLabCard({
               </div>
             </div>
 
+            {/* Test Summary */}
+            {summary && (summary["7_dias"] > 0 || summary["30_dias"] > 0 || summary["3_meses"] > 0 || summary.expirados > 0) && (
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                {summary["7_dias"] > 0 && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className={cn("text-xs cursor-default", DURACAO_CONFIG["7_dias"].bg, DURACAO_CONFIG["7_dias"].color)}>
+                          {DURACAO_CONFIG["7_dias"].emoji} {summary["7_dias"]}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {summary["7_dias"]} teste(s) de 7 dias ativos
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {summary["30_dias"] > 0 && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className={cn("text-xs cursor-default", DURACAO_CONFIG["30_dias"].bg, DURACAO_CONFIG["30_dias"].color)}>
+                          {DURACAO_CONFIG["30_dias"].emoji} {summary["30_dias"]}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {summary["30_dias"]} teste(s) de 30 dias ativos
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {summary["3_meses"] > 0 && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className={cn("text-xs cursor-default", DURACAO_CONFIG["3_meses"].bg, DURACAO_CONFIG["3_meses"].color)}>
+                          {DURACAO_CONFIG["3_meses"].emoji} {summary["3_meses"]}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {summary["3_meses"]} teste(s) de 3 meses ativos
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {summary.expirados > 0 && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="destructive" className="text-xs cursor-default">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          {summary.expirados}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {summary.expirados} teste(s) expirado(s) - requer atenção
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+            )}
+
             {/* Observações */}
             {app.observacoes && (
               <TooltipProvider>
@@ -188,6 +264,22 @@ export function AppLabCard({
 
           {/* Actions */}
           <div className="flex items-center gap-1 shrink-0">
+            {/* Expiration Alert */}
+            {hasExpirados && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => onManageLinks(app)}>
+                      <AlertTriangle className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {summary?.expirados} teste(s) expirado(s)
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
             {/* Status Quick Change */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
