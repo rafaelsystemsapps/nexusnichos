@@ -131,9 +131,13 @@ export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHab
   // Usa ordem customizada ou padrão
   const order = ordemAbas || DEFAULT_ORDER;
   
-  // Constrói os navItems baseado na ordem e itens habilitados
-  const colaboradorNavItems: NavItem[] = order
-    .filter(id => abaConfig[id]?.enabled)
+  // Identifica abas habilitadas que não estão na ordem (para garantir que apareçam)
+  const enabledIds = Object.keys(abaConfig).filter(id => abaConfig[id].enabled);
+  const missingEnabled = enabledIds.filter(id => !order.includes(id));
+  const finalOrder = [...order.filter(id => enabledIds.includes(id)), ...missingEnabled];
+  
+  // Constrói os navItems baseado na ordem final
+  const colaboradorNavItems: NavItem[] = finalOrder
     .map(id => ({
       title: abaConfig[id].title,
       href: abaConfig[id].href,

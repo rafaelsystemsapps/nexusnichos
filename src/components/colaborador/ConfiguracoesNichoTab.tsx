@@ -189,7 +189,8 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
 
     try {
       // Build update payload with linked modules
-      const updatePayload: Record<string, boolean> = { [dbField]: enabled };
+      const updatePayload: Record<string, any> = { [dbField]: enabled };
+      const linkedIds: string[] = [];
       
       // If this module has linked modules, update them too
       if ('linkedModules' in modulo && modulo.linkedModules) {
@@ -197,8 +198,23 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
           const linkedModulo = MODULOS_CONFIG.find(m => m.id === linkedId);
           if (linkedModulo) {
             updatePayload[linkedModulo.dbField] = enabled;
+            linkedIds.push(linkedId);
             setModulosState((prev) => ({ ...prev, [linkedId]: enabled }));
           }
+        }
+      }
+
+      // Se estamos habilitando modulos, garantir que estejam no ordem_abas
+      if (enabled && linkedIds.length > 0) {
+        const currentOrdem = nicho.ordem_abas || [];
+        const missingFromOrder = linkedIds.filter(id => !currentOrdem.includes(id));
+        if (missingFromOrder.length > 0) {
+          // Adicionar logo após o módulo principal na ordem
+          const mainIndex = currentOrdem.indexOf(moduloId);
+          const insertIndex = mainIndex >= 0 ? mainIndex + 1 : currentOrdem.length;
+          const newOrdem = [...currentOrdem];
+          newOrdem.splice(insertIndex, 0, ...missingFromOrder);
+          updatePayload.ordem_abas = newOrdem;
         }
       }
 
