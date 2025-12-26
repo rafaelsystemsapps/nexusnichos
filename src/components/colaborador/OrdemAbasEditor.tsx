@@ -38,6 +38,8 @@ import {
   Bell,
   Smartphone,
   Briefcase,
+  AlertTriangle,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +67,7 @@ interface OrdemAbasEditorProps {
     teste_rapido_habilitado?: boolean;
     logs_aprendizado_habilitado?: boolean;
     lembretes_hoje_habilitado?: boolean;
+    alertas_habilitado?: boolean;
   };
   onConfigUpdate: () => void;
 }
@@ -79,6 +82,7 @@ const DEFAULT_ORDER = [
   "financeiro",
   "pedidos",
   "radar",
+  "alertas",
   "cemiterio",
   "mapa",
   "testes",
@@ -97,6 +101,7 @@ const ABA_CONFIG: Record<string, { title: string; icon: React.ComponentType<{ cl
   financeiro: { title: "Financeiro", icon: DollarSign },
   pedidos: { title: "Pedidos", icon: Package },
   radar: { title: "Radar", icon: Radio },
+  alertas: { title: "Alertas", icon: AlertTriangle },
   cemiterio: { title: "Cemitério", icon: Archive },
   mapa: { title: "Mapa", icon: Network },
   testes: { title: "Testes", icon: FlaskConical },
@@ -190,6 +195,7 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
       financeiro: nicho.financeiro_habilitado === true,
       pedidos: nicho.pedidos_habilitado === true,
       radar: nicho.radar_habilitado === true,
+      alertas: nicho.alertas_habilitado === true,
       cemiterio: nicho.cemiterio_habilitado === true,
       mapa: nicho.mapa_dependencia_habilitado === true,
       testes: nicho.teste_rapido_habilitado === true,
@@ -273,6 +279,7 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
       financeiro: nicho.financeiro_habilitado === true,
       pedidos: nicho.pedidos_habilitado === true,
       radar: nicho.radar_habilitado === true,
+      alertas: nicho.alertas_habilitado === true,
       cemiterio: nicho.cemiterio_habilitado === true,
       mapa: nicho.mapa_dependencia_habilitado === true,
       testes: nicho.teste_rapido_habilitado === true,
