@@ -334,6 +334,9 @@ export type Database = {
       }
       contas_redes_sociais: {
         Row: {
+          aquecimento_ativo: boolean | null
+          aquecimento_inicio: string | null
+          aquecimento_meta_dias: number | null
           created_at: string | null
           data_criacao_conta: string | null
           gmail_email: string | null
@@ -361,6 +364,9 @@ export type Database = {
           url_site: string | null
         }
         Insert: {
+          aquecimento_ativo?: boolean | null
+          aquecimento_inicio?: string | null
+          aquecimento_meta_dias?: number | null
           created_at?: string | null
           data_criacao_conta?: string | null
           gmail_email?: string | null
@@ -388,6 +394,9 @@ export type Database = {
           url_site?: string | null
         }
         Update: {
+          aquecimento_ativo?: boolean | null
+          aquecimento_inicio?: string | null
+          aquecimento_meta_dias?: number | null
           created_at?: string | null
           data_criacao_conta?: string | null
           gmail_email?: string | null
