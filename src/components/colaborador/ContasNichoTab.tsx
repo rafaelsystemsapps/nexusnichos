@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical, KeyRound, Copy, ChevronDown, ChevronUp, Phone, Send, Globe, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical, KeyRound, Copy, ChevronDown, ChevronUp, Phone, Send, Globe, GripVertical, Flame, Snowflake, Thermometer, CheckCircle2, Rocket, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -28,6 +28,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { differenceInDays } from "date-fns";
 
 interface ContasNichoTabProps {
   nichoId: string;
@@ -83,6 +84,98 @@ const STATUS_FILTROS = [
   { value: "desativada", label: "Desativadas" },
 ];
 
+// === SISTEMA DE AQUECIMENTO ===
+type FaseAquecimento = "fria" | "7_dias" | "15_dias" | "pronta_teste" | "aquecida" | "sem_engajamento";
+
+const FASE_CONFIG: Record<FaseAquecimento, { 
+  label: string; 
+  icon: React.ReactNode; 
+  className: string;
+  shortLabel: string;
+}> = {
+  fria: { 
+    label: "Fria", 
+    shortLabel: "Fria",
+    icon: <Snowflake className="h-3 w-3" />,
+    className: "bg-sky-500/20 text-sky-400 border-sky-500/30" 
+  },
+  "7_dias": { 
+    label: "7 dias", 
+    shortLabel: "7d",
+    icon: <Thermometer className="h-3 w-3" />,
+    className: "bg-amber-500/20 text-amber-400 border-amber-500/30" 
+  },
+  "15_dias": { 
+    label: "15 dias", 
+    shortLabel: "15d",
+    icon: <Flame className="h-3 w-3" />,
+    className: "bg-orange-500/20 text-orange-400 border-orange-500/30" 
+  },
+  pronta_teste: { 
+    label: "Pronta p/ teste", 
+    shortLabel: "Pronta",
+    icon: <CheckCircle2 className="h-3 w-3" />,
+    className: "bg-lime-500/20 text-lime-400 border-lime-500/30" 
+  },
+  aquecida: { 
+    label: "Aquecida", 
+    shortLabel: "Aquec.",
+    icon: <Rocket className="h-3 w-3" />,
+    className: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" 
+  },
+  sem_engajamento: { 
+    label: "Sem engajamento", 
+    shortLabel: "S/ Eng.",
+    icon: <AlertTriangle className="h-3 w-3" />,
+    className: "bg-red-500/20 text-red-400 border-red-500/30" 
+  },
+};
+
+const FASE_FILTROS = [
+  { value: "todas", label: "Todas fases" },
+  { value: "fria", label: "❄️ Fria" },
+  { value: "7_dias", label: "🌡️ 7 dias" },
+  { value: "15_dias", label: "🔥 15 dias" },
+  { value: "pronta_teste", label: "✅ Pronta" },
+  { value: "aquecida", label: "🚀 Aquecida" },
+  { value: "sem_engajamento", label: "⚠️ S/ Eng." },
+];
+
+// Calcula a fase de aquecimento automaticamente
+const calcularFaseAquecimento = (conta: any): FaseAquecimento => {
+  // Se tem override manual (status_aquecimento diferente de 'media'), usar
+  if (conta.status_aquecimento && conta.status_aquecimento !== 'media') {
+    // Mapear valores do DB para nossas fases
+    const mapOverride: Record<string, FaseAquecimento> = {
+      'fria': 'fria',
+      'baixa': '7_dias',
+      'alta': 'aquecida',
+      'sem_engajamento': 'sem_engajamento',
+    };
+    if (mapOverride[conta.status_aquecimento]) {
+      return mapOverride[conta.status_aquecimento];
+    }
+  }
+  
+  // Se não tem data de criação, é fria
+  if (!conta.data_criacao_conta) return 'fria';
+  
+  const diasAquecendo = differenceInDays(new Date(), new Date(conta.data_criacao_conta));
+  
+  if (diasAquecendo < 0) return 'fria'; // Data futura
+  if (diasAquecendo < 7) return '7_dias';
+  if (diasAquecendo < 15) return '15_dias';
+  if (diasAquecendo < 30) return 'pronta_teste';
+  return 'aquecida';
+};
+
+// Calcula dias desde criação
+const calcularDiasAquecendo = (dataCriacao: string | null): number | null => {
+  if (!dataCriacao) return null;
+  const dias = differenceInDays(new Date(), new Date(dataCriacao));
+  return dias >= 0 ? dias : null;
+};
+
 // Mapeamento do enum antigo para o novo status minimalista
 const mapStatusFromDB = (status: string): StatusConta => {
   if (status === "ativa") return "ativa";
@@ -107,9 +200,10 @@ interface SortableContaItemProps {
   onCredenciais: (conta: any) => void;
   hasCredenciais: (conta: any) => boolean;
   getStatusDisplay: (status: string) => React.ReactNode;
+  getFaseDisplay: (conta: any) => React.ReactNode;
 }
 
-function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, hasCredenciais, getStatusDisplay }: SortableContaItemProps) {
+function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, hasCredenciais, getStatusDisplay, getFaseDisplay }: SortableContaItemProps) {
   const {
     attributes,
     listeners,
@@ -127,6 +221,7 @@ function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, hasCredenci
 
   const status = mapStatusFromDB(conta.status);
   const needsAction = status === "risco" || status === "desativada";
+  const diasAquecendo = calcularDiasAquecendo(conta.data_criacao_conta);
 
   return (
     <div 
@@ -154,12 +249,23 @@ function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, hasCredenci
       
       {/* Conteudo principal */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center">
-          <span className="font-medium text-sm truncate w-[130px] shrink-0">{conta.nome_conta}</span>
-          <div className="ml-2">
-            {getStatusDisplay(conta.status)}
-          </div>
+        <div className="flex items-center flex-wrap gap-1.5">
+          <span className="font-medium text-sm truncate max-w-[120px] shrink-0">{conta.nome_conta}</span>
+          {getStatusDisplay(conta.status)}
+          {getFaseDisplay(conta)}
         </div>
+
+        {/* Dias aquecendo */}
+        {diasAquecendo !== null && (
+          <p className="text-xs text-muted-foreground mt-1">
+            <span className="opacity-60">Aquecendo há</span> {diasAquecendo} {diasAquecendo === 1 ? 'dia' : 'dias'}
+          </p>
+        )}
+        {diasAquecendo === null && !conta.data_criacao_conta && (
+          <p className="text-xs text-amber-400/70 mt-1">
+            ⚠️ Adicionar data de criação
+          </p>
+        )}
         
         {/* Telefone para WhatsApp/Telegram */}
         {(conta.plataforma === "whatsapp" || conta.plataforma === "telegram") && conta.telefone && (
@@ -258,6 +364,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     telefone: "",
     url_site: "",
     pin: "",
+    data_criacao_conta: "",
+    status_aquecimento: "media",
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contaToDelete, setContaToDelete] = useState<any>(null);
@@ -270,6 +378,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   // Filtros
   const [filtroStatus, setFiltroStatus] = useState<string>("todas");
   const [filtroPlataforma, setFiltroPlataforma] = useState<string>("todas");
+  const [filtroFase, setFiltroFase] = useState<string>("todas");
 
   // Sensor para drag and drop
   const sensors = useSensors(
@@ -305,11 +414,13 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const contasFiltradas = useMemo(() => {
     return contas.filter(conta => {
       const statusConta = mapStatusFromDB(conta.status);
+      const faseConta = calcularFaseAquecimento(conta);
       const matchStatus = filtroStatus === "todas" || statusConta === filtroStatus;
       const matchPlataforma = filtroPlataforma === "todas" || conta.plataforma === filtroPlataforma;
-      return matchStatus && matchPlataforma;
+      const matchFase = filtroFase === "todas" || faseConta === filtroFase;
+      return matchStatus && matchPlataforma && matchFase;
     });
-  }, [contas, filtroStatus, filtroPlataforma]);
+  }, [contas, filtroStatus, filtroPlataforma, filtroFase]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -361,6 +472,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         telefone: formData.telefone || null,
         url_site: formData.url_site || null,
         pin: formData.pin || null,
+        data_criacao_conta: formData.data_criacao_conta || null,
+        status_aquecimento: formData.status_aquecimento || 'media',
         nicho_id: nichoId,
         responsavel_id: user?.id || null,
         ordem: editingConta ? editingConta.ordem : contas.length,
@@ -404,6 +517,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       telefone: "",
       url_site: "",
       pin: "",
+      data_criacao_conta: "",
+      status_aquecimento: "media",
     });
     setEditingConta(null);
     setCredenciaisOpen(false);
@@ -425,6 +540,8 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       telefone: conta.telefone || "",
       url_site: conta.url_site || "",
       pin: conta.pin || "",
+      data_criacao_conta: conta.data_criacao_conta || "",
+      status_aquecimento: conta.status_aquecimento || "media",
     });
     // Abrir secao de credenciais se ja existem dados
     setCredenciaisOpen(!!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha));
@@ -481,8 +598,19 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     const status = mapStatusFromDB(dbStatus);
     const config = STATUS_CONFIG[status];
     return (
-      <span className={`text-xs font-medium px-2 py-1 rounded-md border w-[85px] text-center inline-block ${config.className}`}>
+      <span className={`text-xs font-medium px-2 py-0.5 rounded-md border text-center inline-block ${config.className}`}>
         {config.label}
+      </span>
+    );
+  };
+
+  const getFaseDisplay = (conta: any) => {
+    const fase = calcularFaseAquecimento(conta);
+    const config = FASE_CONFIG[fase];
+    return (
+      <span className={`text-xs font-medium px-2 py-0.5 rounded-md border inline-flex items-center gap-1 ${config.className}`}>
+        {config.icon}
+        {config.shortLabel}
       </span>
     );
   };
@@ -791,6 +919,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   onCredenciais={openCredenciaisModal}
                   hasCredenciais={hasCredenciais}
                   getStatusDisplay={getStatusDisplay}
+                  getFaseDisplay={getFaseDisplay}
                 />
               ))}
             </div>
