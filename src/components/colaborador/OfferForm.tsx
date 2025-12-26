@@ -63,6 +63,7 @@ const formSchema = z.object({
   titulo_curto: z.string().min(1, "Título obrigatório").max(100, "Máximo 100 caracteres"),
   origem_plataforma: z.string().min(1, "Plataforma obrigatória"),
   origem_url: z.string().url("URL inválida").optional().or(z.literal("")),
+  link_pagina_vendas: z.string().url("URL inválida").optional().or(z.literal("")),
   pais: z.string().min(1, "País obrigatório"),
   status_oferta: z.string().min(1, "Status obrigatório"),
   como_testar: z.string().max(500, "Máximo 500 caracteres").optional(),
@@ -95,6 +96,7 @@ export function OfferForm({ open, onOpenChange, offer, onSubmit, isLoading }: Of
       titulo_curto: offer?.titulo_curto || "",
       origem_plataforma: offer?.origem_plataforma || "tiktok",
       origem_url: offer?.origem_url || "",
+      link_pagina_vendas: offer?.link_pagina_vendas || "",
       pais: offer?.pais || "BR",
       status_oferta: offer?.status_oferta || "salva",
       como_testar: offer?.como_testar || "",
@@ -108,6 +110,7 @@ export function OfferForm({ open, onOpenChange, offer, onSubmit, isLoading }: Of
     onSubmit({
       ...data,
       origem_url: data.origem_url || undefined,
+      link_pagina_vendas: data.link_pagina_vendas || undefined,
       como_testar: data.como_testar || undefined,
       aprendizado: data.aprendizado || undefined,
     });
@@ -193,9 +196,23 @@ export function OfferForm({ open, onOpenChange, offer, onSubmit, isLoading }: Of
               name="origem_url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Link da oferta</FormLabel>
+                  <FormLabel>Link da oferta (onde encontrou)</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://..." {...field} />
+                    <Input placeholder="https://tiktok.com/..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="link_pagina_vendas"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Link da página de vendas</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://vendas.com/..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

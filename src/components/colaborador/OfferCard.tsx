@@ -9,7 +9,8 @@ import {
   Snowflake,
   CheckCircle2,
   XCircle,
-  Trash
+  Trash,
+  ShoppingCart
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -128,18 +129,31 @@ export function OfferCard({ offer, onEdit, onDelete, onStatusChange }: OfferCard
           </Badge>
         </div>
 
-        {/* Link */}
-        {offer.origem_url && (
-          <a 
-            href={offer.origem_url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs text-primary hover:underline truncate"
-          >
-            <ExternalLink className="h-3 w-3 shrink-0" />
-            <span className="truncate">{offer.origem_url}</span>
-          </a>
-        )}
+        {/* Links */}
+        <div className="space-y-1">
+          {offer.origem_url && (
+            <a 
+              href={offer.origem_url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-primary hover:underline truncate"
+            >
+              <ExternalLink className="h-3 w-3 shrink-0" />
+              <span className="truncate">Origem: {offer.origem_url}</span>
+            </a>
+          )}
+          {offer.link_pagina_vendas && (
+            <a 
+              href={offer.link_pagina_vendas} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-emerald-600 hover:underline truncate"
+            >
+              <ShoppingCart className="h-3 w-3 shrink-0" />
+              <span className="truncate">Vendas: {offer.link_pagina_vendas}</span>
+            </a>
+          )}
+        </div>
 
         {/* Como testar */}
         {offer.como_testar && (
