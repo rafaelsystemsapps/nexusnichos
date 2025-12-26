@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo, memo } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsIOSMobile } from "@/hooks/use-mobile";
-import { supabase } from "@/integrations/supabase/client";
+import { useProfile, useInvalidateProfile } from "@/hooks/queries";
 import {
   FileText,
   Share2,
@@ -76,30 +76,15 @@ const DEFAULT_ORDER = [
   "configuracoes",
 ];
 
-export function AppSidebar({ nichoId, nichoNome, dashboardHabilitado, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, appsHabilitado, ordemAbas }: AppSidebarProps) {
+function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, appsHabilitado, ordemAbas }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
   const isIOSMobile = useIsIOSMobile();
   
-  const [profile, setProfile] = useState<{ nome: string; avatar_emoji: string | null; avatar_color: string | null } | null>(null);
+  const { data: profile } = useProfile(user?.id);
+  const invalidateProfile = useInvalidateProfile(user?.id);
   const [avatarEditorOpen, setAvatarEditorOpen] = useState(false);
-
-  useEffect(() => {
-    if (user?.id) {
-      fetchProfile();
-    }
-  }, [user?.id]);
-
-  const fetchProfile = async () => {
-    if (!user?.id) return;
-    const { data } = await supabase
-      .from("profiles")
-      .select("nome, avatar_emoji, avatar_color")
-      .eq("id", user.id)
-      .single();
-    if (data) setProfile(data);
-  };
 
   const getInitials = (name: string) => {
     return name
@@ -110,8 +95,8 @@ export function AppSidebar({ nichoId, nichoNome, dashboardHabilitado, contasHabi
       .slice(0, 2);
   };
 
-  // Configuração de todas as abas disponíveis
-  const abaConfig: Record<string, { title: string; href: string; icon: React.ComponentType<{ className?: string }>; enabled: boolean }> = {
+  // Configuração de todas as abas disponíveis - memoized
+  const abaConfig = useMemo(() => ({
     dashboard: { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard, enabled: dashboardHabilitado !== false },
     contas: { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2, enabled: contasHabilitado !== false },
     logistica: { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck, enabled: contasHabilitado === true },
@@ -127,33 +112,31 @@ export function AppSidebar({ nichoId, nichoNome, dashboardHabilitado, contasHabi
     aprendizado: { title: "Aprendizado", href: `/workspace/${nichoId}/aprendizado`, icon: Lightbulb, enabled: logsAprendizadoHabilitado === true },
     lembretes: { title: "Lembretes", href: `/workspace/${nichoId}/lembretes`, icon: Bell, enabled: lembretesHojeHabilitado === true },
     configuracoes: { title: "Configurações", href: `/workspace/${nichoId}/configuracoes`, icon: Settings, enabled: true },
-  };
+  }), [nichoId, dashboardHabilitado, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, appsHabilitado]);
 
-  // Usa ordem customizada ou padrão
-  const order = ordemAbas || DEFAULT_ORDER;
-  
-  // Identifica abas habilitadas que não estão na ordem (para garantir que apareçam)
-  const enabledIds = Object.keys(abaConfig).filter(id => abaConfig[id].enabled);
-  const missingEnabled = enabledIds.filter(id => !order.includes(id));
-  const finalOrder = [...order.filter(id => enabledIds.includes(id)), ...missingEnabled];
-  
-  // Constrói os navItems baseado na ordem final
-  const colaboradorNavItems: NavItem[] = finalOrder
-    .map(id => ({
-      title: abaConfig[id].title,
-      href: abaConfig[id].href,
-      icon: abaConfig[id].icon,
+  // Usa ordem customizada ou padrão - memoized
+  const navItems = useMemo(() => {
+    const order = ordemAbas || DEFAULT_ORDER;
+    const enabledIds = Object.keys(abaConfig).filter(id => abaConfig[id as keyof typeof abaConfig].enabled);
+    const missingEnabled = enabledIds.filter(id => !order.includes(id));
+    const finalOrder = [...order.filter(id => enabledIds.includes(id)), ...missingEnabled];
+    
+    const colaboradorNavItems: NavItem[] = finalOrder.map(id => ({
+      title: abaConfig[id as keyof typeof abaConfig].title,
+      href: abaConfig[id as keyof typeof abaConfig].href,
+      icon: abaConfig[id as keyof typeof abaConfig].icon,
     }));
 
-  const navItems: NavItem[] = isAdmin
-    ? [
-        { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
-        { title: "Nichos", href: "/admin/nichos", icon: Settings },
-      ]
-    : colaboradorNavItems;
+    return isAdmin
+      ? [
+          { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
+          { title: "Nichos", href: "/admin/nichos", icon: Settings },
+        ]
+      : colaboradorNavItems;
+  }, [abaConfig, ordemAbas, isAdmin]);
 
   // Limita itens na tab bar mobile (máximo 5)
-  const mobileNavItems = navItems.slice(0, 5);
+  const mobileNavItems = useMemo(() => navItems.slice(0, 5), [navItems]);
 
   const isActive = (href: string) => {
     if (href === `/workspace/${nichoId}` || href === "/admin") {
@@ -276,10 +259,12 @@ export function AppSidebar({ nichoId, nichoNome, dashboardHabilitado, contasHabi
             userName={profile.nome}
             currentEmoji={profile.avatar_emoji}
             currentColor={profile.avatar_color}
-            onSave={fetchProfile}
+            onSave={invalidateProfile}
           />
         )}
       </div>
     </header>
   );
 }
+
+export const AppSidebar = memo(AppSidebarComponent);

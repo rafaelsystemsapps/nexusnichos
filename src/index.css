@@ -419,4 +419,58 @@
   }
 }
 
+/* Smooth Page Transitions */
+@layer utilities {
+  .page-transition-enter {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  
+  .page-transition-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 150ms ease-out, transform 150ms ease-out;
+  }
+  
+  .page-transition-exit {
+    opacity: 1;
+  }
+  
+  .page-transition-exit-active {
+    opacity: 0;
+    transition: opacity 100ms ease-in;
+  }
+  
+  .tab-content {
+    animation: fadeSlideIn 150ms ease-out;
+  }
+  
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .skeleton-pulse {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes skeleton {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
+
 a[href*="lovable.dev"],iframe[src*="lovable.dev"],div[style*="Edit with Lovable"].lovable-badge{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important;position:absolute!important;z-index:-9999!important;}

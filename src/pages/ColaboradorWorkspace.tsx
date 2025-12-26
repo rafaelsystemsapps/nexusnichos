@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useCallback, memo, lazy, Suspense } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useNicho, useInvalidateNicho } from "@/hooks/queries";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { DashboardNichoTab } from "@/components/colaborador/DashboardNichoTab";
 import { ContasNichoTab } from "@/components/colaborador/ContasNichoTab";
@@ -20,41 +20,33 @@ import { ClientesTab } from "@/components/colaborador/ClientesTab";
 import { AplicativosTab } from "@/components/colaborador/AplicativosTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
+import { cn } from "@/lib/utils";
+
+// Skeleton for lazy loading
+const TabSkeleton = () => (
+  <div className="space-y-4 animate-pulse">
+    <div className="h-8 bg-muted rounded w-1/3 skeleton-pulse" />
+    <div className="grid grid-cols-3 gap-4">
+      <div className="h-24 bg-muted rounded skeleton-pulse" />
+      <div className="h-24 bg-muted rounded skeleton-pulse" />
+      <div className="h-24 bg-muted rounded skeleton-pulse" />
+    </div>
+    <div className="h-64 bg-muted rounded skeleton-pulse" />
+  </div>
+);
 
 export default function ColaboradorWorkspace() {
   const { nichoId: userNichoId } = useAuth();
   const { nichoId, "*": subPath } = useParams<{ nichoId: string; "*": string }>();
-  const [nicho, setNicho] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  
+  const { data: nicho, isLoading: loading } = useNicho(nichoId);
+  const invalidateNicho = useInvalidateNicho(nichoId);
 
   useEffect(() => {
     if (userNichoId && nichoId && userNichoId !== nichoId) {
       toast.error("Você não tem acesso a este nicho");
     }
   }, [userNichoId, nichoId]);
-
-  useEffect(() => {
-    fetchNicho();
-  }, [nichoId]);
-
-  const fetchNicho = useCallback(async () => {
-    if (!nichoId) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("nichos")
-        .select("*")
-        .eq("id", nichoId)
-        .maybeSingle();
-
-      if (error) throw error;
-      setNicho(data);
-    } catch (error: any) {
-      toast.error("Erro ao carregar nicho: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [nichoId]);
 
   if (userNichoId && nichoId && userNichoId !== nichoId) {
     return <Navigate to={`/workspace/${userNichoId}`} replace />;
@@ -141,7 +133,7 @@ export default function ColaboradorWorkspace() {
         <ConfiguracoesNichoTab 
           nichoId={nichoId!} 
           nicho={nicho} 
-          onConfigUpdate={fetchNicho} 
+          onConfigUpdate={invalidateNicho} 
         />
       );
     }
