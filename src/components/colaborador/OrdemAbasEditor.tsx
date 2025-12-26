@@ -40,6 +40,7 @@ import {
   Briefcase,
   AlertTriangle,
   UserPlus,
+  Gem,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -68,6 +69,7 @@ interface OrdemAbasEditorProps {
     logs_aprendizado_habilitado?: boolean;
     lembretes_hoje_habilitado?: boolean;
     alertas_habilitado?: boolean;
+    offer_vault_habilitado?: boolean;
   };
   onConfigUpdate: () => void;
 }
@@ -79,6 +81,7 @@ const DEFAULT_ORDER = [
   "time",
   "clientes",
   "apps",
+  "offervault",
   "financeiro",
   "pedidos",
   "radar",
@@ -98,6 +101,7 @@ const ABA_CONFIG: Record<string, { title: string; icon: React.ComponentType<{ cl
   time: { title: "Time", icon: Users },
   clientes: { title: "Clientes", icon: Briefcase },
   apps: { title: "Apps", icon: Smartphone },
+  offervault: { title: "OfferVault", icon: Gem },
   financeiro: { title: "Financeiro", icon: DollarSign },
   pedidos: { title: "Pedidos", icon: Package },
   radar: { title: "Radar", icon: Radio },
@@ -192,6 +196,7 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
       time: nicho.time_habilitado !== false,
       clientes: nicho.clientes_habilitado === true,
       apps: nicho.apps_habilitado === true,
+      offervault: nicho.offer_vault_habilitado === true,
       financeiro: nicho.financeiro_habilitado === true,
       pedidos: nicho.pedidos_habilitado === true,
       radar: nicho.radar_habilitado === true,
@@ -276,6 +281,7 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
       time: nicho.time_habilitado !== false,
       clientes: nicho.clientes_habilitado === true,
       apps: nicho.apps_habilitado === true,
+      offervault: nicho.offer_vault_habilitado === true,
       financeiro: nicho.financeiro_habilitado === true,
       pedidos: nicho.pedidos_habilitado === true,
       radar: nicho.radar_habilitado === true,
