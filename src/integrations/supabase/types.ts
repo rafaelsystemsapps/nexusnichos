@@ -737,6 +737,7 @@ export type Database = {
           como_testar: string | null
           created_at: string
           id: string
+          link_pagina_vendas: string | null
           nicho_id: string
           origem_plataforma: string
           origem_url: string | null
@@ -750,6 +751,7 @@ export type Database = {
           como_testar?: string | null
           created_at?: string
           id?: string
+          link_pagina_vendas?: string | null
           nicho_id: string
           origem_plataforma?: string
           origem_url?: string | null
@@ -763,6 +765,7 @@ export type Database = {
           como_testar?: string | null
           created_at?: string
           id?: string
+          link_pagina_vendas?: string | null
           nicho_id?: string
           origem_plataforma?: string
           origem_url?: string | null
