@@ -17,7 +17,6 @@ import { TesteRapidoTab } from "@/components/colaborador/TesteRapidoTab";
 import { LogsAprendizadoTab } from "@/components/colaborador/LogsAprendizadoTab";
 import { LembretesHojeTab } from "@/components/colaborador/LembretesHojeTab";
 import { ClientesTab } from "@/components/colaborador/ClientesTab";
-import { AplicativosTab } from "@/components/colaborador/AplicativosTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
 import { cn } from "@/lib/utils";
@@ -79,8 +78,7 @@ export default function ColaboradorWorkspace() {
     if (subPath === "testes") return "Teste Rapido";
     if (subPath === "aprendizado") return "Logs de Aprendizado";
     if (subPath === "lembretes") return "Lembretes de Hoje";
-    if (subPath === "clientes") return "Gestao de Clientes";
-    if (subPath === "apps") return "Aplicativos";
+    if (subPath === "clientes") return "Gestão de Clientes e Apps";
     if (subPath === "configuracoes") return "Configuracoes";
     return "Workspace";
   };
@@ -125,9 +123,6 @@ export default function ColaboradorWorkspace() {
     if (subPath === "clientes" && nicho.clientes_habilitado) {
       return <ClientesTab nichoId={nichoId!} />;
     }
-    if (subPath === "apps" && nicho.apps_habilitado) {
-      return <AplicativosTab nichoId={nichoId!} />;
-    }
     if (subPath === "configuracoes") {
       return (
         <ConfiguracoesNichoTab 
@@ -158,7 +153,6 @@ export default function ColaboradorWorkspace() {
       lembretesHojeHabilitado={nicho.lembretes_hoje_habilitado}
       timeHabilitado={nicho.time_habilitado}
       clientesHabilitado={nicho.clientes_habilitado}
-      appsHabilitado={nicho.apps_habilitado}
       ordemAbas={nicho.ordem_abas}
     >
       {renderContent()}
