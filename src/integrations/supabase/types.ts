@@ -62,6 +62,105 @@ export type Database = {
         }
         Relationships: []
       }
+      applab_account_links: {
+        Row: {
+          app_id: string
+          conta_id: string
+          created_at: string
+          id: string
+          nicho_id: string
+          observacao: string | null
+          status_vinculo: string
+        }
+        Insert: {
+          app_id: string
+          conta_id: string
+          created_at?: string
+          id?: string
+          nicho_id: string
+          observacao?: string | null
+          status_vinculo?: string
+        }
+        Update: {
+          app_id?: string
+          conta_id?: string
+          created_at?: string
+          id?: string
+          nicho_id?: string
+          observacao?: string | null
+          status_vinculo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applab_account_links_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "applab_apps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applab_account_links_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_redes_sociais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applab_account_links_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      applab_apps: {
+        Row: {
+          created_at: string
+          descricao_curta: string | null
+          id: string
+          nicho_id: string
+          nome_app: string
+          observacoes: string | null
+          status_teste: string
+          updated_at: string
+          usuarios_ativos: number | null
+          usuarios_ativos_atualizado_em: string | null
+        }
+        Insert: {
+          created_at?: string
+          descricao_curta?: string | null
+          id?: string
+          nicho_id: string
+          nome_app: string
+          observacoes?: string | null
+          status_teste?: string
+          updated_at?: string
+          usuarios_ativos?: number | null
+          usuarios_ativos_atualizado_em?: string | null
+        }
+        Update: {
+          created_at?: string
+          descricao_curta?: string | null
+          id?: string
+          nicho_id?: string
+          nome_app?: string
+          observacoes?: string | null
+          status_teste?: string
+          updated_at?: string
+          usuarios_ativos?: number | null
+          usuarios_ativos_atualizado_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applab_apps_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biblioteca_nicho: {
         Row: {
           categoria: string
@@ -656,6 +755,7 @@ export type Database = {
       nichos: {
         Row: {
           alertas_habilitado: boolean
+          applab_habilitado: boolean
           apps_habilitado: boolean
           cemiterio_habilitado: boolean
           clientes_habilitado: boolean
@@ -681,6 +781,7 @@ export type Database = {
         }
         Insert: {
           alertas_habilitado?: boolean
+          applab_habilitado?: boolean
           apps_habilitado?: boolean
           cemiterio_habilitado?: boolean
           clientes_habilitado?: boolean
@@ -706,6 +807,7 @@ export type Database = {
         }
         Update: {
           alertas_habilitado?: boolean
+          applab_habilitado?: boolean
           apps_habilitado?: boolean
           cemiterio_habilitado?: boolean
           clientes_habilitado?: boolean

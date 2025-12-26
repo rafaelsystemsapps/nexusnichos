@@ -20,6 +20,7 @@ import {
   Smartphone,
   LayoutDashboard,
   Gem,
+  FlaskRound,
 } from "lucide-react";
 import { OrdemAbasEditor } from "./OrdemAbasEditor";
 
@@ -40,6 +41,7 @@ interface ConfiguracoesNichoTabProps {
     clientes_habilitado?: boolean;
     apps_habilitado?: boolean;
     offer_vault_habilitado?: boolean;
+    applab_habilitado?: boolean;
     ordem_abas?: string[] | null;
   };
   onConfigUpdate: () => void;
@@ -120,6 +122,14 @@ const MODULOS_CONFIG = [
     description: "Cofre de ofertas - memória estratégica do mercado",
     icon: Gem,
     color: "amber",
+  },
+  {
+    id: "applab",
+    dbField: "applab_habilitado",
+    label: "AppLab",
+    description: "Laboratório operacional de apps e ferramentas",
+    icon: FlaskRound,
+    color: "cyan",
   },
   {
     id: "alertas",
