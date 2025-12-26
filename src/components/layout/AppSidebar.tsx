@@ -113,7 +113,7 @@ export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHab
   const abaConfig: Record<string, { title: string; href: string; icon: React.ComponentType<{ className?: string }>; enabled: boolean }> = {
     dashboard: { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard, enabled: true },
     contas: { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2, enabled: contasHabilitado !== false },
-    logistica: { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck, enabled: true },
+    logistica: { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck, enabled: contasHabilitado === true },
     time: { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users, enabled: timeHabilitado !== false },
     clientes: { title: "Clientes", href: `/workspace/${nichoId}/clientes`, icon: UserCheck, enabled: clientesHabilitado === true },
     apps: { title: "Apps", href: `/workspace/${nichoId}/apps`, icon: Smartphone, enabled: appsHabilitado === true },
