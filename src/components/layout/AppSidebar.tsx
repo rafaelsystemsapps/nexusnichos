@@ -10,7 +10,6 @@ import {
   Settings,
   LogOut,
   LayoutDashboard,
-  DollarSign,
   CalendarCheck,
   Package,
   ChevronDown,
@@ -21,7 +20,6 @@ import {
   Lightbulb,
   Bell,
   UserCheck,
-  Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -44,7 +42,6 @@ interface AppSidebarProps {
   nichoNome?: string;
   dashboardHabilitado?: boolean;
   contasHabilitado?: boolean;
-  financeiroHabilitado?: boolean;
   pedidosHabilitado?: boolean;
   radarHabilitado?: boolean;
   cemiterioHabilitado?: boolean;
@@ -63,7 +60,6 @@ const DEFAULT_ORDER = [
   "logistica",
   "time",
   "clientes",
-  "financeiro",
   "pedidos",
   "radar",
   "cemiterio",
@@ -74,7 +70,7 @@ const DEFAULT_ORDER = [
   "configuracoes",
 ];
 
-function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, ordemAbas }: AppSidebarProps) {
+function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, ordemAbas }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -100,7 +96,6 @@ function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHa
     logistica: { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck, enabled: contasHabilitado === true },
     time: { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users, enabled: timeHabilitado !== false },
     clientes: { title: "Clientes & Apps", href: `/workspace/${nichoId}/clientes`, icon: UserCheck, enabled: clientesHabilitado === true },
-    financeiro: { title: "Financeiro", href: `/workspace/${nichoId}/financeiro`, icon: DollarSign, enabled: financeiroHabilitado === true },
     pedidos: { title: "Pedidos", href: `/workspace/${nichoId}/pedidos`, icon: Package, enabled: pedidosHabilitado === true },
     radar: { title: "Radar", href: `/workspace/${nichoId}/radar`, icon: Radio, enabled: radarHabilitado === true },
     cemiterio: { title: "Cemitério", href: `/workspace/${nichoId}/cemiterio`, icon: Archive, enabled: cemiterioHabilitado === true },
@@ -109,7 +104,7 @@ function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHa
     aprendizado: { title: "Aprendizado", href: `/workspace/${nichoId}/aprendizado`, icon: Lightbulb, enabled: logsAprendizadoHabilitado === true },
     lembretes: { title: "Lembretes", href: `/workspace/${nichoId}/lembretes`, icon: Bell, enabled: lembretesHojeHabilitado === true },
     configuracoes: { title: "Configurações", href: `/workspace/${nichoId}/configuracoes`, icon: Settings, enabled: true },
-  }), [nichoId, dashboardHabilitado, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado]);
+  }), [nichoId, dashboardHabilitado, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado]);
 
   // Usa ordem customizada ou padrão - memoized
   const navItems = useMemo(() => {
