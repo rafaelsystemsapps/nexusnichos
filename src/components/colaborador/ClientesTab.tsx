@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Search, Users, Filter, Percent, DollarSign, Target, Smartphone, Wallet } from "lucide-react";
+import { Plus, Search, Users, Filter, Percent, DollarSign, Target, Smartphone } from "lucide-react";
 import { ClienteCard } from "./ClienteCard";
 import { ClienteForm } from "./ClienteForm";
 import { ProspectsTab } from "./ProspectsTab";
 import { AplicativosTab } from "./AplicativosTab";
-import { FinanceiroTab } from "./FinanceiroTab";
+import { CustosAppsTab } from "./CustosAppsTab";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useClientes, useUpdateClienteOrdem, useInvalidateClientes } from "@/hooks/queries";
@@ -174,9 +174,9 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
             <Target className="h-4 w-4" />
             Prospecção
           </TabsTrigger>
-          <TabsTrigger value="financeiro" className="flex items-center gap-2">
-            <Wallet className="h-4 w-4" />
-            Financeiro
+          <TabsTrigger value="custos" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Custos
           </TabsTrigger>
         </TabsList>
 
@@ -340,8 +340,8 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
           <ProspectsTab nichoId={nichoId} />
         </TabsContent>
 
-        <TabsContent value="financeiro" className="mt-6 tab-content">
-          <FinanceiroTab nichoId={nichoId} />
+        <TabsContent value="custos" className="mt-6 tab-content">
+          <CustosAppsTab nichoId={nichoId} />
         </TabsContent>
       </Tabs>
     </div>
