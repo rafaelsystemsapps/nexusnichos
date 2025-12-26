@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AplicativoCard } from "./AplicativoCard";
 import { AplicativoForm } from "./AplicativoForm";
+import { AppsDashboard } from "./AppsDashboard";
 
 interface AplicativosTabProps {
   nichoId: string;
@@ -34,8 +35,16 @@ interface Aplicativo {
   }>;
 }
 
+interface Transacao {
+  id: string;
+  app_id: string | null;
+  preco_venda: number;
+  preco_custo: number;
+}
+
 export function AplicativosTab({ nichoId }: AplicativosTabProps) {
   const [aplicativos, setAplicativos] = useState<Aplicativo[]>([]);
+  const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -70,6 +79,16 @@ export function AplicativosTab({ nichoId }: AplicativosTabProps) {
         .order("data", { ascending: false });
 
       if (resultadosError) throw resultadosError;
+
+      // Buscar transações vinculadas a apps
+      const { data: transacoesData, error: transacoesError } = await supabase
+        .from("transacoes_financeiras")
+        .select("id, app_id, preco_venda, preco_custo")
+        .eq("nicho_id", nichoId)
+        .not("app_id", "is", null);
+
+      if (transacoesError) throw transacoesError;
+      setTransacoes(transacoesData || []);
 
       // Mapear dados
       const appsWithData = (apps || []).map((app) => {
@@ -126,6 +145,9 @@ export function AplicativosTab({ nichoId }: AplicativosTabProps) {
 
   return (
     <div className="space-y-6">
+      {/* Dashboard de Métricas */}
+      <AppsDashboard aplicativos={aplicativos} transacoes={transacoes} />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
