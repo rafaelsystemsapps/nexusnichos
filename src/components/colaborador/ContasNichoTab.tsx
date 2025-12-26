@@ -59,6 +59,34 @@ const PLATAFORMAS = [
   { value: "outros", label: "Outros" },
 ];
 
+// === PAÍSES ===
+const PAISES = [
+  { value: "BR", label: "Brasil", flag: "🇧🇷" },
+  { value: "US", label: "Estados Unidos", flag: "🇺🇸" },
+  { value: "PT", label: "Portugal", flag: "🇵🇹" },
+  { value: "ES", label: "Espanha", flag: "🇪🇸" },
+  { value: "MX", label: "México", flag: "🇲🇽" },
+  { value: "AR", label: "Argentina", flag: "🇦🇷" },
+  { value: "CO", label: "Colômbia", flag: "🇨🇴" },
+  { value: "CL", label: "Chile", flag: "🇨🇱" },
+  { value: "PE", label: "Peru", flag: "🇵🇪" },
+  { value: "UK", label: "Reino Unido", flag: "🇬🇧" },
+  { value: "DE", label: "Alemanha", flag: "🇩🇪" },
+  { value: "FR", label: "França", flag: "🇫🇷" },
+  { value: "IT", label: "Itália", flag: "🇮🇹" },
+  { value: "outro", label: "Outro", flag: "🌍" },
+];
+
+const PAISES_FILTROS = [
+  { value: "todos", label: "Todos países" },
+  ...PAISES.map(p => ({ value: p.value, label: `${p.flag} ${p.label}` })),
+];
+
+const getPaisFlag = (pais: string | null): string => {
+  const found = PAISES.find(p => p.value === pais);
+  return found?.flag || "🌍";
+};
+
 // Status minimalista: ativa, risco, desativada
 type StatusConta = "ativa" | "risco" | "desativada";
 
@@ -253,6 +281,9 @@ function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, hasCredenci
           <span className="font-medium text-sm truncate max-w-[120px] shrink-0">{conta.nome_conta}</span>
           {getStatusDisplay(conta.status)}
           {getFaseDisplay(conta)}
+          <span className="text-sm" title={PAISES.find(p => p.value === conta.pais)?.label || conta.pais}>
+            {getPaisFlag(conta.pais)}
+          </span>
         </div>
 
         {/* Dias aquecendo */}
@@ -366,6 +397,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     pin: "",
     data_criacao_conta: "",
     status_aquecimento: "media",
+    pais: "BR",
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contaToDelete, setContaToDelete] = useState<any>(null);
@@ -379,6 +411,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const [filtroStatus, setFiltroStatus] = useState<string>("todas");
   const [filtroPlataforma, setFiltroPlataforma] = useState<string>("todas");
   const [filtroFase, setFiltroFase] = useState<string>("todas");
+  const [filtroPais, setFiltroPais] = useState<string>("todos");
 
   // Sensor para drag and drop
   const sensors = useSensors(
@@ -418,9 +451,10 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       const matchStatus = filtroStatus === "todas" || statusConta === filtroStatus;
       const matchPlataforma = filtroPlataforma === "todas" || conta.plataforma === filtroPlataforma;
       const matchFase = filtroFase === "todas" || faseConta === filtroFase;
-      return matchStatus && matchPlataforma && matchFase;
+      const matchPais = filtroPais === "todos" || conta.pais === filtroPais;
+      return matchStatus && matchPlataforma && matchFase && matchPais;
     });
-  }, [contas, filtroStatus, filtroPlataforma, filtroFase]);
+  }, [contas, filtroStatus, filtroPlataforma, filtroFase, filtroPais]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -474,6 +508,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         pin: formData.pin || null,
         data_criacao_conta: formData.data_criacao_conta || null,
         status_aquecimento: formData.status_aquecimento || 'media',
+        pais: formData.pais || 'BR',
         nicho_id: nichoId,
         responsavel_id: user?.id || null,
         ordem: editingConta ? editingConta.ordem : contas.length,
@@ -519,6 +554,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       pin: "",
       data_criacao_conta: "",
       status_aquecimento: "media",
+      pais: "BR",
     });
     setEditingConta(null);
     setCredenciaisOpen(false);
@@ -542,6 +578,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       pin: conta.pin || "",
       data_criacao_conta: conta.data_criacao_conta || "",
       status_aquecimento: conta.status_aquecimento || "media",
+      pais: conta.pais || "BR",
     });
     // Abrir secao de credenciais se ja existem dados
     setCredenciaisOpen(!!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha));
@@ -657,6 +694,18 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
             </SelectContent>
           </Select>
 
+          {/* Filtro de País */}
+          <Select value={filtroPais} onValueChange={setFiltroPais}>
+            <SelectTrigger className="h-8 w-[130px]">
+              <SelectValue placeholder="País" />
+            </SelectTrigger>
+            <SelectContent>
+              {PAISES_FILTROS.map(p => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm" onClick={resetForm}>
@@ -706,6 +755,25 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                       maxLength={50}
                     />
                   </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs">País *</Label>
+                  <Select
+                    value={formData.pais}
+                    onValueChange={(value) => setFormData({ ...formData, pais: value })}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAISES.map(p => (
+                        <SelectItem key={p.value} value={p.value}>
+                          {p.flag} {p.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
