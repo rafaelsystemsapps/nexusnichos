@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      aplicativos: {
+        Row: {
+          created_at: string | null
+          data_criacao: string | null
+          data_lancamento: string | null
+          descricao: string | null
+          id: string
+          nicho_id: string
+          nome: string
+          status: string | null
+          tecnologias: string | null
+          tipo_app: string | null
+          updated_at: string | null
+          url_producao: string | null
+          url_repositorio: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_criacao?: string | null
+          data_lancamento?: string | null
+          descricao?: string | null
+          id?: string
+          nicho_id: string
+          nome: string
+          status?: string | null
+          tecnologias?: string | null
+          tipo_app?: string | null
+          updated_at?: string | null
+          url_producao?: string | null
+          url_repositorio?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_criacao?: string | null
+          data_lancamento?: string | null
+          descricao?: string | null
+          id?: string
+          nicho_id?: string
+          nome?: string
+          status?: string | null
+          tecnologias?: string | null
+          tipo_app?: string | null
+          updated_at?: string | null
+          url_producao?: string | null
+          url_repositorio?: string | null
+        }
+        Relationships: []
+      }
       biblioteca_nicho: {
         Row: {
           categoria: string
@@ -130,6 +178,7 @@ export type Database = {
       }
       clientes: {
         Row: {
+          app_id: string | null
           app_url: string | null
           created_at: string
           data_inicio_parceria: string | null
@@ -155,6 +204,7 @@ export type Database = {
           valor_contrato: number | null
         }
         Insert: {
+          app_id?: string | null
           app_url?: string | null
           created_at?: string
           data_inicio_parceria?: string | null
@@ -180,6 +230,7 @@ export type Database = {
           valor_contrato?: number | null
         }
         Update: {
+          app_id?: string | null
           app_url?: string | null
           created_at?: string
           data_inicio_parceria?: string | null
@@ -205,6 +256,13 @@ export type Database = {
           valor_contrato?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "clientes_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "aplicativos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "clientes_nicho_id_fkey"
             columns: ["nicho_id"]
@@ -526,6 +584,7 @@ export type Database = {
       nichos: {
         Row: {
           alertas_habilitado: boolean
+          apps_habilitado: boolean
           cemiterio_habilitado: boolean
           clientes_habilitado: boolean
           contas_habilitado: boolean
@@ -548,6 +607,7 @@ export type Database = {
         }
         Insert: {
           alertas_habilitado?: boolean
+          apps_habilitado?: boolean
           cemiterio_habilitado?: boolean
           clientes_habilitado?: boolean
           contas_habilitado?: boolean
@@ -570,6 +630,7 @@ export type Database = {
         }
         Update: {
           alertas_habilitado?: boolean
+          apps_habilitado?: boolean
           cemiterio_habilitado?: boolean
           clientes_habilitado?: boolean
           contas_habilitado?: boolean
@@ -781,6 +842,47 @@ export type Database = {
             columns: ["nicho_id"]
             isOneToOne: false
             referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resultados_app: {
+        Row: {
+          app_id: string
+          created_at: string | null
+          data: string | null
+          id: string
+          nicho_id: string
+          observacao: string | null
+          tipo: string
+          valor: number | null
+        }
+        Insert: {
+          app_id: string
+          created_at?: string | null
+          data?: string | null
+          id?: string
+          nicho_id: string
+          observacao?: string | null
+          tipo: string
+          valor?: number | null
+        }
+        Update: {
+          app_id?: string
+          created_at?: string | null
+          data?: string | null
+          id?: string
+          nicho_id?: string
+          observacao?: string | null
+          tipo?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resultados_app_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "aplicativos"
             referencedColumns: ["id"]
           },
         ]
@@ -1069,6 +1171,7 @@ export type Database = {
       }
       transacoes_financeiras: {
         Row: {
+          app_id: string | null
           created_at: string
           data_transacao: string
           id: string
@@ -1080,6 +1183,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          app_id?: string | null
           created_at?: string
           data_transacao?: string
           id?: string
@@ -1091,6 +1195,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          app_id?: string | null
           created_at?: string
           data_transacao?: string
           id?: string
@@ -1102,6 +1207,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "transacoes_financeiras_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "aplicativos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transacoes_financeiras_membro_time_id_fkey"
             columns: ["membro_time_id"]

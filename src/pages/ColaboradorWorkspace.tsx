@@ -17,6 +17,7 @@ import { TesteRapidoTab } from "@/components/colaborador/TesteRapidoTab";
 import { LogsAprendizadoTab } from "@/components/colaborador/LogsAprendizadoTab";
 import { LembretesHojeTab } from "@/components/colaborador/LembretesHojeTab";
 import { ClientesTab } from "@/components/colaborador/ClientesTab";
+import { AplicativosTab } from "@/components/colaborador/AplicativosTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
 
@@ -76,18 +77,19 @@ export default function ColaboradorWorkspace() {
   const getPageTitle = () => {
     if (!subPath || subPath === "") return "Dashboard";
     if (subPath === "contas") return "Contas do Nicho";
-    if (subPath === "logistica") return "Logística Semanal";
+    if (subPath === "logistica") return "Logistica Semanal";
     if (subPath === "time") return "Time";
     if (subPath === "financeiro") return "Financeiro";
-    if (subPath === "pedidos") return "Gestão de Pedidos";
+    if (subPath === "pedidos") return "Gestao de Pedidos";
     if (subPath === "radar") return "Radar de Oportunidades";
-    if (subPath === "cemiterio") return "Cemitério";
-    if (subPath === "mapa-dependencia") return "Mapa de Dependência";
-    if (subPath === "testes") return "Teste Rápido";
+    if (subPath === "cemiterio") return "Cemiterio";
+    if (subPath === "mapa-dependencia") return "Mapa de Dependencia";
+    if (subPath === "testes") return "Teste Rapido";
     if (subPath === "aprendizado") return "Logs de Aprendizado";
     if (subPath === "lembretes") return "Lembretes de Hoje";
-    if (subPath === "clientes") return "Gestão de Clientes";
-    if (subPath === "configuracoes") return "Configurações";
+    if (subPath === "clientes") return "Gestao de Clientes";
+    if (subPath === "apps") return "Aplicativos";
+    if (subPath === "configuracoes") return "Configuracoes";
     return "Workspace";
   };
 
@@ -131,6 +133,9 @@ export default function ColaboradorWorkspace() {
     if (subPath === "clientes" && nicho.clientes_habilitado) {
       return <ClientesTab nichoId={nichoId!} />;
     }
+    if (subPath === "apps" && nicho.apps_habilitado) {
+      return <AplicativosTab nichoId={nichoId!} />;
+    }
     if (subPath === "configuracoes") {
       return (
         <ConfiguracoesNichoTab 
@@ -160,6 +165,7 @@ export default function ColaboradorWorkspace() {
       lembretesHojeHabilitado={nicho.lembretes_hoje_habilitado}
       timeHabilitado={nicho.time_habilitado}
       clientesHabilitado={nicho.clientes_habilitado}
+      appsHabilitado={nicho.apps_habilitado}
       ordemAbas={nicho.ordem_abas}
     >
       {renderContent()}

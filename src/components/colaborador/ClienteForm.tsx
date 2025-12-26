@@ -8,6 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface Aplicativo {
+  id: string;
+  nome: string;
+}
+
 interface ClienteFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -18,6 +23,7 @@ interface ClienteFormProps {
 
 export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: ClienteFormProps) {
   const [saving, setSaving] = useState(false);
+  const [aplicativos, setAplicativos] = useState<Aplicativo[]>([]);
   const [formData, setFormData] = useState({
     nome: "",
     tipo: "influencer" as "influencer" | "negocio_local",
@@ -34,8 +40,21 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
     modelo_pagamento: "" as "" | "porcentagem" | "valor_fixo",
     valor_contrato: "",
     app_url: "",
+    app_id: "",
     data_inicio_parceria: "",
   });
+
+  useEffect(() => {
+    const fetchAplicativos = async () => {
+      const { data } = await supabase
+        .from("aplicativos")
+        .select("id, nome")
+        .eq("nicho_id", nichoId)
+        .order("nome");
+      if (data) setAplicativos(data);
+    };
+    if (open) fetchAplicativos();
+  }, [nichoId, open]);
 
   useEffect(() => {
     if (cliente) {
@@ -55,6 +74,7 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
         modelo_pagamento: cliente.modelo_pagamento || "",
         valor_contrato: cliente.valor_contrato?.toString() || "",
         app_url: cliente.app_url || "",
+        app_id: cliente.app_id || "",
         data_inicio_parceria: cliente.data_inicio_parceria || "",
       });
     } else {
@@ -74,6 +94,7 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
         modelo_pagamento: "",
         valor_contrato: "",
         app_url: "",
+        app_id: "",
         data_inicio_parceria: "",
       });
     }
@@ -105,6 +126,7 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
         modelo_pagamento: formData.modelo_pagamento || null,
         valor_contrato: formData.valor_contrato ? parseFloat(formData.valor_contrato) : null,
         app_url: formData.app_url || null,
+        app_id: formData.app_id || null,
         data_inicio_parceria: formData.data_inicio_parceria || null,
       };
 
@@ -302,6 +324,22 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
                 />
               </div>
               <div>
+                <Label>Aplicativo Vinculado</Label>
+                <Select
+                  value={formData.app_id}
+                  onValueChange={(v) => setFormData({ ...formData, app_id: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um app..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {aplicativos.map((app) => (
+                      <SelectItem key={app.id} value={app.id}>{app.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label>URL do App</Label>
                 <Input
                   value={formData.app_url}
@@ -310,7 +348,7 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
                 />
               </div>
               <div>
-                <Label>Data de Início da Parceria</Label>
+                <Label>Data de Inicio da Parceria</Label>
                 <Input
                   type="date"
                   value={formData.data_inicio_parceria}
