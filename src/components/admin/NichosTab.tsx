@@ -44,6 +44,8 @@ export function NichosTab() {
   const [userToDelete, setUserToDelete] = useState<{ id: string; nome: string; nichoNome: string } | null>(null);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
@@ -213,6 +215,40 @@ export function NichosTab() {
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!editingNicho?.usuario || !newPassword) return;
+    
+    if (newPassword.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("reset-password", {
+        body: { 
+          user_id: editingNicho.usuario.id,
+          new_password: newPassword 
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || "Erro ao alterar senha");
+      }
+
+      toast.success("Senha alterada com sucesso!");
+      setNewPassword("");
+    } catch (error: any) {
+      toast.error("Erro ao alterar senha: " + error.message);
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza que deseja deletar este nicho? Isso também removerá os usuários vinculados.")) return;
 
@@ -275,9 +311,15 @@ export function NichosTab() {
     });
     setEditingNicho(null);
     setCurrentStep(1);
+    setNewPassword("");
   };
 
-  const getTotalSteps = () => editingNicho ? 2 : 3;
+  // 3 etapas ao criar, 3 etapas ao editar (se tiver usuário), 2 etapas se não tiver
+  const getTotalSteps = () => {
+    if (!editingNicho) return 3; // Criando: Nome, Módulos, Usuário
+    if (editingNicho.usuario) return 3; // Editando com usuário: Nome, Módulos, Senha
+    return 2; // Editando sem usuário: Nome, Módulos
+  };
 
   const canProceed = () => {
     if (currentStep === 1) return formData.nome.trim() !== "";
@@ -344,18 +386,16 @@ export function NichosTab() {
             </DialogHeader>
 
             {/* Progress indicator */}
-            {!editingNicho && (
-              <div className="flex gap-2 mb-4">
-                {Array.from({ length: getTotalSteps() }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1 flex-1 rounded-full transition-colors ${
-                      i + 1 <= currentStep ? "bg-primary" : "bg-muted"
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="flex gap-2 mb-4">
+              {Array.from({ length: getTotalSteps() }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1 flex-1 rounded-full transition-colors ${
+                    i + 1 <= currentStep ? "bg-primary" : "bg-muted"
+                  }`}
+                />
+              ))}
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Etapa 1: Nome do Nicho */}
@@ -584,6 +624,54 @@ export function NichosTab() {
                       placeholder="Mínimo 6 caracteres"
                       minLength={6}
                     />
+                  </div>
+                </div>
+              )}
+
+              {/* Etapa 3: Alterar Senha (apenas ao editar com usuário) */}
+              {currentStep === 3 && editingNicho && editingNicho.usuario && (
+                <div className="space-y-4">
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-semibold">Gerenciar Usuário</h3>
+                    <p className="text-sm text-muted-foreground">Altere a senha do usuário vinculado</p>
+                  </div>
+
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <User className="h-4 w-4 text-primary" />
+                      <span>Usuário Atual</span>
+                    </div>
+                    <p className="text-sm font-medium">{editingNicho.usuario.nome}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Mail className="h-3 w-3" />
+                      {editingNicho.usuario.email}
+                    </p>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-3">
+                    <Label htmlFor="nova_senha" className="flex items-center gap-2">
+                      <Lock className="w-3 h-3" />
+                      Nova Senha
+                    </Label>
+                    <Input
+                      id="nova_senha"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                      minLength={6}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="secondary" 
+                      className="w-full"
+                      onClick={handleChangePassword}
+                      disabled={isChangingPassword || newPassword.length < 6}
+                    >
+                      {isChangingPassword ? "Alterando..." : "Alterar Senha"}
+                    </Button>
                   </div>
                 </div>
               )}
