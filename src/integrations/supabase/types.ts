@@ -589,6 +589,7 @@ export type Database = {
           clientes_habilitado: boolean
           contas_habilitado: boolean
           created_at: string | null
+          dashboard_habilitado: boolean
           descricao: string | null
           financeiro_habilitado: boolean
           foco_do_dia: string | null
@@ -612,6 +613,7 @@ export type Database = {
           clientes_habilitado?: boolean
           contas_habilitado?: boolean
           created_at?: string | null
+          dashboard_habilitado?: boolean
           descricao?: string | null
           financeiro_habilitado?: boolean
           foco_do_dia?: string | null
@@ -635,6 +637,7 @@ export type Database = {
           clientes_habilitado?: boolean
           contas_habilitado?: boolean
           created_at?: string | null
+          dashboard_habilitado?: boolean
           descricao?: string | null
           financeiro_habilitado?: boolean
           foco_do_dia?: string | null
