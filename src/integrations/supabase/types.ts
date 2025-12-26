@@ -345,6 +345,7 @@ export type Database = {
           nome_conta: string
           observacoes: string | null
           ordem: number | null
+          pais: string | null
           pin: string | null
           plataforma: Database["public"]["Enums"]["plataforma_social"]
           proxima_acao: string | null
@@ -371,6 +372,7 @@ export type Database = {
           nome_conta: string
           observacoes?: string | null
           ordem?: number | null
+          pais?: string | null
           pin?: string | null
           plataforma: Database["public"]["Enums"]["plataforma_social"]
           proxima_acao?: string | null
@@ -397,6 +399,7 @@ export type Database = {
           nome_conta?: string
           observacoes?: string | null
           ordem?: number | null
+          pais?: string | null
           pin?: string | null
           plataforma?: Database["public"]["Enums"]["plataforma_social"]
           proxima_acao?: string | null
