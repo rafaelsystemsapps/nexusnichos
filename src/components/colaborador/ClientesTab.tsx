@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Search, Users, Filter, Percent, DollarSign, Target } from "lucide-react";
+import { Plus, Search, Users, Filter, Percent, DollarSign, Target, Smartphone } from "lucide-react";
 import { ClienteCard } from "./ClienteCard";
 import { ClienteForm } from "./ClienteForm";
 import { ProspectsTab } from "./ProspectsTab";
+import { AplicativosTab } from "./AplicativosTab";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useClientes, useUpdateClienteOrdem, useInvalidateClientes } from "@/hooks/queries";
@@ -159,10 +160,14 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
     <div className="space-y-6 tab-content">
       {/* Sub-Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+        <TabsList className="grid w-full max-w-[500px] grid-cols-3">
           <TabsTrigger value="clientes" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Clientes
+          </TabsTrigger>
+          <TabsTrigger value="apps" className="flex items-center gap-2">
+            <Smartphone className="h-4 w-4" />
+            Aplicativos
           </TabsTrigger>
           <TabsTrigger value="prospeccao" className="flex items-center gap-2">
             <Target className="h-4 w-4" />
@@ -320,6 +325,10 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
             nichoId={nichoId}
             onSave={invalidateClientes}
           />
+        </TabsContent>
+
+        <TabsContent value="apps" className="mt-6 tab-content">
+          <AplicativosTab nichoId={nichoId} />
         </TabsContent>
 
         <TabsContent value="prospeccao" className="mt-6 tab-content">
