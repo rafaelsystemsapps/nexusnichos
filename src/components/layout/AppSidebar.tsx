@@ -42,6 +42,7 @@ interface NavItem {
 interface AppSidebarProps {
   nichoId?: string;
   nichoNome?: string;
+  dashboardHabilitado?: boolean;
   contasHabilitado?: boolean;
   financeiroHabilitado?: boolean;
   pedidosHabilitado?: boolean;
@@ -75,7 +76,7 @@ const DEFAULT_ORDER = [
   "configuracoes",
 ];
 
-export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, appsHabilitado, ordemAbas }: AppSidebarProps) {
+export function AppSidebar({ nichoId, nichoNome, dashboardHabilitado, contasHabilitado, financeiroHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, appsHabilitado, ordemAbas }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -111,7 +112,7 @@ export function AppSidebar({ nichoId, nichoNome, contasHabilitado, financeiroHab
 
   // Configuração de todas as abas disponíveis
   const abaConfig: Record<string, { title: string; href: string; icon: React.ComponentType<{ className?: string }>; enabled: boolean }> = {
-    dashboard: { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard, enabled: true },
+    dashboard: { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard, enabled: dashboardHabilitado !== false },
     contas: { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2, enabled: contasHabilitado !== false },
     logistica: { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck, enabled: contasHabilitado === true },
     time: { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users, enabled: timeHabilitado !== false },

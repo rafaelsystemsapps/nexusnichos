@@ -154,6 +154,7 @@ export default function ColaboradorWorkspace() {
       nichoNome={nicho.nome}
       title={getPageTitle()}
       subtitle={`Workspace: ${nicho.nome}`}
+      dashboardHabilitado={nicho.dashboard_habilitado}
       contasHabilitado={nicho.contas_habilitado}
       financeiroHabilitado={nicho.financeiro_habilitado}
       pedidosHabilitado={nicho.pedidos_habilitado}
