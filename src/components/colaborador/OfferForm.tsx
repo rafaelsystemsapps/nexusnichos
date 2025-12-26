@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -93,16 +94,32 @@ export function OfferForm({ open, onOpenChange, offer, onSubmit, isLoading }: Of
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      titulo_curto: offer?.titulo_curto || "",
-      origem_plataforma: offer?.origem_plataforma || "tiktok",
-      origem_url: offer?.origem_url || "",
-      link_pagina_vendas: offer?.link_pagina_vendas || "",
-      pais: offer?.pais || "BR",
-      status_oferta: offer?.status_oferta || "salva",
-      como_testar: offer?.como_testar || "",
-      aprendizado: offer?.aprendizado || "",
+      titulo_curto: "",
+      origem_plataforma: "tiktok",
+      origem_url: "",
+      link_pagina_vendas: "",
+      pais: "BR",
+      status_oferta: "salva",
+      como_testar: "",
+      aprendizado: "",
     },
   });
+
+  // Reset form when offer changes (edit mode) or when dialog opens
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        titulo_curto: offer?.titulo_curto || "",
+        origem_plataforma: offer?.origem_plataforma || "tiktok",
+        origem_url: offer?.origem_url || "",
+        link_pagina_vendas: offer?.link_pagina_vendas || "",
+        pais: offer?.pais || "BR",
+        status_oferta: offer?.status_oferta || "salva",
+        como_testar: offer?.como_testar || "",
+        aprendizado: offer?.aprendizado || "",
+      });
+    }
+  }, [open, offer, form]);
 
   const watchStatus = form.watch("status_oferta");
 
@@ -146,7 +163,7 @@ export function OfferForm({ open, onOpenChange, offer, onSubmit, isLoading }: Of
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Plataforma *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -171,7 +188,7 @@ export function OfferForm({ open, onOpenChange, offer, onSubmit, isLoading }: Of
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>País *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -225,7 +242,7 @@ export function OfferForm({ open, onOpenChange, offer, onSubmit, isLoading }: Of
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue />
