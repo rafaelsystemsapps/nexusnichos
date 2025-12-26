@@ -16,6 +16,7 @@ import { TesteRapidoTab } from "@/components/colaborador/TesteRapidoTab";
 import { LogsAprendizadoTab } from "@/components/colaborador/LogsAprendizadoTab";
 import { LembretesHojeTab } from "@/components/colaborador/LembretesHojeTab";
 import { ClientesTab } from "@/components/colaborador/ClientesTab";
+import { OfferVaultTab } from "@/components/colaborador/OfferVaultTab";
 import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
 import { cn } from "@/lib/utils";
@@ -70,6 +71,7 @@ export default function ColaboradorWorkspace() {
     if (subPath === "logistica") return "Logistica Semanal";
     if (subPath === "time") return "Time";
     if (subPath === "pedidos") return "Gestao de Pedidos";
+    if (subPath === "offervault") return "OfferVault";
     if (subPath === "radar") return "Radar de Oportunidades";
     if (subPath === "cemiterio") return "Cemiterio";
     if (subPath === "mapa-dependencia") return "Mapa de Dependencia";
@@ -96,6 +98,9 @@ export default function ColaboradorWorkspace() {
     }
     if (subPath === "pedidos" && nicho.pedidos_habilitado) {
       return <PedidosTab nichoId={nichoId!} />;
+    }
+    if (subPath === "offervault" && nicho.offer_vault_habilitado) {
+      return <OfferVaultTab nichoId={nichoId!} />;
     }
     if (subPath === "radar" && nicho.radar_habilitado) {
       return <RadarOportunidadesTab nichoId={nichoId!} />;
@@ -147,6 +152,7 @@ export default function ColaboradorWorkspace() {
       lembretesHojeHabilitado={nicho.lembretes_hoje_habilitado}
       timeHabilitado={nicho.time_habilitado}
       clientesHabilitado={nicho.clientes_habilitado}
+      offerVaultHabilitado={nicho.offer_vault_habilitado}
       ordemAbas={nicho.ordem_abas}
     >
       {renderContent()}
