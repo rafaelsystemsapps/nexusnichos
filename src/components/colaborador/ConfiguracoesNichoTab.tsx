@@ -16,7 +16,8 @@ import {
   FlaskConical, 
   BookOpen, 
   UserCheck,
-  Briefcase
+  Briefcase,
+  Smartphone
 } from "lucide-react";
 import { OrdemAbasEditor } from "./OrdemAbasEditor";
 
@@ -34,6 +35,7 @@ interface ConfiguracoesNichoTabProps {
     logs_aprendizado_habilitado?: boolean;
     alertas_habilitado?: boolean;
     clientes_habilitado?: boolean;
+    apps_habilitado?: boolean;
     ordem_abas?: string[] | null;
   };
   onConfigUpdate: () => void;
@@ -68,10 +70,20 @@ const MODULOS_CONFIG = [
   {
     id: "clientes",
     dbField: "clientes_habilitado",
-    label: "Gestão de Clientes",
-    description: "Gerencie clientes e influenciadores com metas semanais",
+    label: "Gestao de Clientes + Apps",
+    description: "Gerencie clientes, influenciadores e aplicativos SaaS",
     icon: Briefcase,
     color: "purple",
+    linkedModules: ["apps"],
+  },
+  {
+    id: "apps",
+    dbField: "apps_habilitado",
+    label: "Aplicativos SaaS",
+    description: "Cadastre apps, vincule a clientes e registre resultados",
+    icon: Smartphone,
+    color: "cyan",
+    hidden: true,
   },
   {
     id: "time",
@@ -139,6 +151,8 @@ const MODULOS_CONFIG = [
   },
 ] as const;
 
+type ModuloConfig = typeof MODULOS_CONFIG[number];
+
 const COLOR_CLASSES: Record<string, { bg: string; text: string }> = {
   emerald: { bg: "bg-emerald-500/10", text: "text-emerald-500" },
   orange: { bg: "bg-orange-500/10", text: "text-orange-500" },
@@ -165,14 +179,32 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
     setModulosState(state);
   }, [nicho]);
 
-  const handleToggle = async (moduloId: string, dbField: string, label: string, enabled: boolean) => {
+  const handleToggle = async (modulo: ModuloConfig, enabled: boolean) => {
+    const moduloId = modulo.id;
+    const dbField = modulo.dbField;
+    const label = modulo.label;
+    
     setSaving(moduloId);
     setModulosState((prev) => ({ ...prev, [moduloId]: enabled }));
 
     try {
+      // Build update payload with linked modules
+      const updatePayload: Record<string, boolean> = { [dbField]: enabled };
+      
+      // If this module has linked modules, update them too
+      if ('linkedModules' in modulo && modulo.linkedModules) {
+        for (const linkedId of modulo.linkedModules) {
+          const linkedModulo = MODULOS_CONFIG.find(m => m.id === linkedId);
+          if (linkedModulo) {
+            updatePayload[linkedModulo.dbField] = enabled;
+            setModulosState((prev) => ({ ...prev, [linkedId]: enabled }));
+          }
+        }
+      }
+
       const { error } = await supabase
         .from("nichos")
-        .update({ [dbField]: enabled })
+        .update(updatePayload)
         .eq("id", nichoId);
 
       if (error) throw error;
@@ -181,7 +213,7 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
       onConfigUpdate();
     } catch (error: any) {
       setModulosState((prev) => ({ ...prev, [moduloId]: !enabled }));
-      toast.error("Erro ao salvar configuração: " + error.message);
+      toast.error("Erro ao salvar configuracao: " + error.message);
     } finally {
       setSaving(null);
     }
@@ -206,7 +238,7 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
           <CardDescription>Ative ou desative módulos do sistema</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {MODULOS_CONFIG.map((modulo) => {
+          {MODULOS_CONFIG.filter(m => !('hidden' in m && m.hidden)).map((modulo) => {
             const Icon = modulo.icon;
             const colorClass = COLOR_CLASSES[modulo.color];
             const isEnabled = modulosState[modulo.id] ?? false;
@@ -239,7 +271,7 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
                 <Switch
                   id={modulo.id}
                   checked={isEnabled}
-                  onCheckedChange={(enabled) => handleToggle(modulo.id, modulo.dbField, modulo.label, enabled)}
+                  onCheckedChange={(enabled) => handleToggle(modulo, enabled)}
                   disabled={saving !== null}
                 />
               </div>
