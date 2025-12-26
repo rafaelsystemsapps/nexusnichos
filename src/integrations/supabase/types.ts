@@ -138,6 +138,66 @@ export type Database = {
           },
         ]
       }
+      client_apps: {
+        Row: {
+          ativo: boolean
+          cliente_id: string
+          created_at: string
+          id: string
+          nicho_id: string
+          nome_app: string
+          observacao: string | null
+          periodicidade: string
+          rateio: string
+          tipo_custo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          cliente_id: string
+          created_at?: string
+          id?: string
+          nicho_id: string
+          nome_app: string
+          observacao?: string | null
+          periodicidade?: string
+          rateio?: string
+          tipo_custo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          ativo?: boolean
+          cliente_id?: string
+          created_at?: string
+          id?: string
+          nicho_id?: string
+          nome_app?: string
+          observacao?: string | null
+          periodicidade?: string
+          rateio?: string
+          tipo_custo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_apps_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_apps_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cliente_templates: {
         Row: {
           campos_padrao: Json | null

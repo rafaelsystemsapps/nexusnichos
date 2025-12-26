@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { TarefaClienteItem } from "./TarefaClienteItem";
 import { ClienteForm } from "./ClienteForm";
+import { ClienteAppsSection } from "./ClienteAppsSection";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -401,6 +402,14 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
               </p>
             )}
           </div>
+
+          {/* Apps & Custos */}
+          <ClienteAppsSection
+            clienteId={cliente.id}
+            nichoId={nichoId}
+            valorContrato={cliente.valor_contrato}
+            modeloPagamento={cliente.modelo_pagamento}
+          />
         </CardContent>
       </Card>
 
