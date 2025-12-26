@@ -799,6 +799,59 @@ export type Database = {
         }
         Relationships: []
       }
+      prospects: {
+        Row: {
+          contato: string | null
+          created_at: string
+          data_ultimo_contato: string | null
+          id: string
+          metodo_contato: string
+          nicho_id: string
+          nome_display: string
+          observacao: string | null
+          origem: string
+          origem_url: string | null
+          status_contato: string
+          updated_at: string
+        }
+        Insert: {
+          contato?: string | null
+          created_at?: string
+          data_ultimo_contato?: string | null
+          id?: string
+          metodo_contato?: string
+          nicho_id: string
+          nome_display: string
+          observacao?: string | null
+          origem?: string
+          origem_url?: string | null
+          status_contato?: string
+          updated_at?: string
+        }
+        Update: {
+          contato?: string | null
+          created_at?: string
+          data_ultimo_contato?: string | null
+          id?: string
+          metodo_contato?: string
+          nicho_id?: string
+          nome_display?: string
+          observacao?: string | null
+          origem?: string
+          origem_url?: string | null
+          status_contato?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospects_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       radar_oportunidades: {
         Row: {
           arquivado: boolean
