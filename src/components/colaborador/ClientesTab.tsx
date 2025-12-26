@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +9,8 @@ import { ClienteForm } from "./ClienteForm";
 import { ProspectsTab } from "./ProspectsTab";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useClientes, useUpdateClienteOrdem, useInvalidateClientes } from "@/hooks/queries";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
   closestCenter,
@@ -69,8 +70,11 @@ function SortableClienteCard({
 }
 
 export function ClientesTab({ nichoId }: ClientesTabProps) {
-  const [clientes, setClientes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: clientes = [], isLoading: loading } = useClientes(nichoId);
+  const updateOrdem = useUpdateClienteOrdem(nichoId);
+  const invalidateClientes = useInvalidateClientes(nichoId);
+  const queryClient = useQueryClient();
+  
   const [formOpen, setFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTipo, setFilterTipo] = useState<string>("todos");
@@ -86,34 +90,15 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
     })
   );
 
-  useEffect(() => {
-    fetchClientes();
-  }, [nichoId]);
-
-  const fetchClientes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("clientes")
-        .select("*")
-        .eq("nicho_id", nichoId)
-        .order("ordem", { ascending: true });
-
-      if (error) throw error;
-      setClientes(data || []);
-    } catch (error: any) {
-      toast.error("Erro ao carregar clientes: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredClientes = clientes.filter((cliente) => {
-    const matchSearch = cliente.nome.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchTipo = filterTipo === "todos" || cliente.tipo === filterTipo;
-    const matchStatus = filterStatus === "todos" || cliente.status === filterStatus;
-    const matchPagamento = filterPagamento === "todos" || cliente.modelo_pagamento === filterPagamento;
-    return matchSearch && matchTipo && matchStatus && matchPagamento;
-  });
+  const filteredClientes = useMemo(() => {
+    return clientes.filter((cliente) => {
+      const matchSearch = cliente.nome.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchTipo = filterTipo === "todos" || cliente.tipo === filterTipo;
+      const matchStatus = filterStatus === "todos" || cliente.status === filterStatus;
+      const matchPagamento = filterPagamento === "todos" || cliente.modelo_pagamento === filterPagamento;
+      return matchSearch && matchTipo && matchStatus && matchPagamento;
+    });
+  }, [clientes, searchTerm, filterTipo, filterStatus, filterPagamento]);
 
   // Verificar se há filtros ativos
   const hasActiveFilters = searchTerm !== "" || filterTipo !== "todos" || filterStatus !== "todos" || filterPagamento !== "todos";
@@ -125,30 +110,22 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
     const oldIndex = clientes.findIndex((c) => c.id === active.id);
     const newIndex = clientes.findIndex((c) => c.id === over.id);
 
-    const newClientes = arrayMove(clientes, oldIndex, newIndex);
-    setClientes(newClientes);
+    const newClientes = arrayMove([...clientes], oldIndex, newIndex);
+    
+    // Optimistic update
+    queryClient.setQueryData(["clientes", nichoId], newClientes);
 
-    // Persistir no banco
-    try {
-      const updates = newClientes.map((cliente, index) => ({
-        id: cliente.id,
-        ordem: index,
-      }));
-
-      for (const update of updates) {
-        await supabase
-          .from("clientes")
-          .update({ ordem: update.ordem })
-          .eq("id", update.id);
-      }
-    } catch (error: any) {
-      toast.error("Erro ao salvar ordem: " + error.message);
-      fetchClientes(); // Reverter em caso de erro
-    }
+    // Persist
+    const updates = newClientes.map((cliente, index) => ({
+      id: cliente.id,
+      ordem: index,
+    }));
+    
+    updateOrdem.mutate(updates);
   };
 
   // Stats
-  const stats = {
+  const stats = useMemo(() => ({
     total: clientes.length,
     rodando: clientes.filter(c => c.status === "rodando").length,
     pausado: clientes.filter(c => c.status === "pausado").length,
@@ -156,18 +133,30 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
     negocios: clientes.filter(c => c.tipo === "negocio_local").length,
     porcentagem: clientes.filter(c => c.modelo_pagamento === "porcentagem").length,
     valorFixo: clientes.filter(c => c.modelo_pagamento === "valor_fixo").length,
-  };
+  }), [clientes]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-muted-foreground">Carregando...</div>
+        <div className="space-y-4 w-full max-w-3xl">
+          <div className="grid grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="h-20 rounded-lg skeleton-pulse bg-muted" />
+            ))}
+          </div>
+          <div className="h-12 rounded-lg skeleton-pulse bg-muted" />
+          <div className="grid grid-cols-3 gap-4">
+            {[1,2,3].map(i => (
+              <div key={i} className="h-40 rounded-lg skeleton-pulse bg-muted" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 tab-content">
       {/* Sub-Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-[400px] grid-cols-2">
@@ -181,7 +170,7 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="clientes" className="mt-6">
+        <TabsContent value="clientes" className="mt-6 tab-content">
           {/* Header Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
             <div className="p-4 rounded-lg bg-card/50 border border-border/50">
@@ -296,7 +285,7 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
                 <ClienteCard
                   key={cliente.id}
                   cliente={cliente}
-                  onUpdate={fetchClientes}
+                  onUpdate={invalidateClientes}
                   nichoId={nichoId}
                 />
               ))}
@@ -316,7 +305,7 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
                     <SortableClienteCard
                       key={cliente.id}
                       cliente={cliente}
-                      onUpdate={fetchClientes}
+                      onUpdate={invalidateClientes}
                       nichoId={nichoId}
                     />
                   ))}
@@ -329,11 +318,11 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
             open={formOpen}
             onOpenChange={setFormOpen}
             nichoId={nichoId}
-            onSave={fetchClientes}
+            onSave={invalidateClientes}
           />
         </TabsContent>
 
-        <TabsContent value="prospeccao" className="mt-6">
+        <TabsContent value="prospeccao" className="mt-6 tab-content">
           <ProspectsTab nichoId={nichoId} />
         </TabsContent>
       </Tabs>

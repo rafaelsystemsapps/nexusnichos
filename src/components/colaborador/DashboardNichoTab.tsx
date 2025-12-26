@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,142 +6,49 @@ import { CheckCircle, AlertTriangle, Clock, CalendarClock, AlertCircle } from "l
 import { useIsIOSMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { differenceInDays } from "date-fns";
 import { FocoDoDia } from "./FocoDoDia";
 import { AlertasRisco } from "./AlertasRisco";
+import { useDashboardTarefas, useInvalidateDashboardTarefas } from "@/hooks/queries";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface DashboardNichoTabProps {
   nichoId: string;
   alertasHabilitado?: boolean;
 }
 
-interface TarefaFila {
-  id: string;
-  data: string;
-  status: string;
-  template_titulo: string;
-  conta_nome?: string;
-  dias_atraso?: number;
-}
-
-interface ContaAcao {
-  id: string;
-  nome_conta: string;
-  plataforma: string;
-  status: string;
-  proxima_acao: string | null;
-}
-
 export function DashboardNichoTab({ nichoId, alertasHabilitado = false }: DashboardNichoTabProps) {
-  const [tarefasAtrasadas, setTarefasAtrasadas] = useState<TarefaFila[]>([]);
-  const [tarefasHoje, setTarefasHoje] = useState<TarefaFila[]>([]);
-  const [contasAcao, setContasAcao] = useState<ContaAcao[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading: loading } = useDashboardTarefas(nichoId);
+  const invalidateTarefas = useInvalidateDashboardTarefas(nichoId);
+  const queryClient = useQueryClient();
+  
   const [completingTask, setCompletingTask] = useState<string | null>(null);
   const isIOSMobile = useIsIOSMobile();
 
-  useEffect(() => {
-    fetchFilaExecucao();
-  }, [nichoId]);
-
-  const fetchFilaExecucao = async () => {
-    try {
-      const hoje = new Date().toISOString().split('T')[0];
-
-      // Buscar semanas do nicho para pegar os IDs
-      const { data: semanasData } = await supabase
-        .from("semana_logistica")
-        .select("id")
-        .eq("nicho_id", nichoId);
-
-      const semanaIds = semanasData?.map(s => s.id) || [];
-
-      if (semanaIds.length > 0) {
-        // Tarefas atrasadas (data < hoje e não concluídas)
-        const { data: atrasadasData } = await supabase
-          .from("tarefa_diaria")
-          .select(`
-            id,
-            data,
-            status,
-            tarefa_templates!inner(titulo, conta_id, contas_redes_sociais(nome_conta))
-          `)
-          .in("semana_id", semanaIds)
-          .lt("data", hoje)
-          .in("status", ["pendente", "em_andamento"])
-          .order("data", { ascending: true });
-
-        const atrasadas: TarefaFila[] = (atrasadasData || []).map((t: any) => ({
-          id: t.id,
-          data: t.data,
-          status: t.status,
-          template_titulo: t.tarefa_templates?.titulo || "Tarefa",
-          conta_nome: t.tarefa_templates?.contas_redes_sociais?.nome_conta,
-          dias_atraso: differenceInDays(new Date(), new Date(t.data)),
-        }));
-        setTarefasAtrasadas(atrasadas);
-
-        // Tarefas de hoje (não concluídas)
-        const { data: hojeData } = await supabase
-          .from("tarefa_diaria")
-          .select(`
-            id,
-            data,
-            status,
-            tarefa_templates!inner(titulo, ordem, conta_id, contas_redes_sociais(nome_conta))
-          `)
-          .in("semana_id", semanaIds)
-          .eq("data", hoje)
-          .neq("status", "concluida")
-          .order("tarefa_templates(ordem)", { ascending: true });
-
-        const hojeList: TarefaFila[] = (hojeData || []).map((t: any) => ({
-          id: t.id,
-          data: t.data,
-          status: t.status,
-          template_titulo: t.tarefa_templates?.titulo || "Tarefa",
-          conta_nome: t.tarefa_templates?.contas_redes_sociais?.nome_conta,
-        }));
-        setTarefasHoje(hojeList);
-      } else {
-        setTarefasAtrasadas([]);
-        setTarefasHoje([]);
-      }
-
-      // Contas precisando de ação (limitada = risco, banida = desativada)
-      const { data: contasData } = await supabase
-        .from("contas_redes_sociais")
-        .select("id, nome_conta, plataforma, status, proxima_acao")
-        .eq("nicho_id", nichoId)
-        .in("status", ["limitada", "banida"])
-        .order("nome_conta");
-
-      setContasAcao(contasData || []);
-    } catch (error) {
-      console.error("Erro ao carregar fila de execução:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const tarefasAtrasadas = data?.tarefasAtrasadas || [];
+  const tarefasHoje = data?.tarefasHoje || [];
+  const contasAcao = data?.contasAcao || [];
 
   const handleConcluirTarefa = async (tarefaId: string) => {
     setCompletingTask(tarefaId);
     try {
+      // Optimistic update
+      queryClient.setQueryData(["dashboard-tarefas", nichoId], (old: any) => ({
+        ...old,
+        tarefasAtrasadas: old?.tarefasAtrasadas?.filter((t: any) => t.id !== tarefaId) || [],
+        tarefasHoje: old?.tarefasHoje?.filter((t: any) => t.id !== tarefaId) || [],
+      }));
+
       const { error } = await supabase
         .from("tarefa_diaria")
         .update({ status: "concluida" })
         .eq("id", tarefaId);
 
       if (error) throw error;
-
-      // Remove da lista local
-      setTarefasAtrasadas(prev => prev.filter(t => t.id !== tarefaId));
-      setTarefasHoje(prev => prev.filter(t => t.id !== tarefaId));
-      
       toast.success("Tarefa concluída!");
     } catch (error) {
       console.error("Erro ao concluir tarefa:", error);
       toast.error("Erro ao concluir tarefa");
+      invalidateTarefas();
     } finally {
       setCompletingTask(null);
     }
@@ -157,14 +64,15 @@ export function DashboardNichoTab({ nichoId, alertasHabilitado = false }: Dashbo
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="space-y-6 tab-content">
+        <div className="h-24 rounded-lg skeleton-pulse bg-muted" />
+        <div className="h-64 rounded-lg skeleton-pulse bg-muted" />
       </div>
     );
   }
 
   return (
-    <div className={cn(isIOSMobile ? "space-y-4" : "space-y-6")}>
+    <div className={cn("tab-content", isIOSMobile ? "space-y-4" : "space-y-6")}>
       {/* Foco do Dia - Sempre visível no topo */}
       <FocoDoDia nichoId={nichoId} />
 

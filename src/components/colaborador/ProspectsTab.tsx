@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,12 +15,11 @@ import {
   Search,
   Filter,
   Target,
-  Instagram,
-  Youtube,
-  Globe,
 } from "lucide-react";
 import { ProspectCard } from "./ProspectCard";
 import { ProspectForm } from "./ProspectForm";
+import { useProspects, useInvalidateProspects } from "@/hooks/queries";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,13 +30,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-// TikTok icon
-const TikTokIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z" />
-  </svg>
-);
 
 type StatusContato = "salvo" | "contatado" | "aceitou" | "nao_aceitou" | "sem_resposta";
 
@@ -61,8 +53,12 @@ interface ProspectsTabProps {
 const STATUS_ORDER: StatusContato[] = ["salvo", "contatado", "sem_resposta", "aceitou", "nao_aceitou"];
 
 export function ProspectsTab({ nichoId }: ProspectsTabProps) {
-  const [prospects, setProspects] = useState<Prospect[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawProspects = [], isLoading: loading } = useProspects(nichoId);
+  const invalidateProspects = useInvalidateProspects(nichoId);
+  const queryClient = useQueryClient();
+  
+  const prospects = rawProspects as Prospect[];
+  
   const [formOpen, setFormOpen] = useState(false);
   const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,27 +68,6 @@ export function ProspectsTab({ nichoId }: ProspectsTabProps) {
   // Convert dialog
   const [convertProspect, setConvertProspect] = useState<Prospect | null>(null);
   const [deleteProspectId, setDeleteProspectId] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchProspects();
-  }, [nichoId]);
-
-  const fetchProspects = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("prospects")
-        .select("*")
-        .eq("nicho_id", nichoId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setProspects((data || []) as Prospect[]);
-    } catch (error: any) {
-      toast.error("Erro ao carregar prospects: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Sort by status order
   const sortedProspects = useMemo(() => {
@@ -129,10 +104,14 @@ export function ProspectsTab({ nichoId }: ProspectsTabProps) {
         status_contato: newStatus,
       };
       
-      // Update last contact date when status changes to contatado
       if (newStatus === "contatado" || newStatus === "sem_resposta" || newStatus === "aceitou" || newStatus === "nao_aceitou") {
         updateData.data_ultimo_contato = new Date().toISOString();
       }
+
+      // Optimistic update
+      queryClient.setQueryData(["prospects", nichoId], (old: any[]) => 
+        old?.map((p) => (p.id === id ? { ...p, ...updateData } : p)) || []
+      );
 
       const { error } = await supabase
         .from("prospects")
@@ -140,13 +119,10 @@ export function ProspectsTab({ nichoId }: ProspectsTabProps) {
         .eq("id", id);
 
       if (error) throw error;
-
-      setProspects((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, ...updateData } : p))
-      );
       toast.success("Status atualizado!");
     } catch (error: any) {
       toast.error("Erro ao atualizar status: " + error.message);
+      invalidateProspects();
     }
   };
 
@@ -154,17 +130,21 @@ export function ProspectsTab({ nichoId }: ProspectsTabProps) {
     if (!deleteProspectId) return;
     
     try {
+      // Optimistic update
+      queryClient.setQueryData(["prospects", nichoId], (old: any[]) => 
+        old?.filter((p) => p.id !== deleteProspectId) || []
+      );
+
       const { error } = await supabase
         .from("prospects")
         .delete()
         .eq("id", deleteProspectId);
 
       if (error) throw error;
-
-      setProspects((prev) => prev.filter((p) => p.id !== deleteProspectId));
       toast.success("Prospect removido!");
     } catch (error: any) {
       toast.error("Erro ao excluir: " + error.message);
+      invalidateProspects();
     } finally {
       setDeleteProspectId(null);
     }
@@ -174,7 +154,6 @@ export function ProspectsTab({ nichoId }: ProspectsTabProps) {
     if (!convertProspect) return;
 
     try {
-      // Create client from prospect
       const clienteData: any = {
         nicho_id: nichoId,
         nome: convertProspect.nome_display,
@@ -183,7 +162,6 @@ export function ProspectsTab({ nichoId }: ProspectsTabProps) {
         observacao_texto: convertProspect.observacao,
       };
 
-      // Map origin URL to appropriate field
       if (convertProspect.origem === "instagram" && convertProspect.origem_url) {
         clienteData.instagram_url = convertProspect.origem_url;
       } else if (convertProspect.origem === "tiktok" && convertProspect.origem_url) {
@@ -198,7 +176,6 @@ export function ProspectsTab({ nichoId }: ProspectsTabProps) {
 
       if (insertError) throw insertError;
 
-      // Delete the prospect
       const { error: deleteError } = await supabase
         .from("prospects")
         .delete()
@@ -206,7 +183,8 @@ export function ProspectsTab({ nichoId }: ProspectsTabProps) {
 
       if (deleteError) throw deleteError;
 
-      setProspects((prev) => prev.filter((p) => p.id !== convertProspect.id));
+      invalidateProspects();
+      queryClient.invalidateQueries({ queryKey: ["clientes", nichoId] });
       toast.success("Prospect convertido em cliente!");
     } catch (error: any) {
       toast.error("Erro ao converter: " + error.message);
@@ -217,14 +195,24 @@ export function ProspectsTab({ nichoId }: ProspectsTabProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-muted-foreground">Carregando...</div>
+      <div className="space-y-4">
+        <div className="grid grid-cols-3 gap-4">
+          {[1,2,3].map(i => (
+            <div key={i} className="h-20 rounded-lg skeleton-pulse bg-muted" />
+          ))}
+        </div>
+        <div className="h-12 rounded-lg skeleton-pulse bg-muted" />
+        <div className="grid grid-cols-3 gap-4">
+          {[1,2,3].map(i => (
+            <div key={i} className="h-32 rounded-lg skeleton-pulse bg-muted" />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 tab-content">
       {/* Header Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div className="p-4 rounded-lg bg-card/50 border border-border/50">
@@ -338,7 +326,7 @@ export function ProspectsTab({ nichoId }: ProspectsTabProps) {
         onOpenChange={setFormOpen}
         nichoId={nichoId}
         prospect={editingProspect}
-        onSuccess={fetchProspects}
+        onSuccess={invalidateProspects}
       />
 
       {/* Delete Confirmation */}
