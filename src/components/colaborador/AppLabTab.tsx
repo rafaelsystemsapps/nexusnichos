@@ -27,6 +27,7 @@ import { AppLabCard, AppLabApp } from "./AppLabCard";
 import { AppLabForm } from "./AppLabForm";
 import { AppLabLinksManager } from "./AppLabLinksManager";
 import { cn } from "@/lib/utils";
+import { differenceInDays } from "date-fns";
 
 interface AppLabTabProps {
   nichoId: string;
@@ -41,6 +42,36 @@ const STATUS_ORDER: Record<AppLabApp["status_teste"], number> = {
   descartado: 4,
 };
 
+const DURACAO_DIAS: Record<string, number> = {
+  "7_dias": 7,
+  "30_dias": 30,
+  "3_meses": 90,
+};
+
+function calcularLinksSummary(links: any[]): AppLabApp["links_summary"] {
+  const summary = { "7_dias": 0, "30_dias": 0, "3_meses": 0, expirados: 0 };
+  
+  links.forEach((link) => {
+    const duracao = link.duracao_teste || "7_dias";
+    const dataInicio = link.data_inicio_teste;
+    
+    if (dataInicio) {
+      const dias = DURACAO_DIAS[duracao] || 7;
+      const diasPassados = differenceInDays(new Date(), new Date(dataInicio));
+      
+      if (diasPassados >= dias) {
+        summary.expirados++;
+      } else if (duracao in summary) {
+        summary[duracao as keyof typeof summary]++;
+      }
+    } else if (duracao in summary) {
+      summary[duracao as keyof typeof summary]++;
+    }
+  });
+  
+  return summary;
+}
+
 export function AppLabTab({ nichoId }: AppLabTabProps) {
   const queryClient = useQueryClient();
 
@@ -51,24 +82,39 @@ export function AppLabTab({ nichoId }: AppLabTabProps) {
   const [linksManagerApp, setLinksManagerApp] = useState<AppLabApp | null>(null);
   const [deleteApp, setDeleteApp] = useState<AppLabApp | null>(null);
 
-  // Fetch apps with links count
+  // Fetch apps with links count and details
   const { data: apps = [], isLoading } = useQuery({
     queryKey: ["applab-apps", nichoId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Get apps
+      const { data: appsData, error: appsError } = await supabase
         .from("applab_apps")
-        .select(`
-          *,
-          applab_account_links(count)
-        `)
+        .select("*")
         .eq("nicho_id", nichoId)
         .order("updated_at", { ascending: false });
 
-      if (error) throw error;
+      if (appsError) throw appsError;
 
-      return (data || []).map((app: any) => ({
+      // Get all links for these apps
+      const appIds = (appsData || []).map((a) => a.id);
+      const { data: linksData, error: linksError } = await supabase
+        .from("applab_account_links")
+        .select("app_id, duracao_teste, data_inicio_teste")
+        .in("app_id", appIds.length > 0 ? appIds : ["none"]);
+
+      if (linksError) throw linksError;
+
+      // Group links by app
+      const linksByApp: Record<string, any[]> = {};
+      (linksData || []).forEach((link) => {
+        if (!linksByApp[link.app_id]) linksByApp[link.app_id] = [];
+        linksByApp[link.app_id].push(link);
+      });
+
+      return (appsData || []).map((app: any) => ({
         ...app,
-        links_count: app.applab_account_links?.[0]?.count || 0,
+        links_count: linksByApp[app.id]?.length || 0,
+        links_summary: calcularLinksSummary(linksByApp[app.id] || []),
       })) as AppLabApp[];
     },
   });

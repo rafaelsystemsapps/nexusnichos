@@ -67,28 +67,37 @@ export type Database = {
           app_id: string
           conta_id: string
           created_at: string
+          data_inicio_teste: string | null
+          duracao_teste: string | null
           id: string
           nicho_id: string
           observacao: string | null
           status_vinculo: string
+          validando: string | null
         }
         Insert: {
           app_id: string
           conta_id: string
           created_at?: string
+          data_inicio_teste?: string | null
+          duracao_teste?: string | null
           id?: string
           nicho_id: string
           observacao?: string | null
           status_vinculo?: string
+          validando?: string | null
         }
         Update: {
           app_id?: string
           conta_id?: string
           created_at?: string
+          data_inicio_teste?: string | null
+          duracao_teste?: string | null
           id?: string
           nicho_id?: string
           observacao?: string | null
           status_vinculo?: string
+          validando?: string | null
         }
         Relationships: [
           {
