@@ -345,6 +345,13 @@ function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, onToggleAqu
           </p>
         )}
 
+        {/* Data de criação da conta */}
+        {conta.data_criacao_conta && (
+          <p className="text-xs text-muted-foreground mt-1">
+            <span className="opacity-60">Criada em:</span> {format(new Date(conta.data_criacao_conta), "dd/MM/yyyy", { locale: ptBR })}
+          </p>
+        )}
+
         {/* Ultima acao */}
         {conta.ultima_acao && (
           <p className="text-xs text-muted-foreground mt-1">
