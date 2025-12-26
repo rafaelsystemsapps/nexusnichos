@@ -8,9 +8,62 @@ import { Plus, Search, Users, Filter, Percent, DollarSign } from "lucide-react";
 import { ClienteCard } from "./ClienteCard";
 import { ClienteForm } from "./ClienteForm";
 import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface ClientesTabProps {
   nichoId: string;
+}
+
+// Sortable wrapper for ClienteCard
+function SortableClienteCard({
+  cliente,
+  onUpdate,
+  nichoId,
+}: {
+  cliente: any;
+  onUpdate: () => void;
+  nichoId: string;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: cliente.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1 : 0,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <ClienteCard
+        cliente={cliente}
+        onUpdate={onUpdate}
+        nichoId={nichoId}
+        dragHandleProps={{ ...attributes, ...listeners }}
+      />
+    </div>
+  );
 }
 
 export function ClientesTab({ nichoId }: ClientesTabProps) {
@@ -21,6 +74,14 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
   const [filterTipo, setFilterTipo] = useState<string>("todos");
   const [filterStatus, setFilterStatus] = useState<string>("todos");
   const [filterPagamento, setFilterPagamento] = useState<string>("todos");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   useEffect(() => {
     fetchClientes();
@@ -50,6 +111,38 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
     const matchPagamento = filterPagamento === "todos" || cliente.modelo_pagamento === filterPagamento;
     return matchSearch && matchTipo && matchStatus && matchPagamento;
   });
+
+  // Verificar se há filtros ativos
+  const hasActiveFilters = searchTerm !== "" || filterTipo !== "todos" || filterStatus !== "todos" || filterPagamento !== "todos";
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = clientes.findIndex((c) => c.id === active.id);
+    const newIndex = clientes.findIndex((c) => c.id === over.id);
+
+    const newClientes = arrayMove(clientes, oldIndex, newIndex);
+    setClientes(newClientes);
+
+    // Persistir no banco
+    try {
+      const updates = newClientes.map((cliente, index) => ({
+        id: cliente.id,
+        ordem: index,
+      }));
+
+      for (const update of updates) {
+        await supabase
+          .from("clientes")
+          .update({ ordem: update.ordem })
+          .eq("id", update.id);
+      }
+    } catch (error: any) {
+      toast.error("Erro ao salvar ordem: " + error.message);
+      fetchClientes(); // Reverter em caso de erro
+    }
+  };
 
   // Stats
   const stats = {
@@ -180,7 +273,7 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
             </Button>
           )}
         </div>
-      ) : (
+      ) : hasActiveFilters ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredClientes.map((cliente) => (
             <ClienteCard
@@ -191,6 +284,28 @@ export function ClientesTab({ nichoId }: ClientesTabProps) {
             />
           ))}
         </div>
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={clientes.map((c) => c.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {clientes.map((cliente) => (
+                <SortableClienteCard
+                  key={cliente.id}
+                  cliente={cliente}
+                  onUpdate={fetchClientes}
+                  nichoId={nichoId}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       <ClienteForm

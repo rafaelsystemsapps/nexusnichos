@@ -24,6 +24,7 @@ import {
   DollarSign,
   Smartphone,
   Calendar,
+  GripVertical,
 } from "lucide-react";
 import { TarefaClienteItem } from "./TarefaClienteItem";
 import { ClienteForm } from "./ClienteForm";
@@ -42,9 +43,10 @@ interface ClienteCardProps {
   cliente: any;
   onUpdate: () => void;
   nichoId: string;
+  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
-export function ClienteCard({ cliente, onUpdate, nichoId }: ClienteCardProps) {
+export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: ClienteCardProps) {
   const [tarefas, setTarefas] = useState<any[]>([]);
   const [novaTarefa, setNovaTarefa] = useState("");
   const [addingTask, setAddingTask] = useState(false);
@@ -181,6 +183,15 @@ export function ClienteCard({ cliente, onUpdate, nichoId }: ClienteCardProps) {
         <CardHeader className="pb-3">
           {/* Header */}
           <div className="flex items-start justify-between gap-3">
+            {/* Drag Handle */}
+            {dragHandleProps && (
+              <div
+                {...dragHandleProps}
+                className="cursor-grab active:cursor-grabbing p-1 -ml-1 -mt-1 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <GripVertical className="h-5 w-5" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-2">
                 <h3 className="font-semibold text-lg truncate">{cliente.nome}</h3>
