@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Trash2 } from "lucide-react";
+import { Check, Trash2, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ interface LembreteItemProps {
     status: string;
   };
   onUpdate: () => void;
+  isAmanha?: boolean;
 }
 
 const PRIORIDADE_CONFIG = {
@@ -33,7 +34,7 @@ const PRIORIDADE_CONFIG = {
   },
 };
 
-export function LembreteItem({ lembrete, onUpdate }: LembreteItemProps) {
+export function LembreteItem({ lembrete, onUpdate, isAmanha = false }: LembreteItemProps) {
   const [loading, setLoading] = useState(false);
 
   const config = PRIORIDADE_CONFIG[lembrete.prioridade as keyof typeof PRIORIDADE_CONFIG] || PRIORIDADE_CONFIG.media;
@@ -96,6 +97,14 @@ export function LembreteItem({ lembrete, onUpdate }: LembreteItemProps) {
         >
           {lembrete.descricao}
         </span>
+        
+        {/* Badge para lembretes de amanhã */}
+        {isAmanha && !isConcluida && !isEncerrada && (
+          <span className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-500/10 text-blue-500 shrink-0">
+            <CalendarDays className="h-3 w-3" />
+            Amanhã
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-2 ml-3">

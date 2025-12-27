@@ -7,19 +7,33 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { format, addDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CalendarDays, MapPin } from "lucide-react";
 
 interface LembreteFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   nichoId: string;
   onSuccess: () => void;
+  defaultDate?: "hoje" | "amanha";
 }
 
-export function LembreteForm({ open, onOpenChange, nichoId, onSuccess }: LembreteFormProps) {
+export function LembreteForm({ open, onOpenChange, nichoId, onSuccess, defaultDate = "hoje" }: LembreteFormProps) {
   const { user } = useAuth();
   const [descricao, setDescricao] = useState("");
   const [prioridade, setPrioridade] = useState<"alta" | "media" | "baixa">("media");
+  const [dataLembrete, setDataLembrete] = useState<"hoje" | "amanha">(defaultDate);
   const [saving, setSaving] = useState(false);
+
+  const hoje = new Date();
+  const amanha = addDays(hoje, 1);
+
+  const getDataFormatada = (date: Date) => format(date, "dd/MM", { locale: ptBR });
+  const getDataISO = (tipo: "hoje" | "amanha") => {
+    const date = tipo === "hoje" ? hoje : amanha;
+    return format(date, "yyyy-MM-dd");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,14 +62,15 @@ export function LembreteForm({ open, onOpenChange, nichoId, onSuccess }: Lembret
         descricao: descricao.trim(),
         prioridade,
         status: "pendente",
-        data_criacao: new Date().toISOString().split("T")[0],
+        data_criacao: getDataISO(dataLembrete),
       });
 
       if (error) throw error;
 
-      toast.success("Lembrete criado!");
+      toast.success(dataLembrete === "hoje" ? "Lembrete criado para hoje!" : "Lembrete agendado para amanhã!");
       setDescricao("");
       setPrioridade("media");
+      setDataLembrete(defaultDate);
       onOpenChange(false);
       onSuccess();
     } catch (error: any) {
@@ -69,12 +84,12 @@ export function LembreteForm({ open, onOpenChange, nichoId, onSuccess }: Lembret
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Novo Lembrete de Hoje</DialogTitle>
+          <DialogTitle>Novo Lembrete</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="descricao">O que você precisa fazer hoje?</Label>
+            <Label htmlFor="descricao">O que você precisa fazer?</Label>
             <Textarea
               id="descricao"
               value={descricao}
@@ -89,6 +104,32 @@ export function LembreteForm({ open, onOpenChange, nichoId, onSuccess }: Lembret
             </p>
           </div>
 
+          {/* Data do Lembrete */}
+          <div className="space-y-3">
+            <Label>Para quando?</Label>
+            <RadioGroup
+              value={dataLembrete}
+              onValueChange={(v) => setDataLembrete(v as "hoje" | "amanha")}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="hoje" id="data-hoje" />
+                <Label htmlFor="data-hoje" className="flex items-center gap-1.5 cursor-pointer">
+                  <MapPin className="h-3.5 w-3.5 text-amber-500" />
+                  Hoje ({getDataFormatada(hoje)})
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="amanha" id="data-amanha" />
+                <Label htmlFor="data-amanha" className="flex items-center gap-1.5 cursor-pointer">
+                  <CalendarDays className="h-3.5 w-3.5 text-blue-500" />
+                  Amanhã ({getDataFormatada(amanha)})
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Prioridade */}
           <div className="space-y-3">
             <Label>Prioridade</Label>
             <RadioGroup
