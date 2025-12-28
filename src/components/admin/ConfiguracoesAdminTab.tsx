@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Check, ChevronDown, Copy, Monitor, Apple, Terminal, Rocket, Info } from "lucide-react";
+import { Check, ChevronDown, Copy, Monitor, Apple, Terminal, Rocket, Info, RefreshCw, CheckCircle2, AlertCircle, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { useServiceWorker } from "@/hooks/useServiceWorker";
 
 type OS = "windows" | "mac" | "linux" | "unknown";
 
@@ -19,6 +20,19 @@ const detectOS = (): OS => {
 export function ConfiguracoesAdminTab() {
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState<string[]>([detectOS()]);
+  const { needRefresh, isChecking, updateServiceWorker, checkForUpdates } = useServiceWorker();
+
+  const handleCheckUpdates = async () => {
+    await checkForUpdates();
+    if (!needRefresh) {
+      toast.success("App está atualizado!");
+    }
+  };
+
+  const handleUpdate = async () => {
+    await updateServiceWorker();
+    toast.success("Atualizando o app...");
+  };
 
   const copyToClipboard = async (text: string, id: string) => {
     try {
@@ -117,6 +131,82 @@ Categories=Office;`;
 
   return (
     <div className="space-y-6">
+      {/* Seção de Atualizações */}
+      <Card className="bg-card/50 border-border/50">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <RefreshCw className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Atualizações do App</CardTitle>
+              <CardDescription>
+                Verifique e instale atualizações do aplicativo
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Status */}
+          <div className={`flex items-center gap-3 p-4 rounded-lg border ${
+            needRefresh 
+              ? "bg-amber-500/10 border-amber-500/30" 
+              : "bg-emerald-500/10 border-emerald-500/30"
+          }`}>
+            {needRefresh ? (
+              <>
+                <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
+                <div>
+                  <p className="font-medium text-foreground">Nova versão disponível!</p>
+                  <p className="text-sm text-muted-foreground">
+                    Clique em "Atualizar Agora" para aplicar as mudanças.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
+                <div>
+                  <p className="font-medium text-foreground">App atualizado</p>
+                  <p className="text-sm text-muted-foreground">
+                    Você está usando a versão mais recente.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Botões */}
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              onClick={handleCheckUpdates}
+              disabled={isChecking}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isChecking ? "animate-spin" : ""}`} />
+              {isChecking ? "Verificando..." : "Verificar Atualizações"}
+            </Button>
+            
+            {needRefresh && (
+              <Button onClick={handleUpdate} className="gap-2">
+                <Download className="h-4 w-4" />
+                Atualizar Agora
+              </Button>
+            )}
+          </div>
+
+          {/* Dica */}
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border border-border/30">
+            <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              O app verifica atualizações automaticamente a cada hora enquanto estiver aberto.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Seção de Inicialização Automática */}
       <Card className="bg-card/50 border-border/50">
         <CardHeader>
           <div className="flex items-center gap-3">
