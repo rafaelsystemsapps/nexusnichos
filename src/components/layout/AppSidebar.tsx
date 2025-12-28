@@ -22,6 +22,7 @@ import {
   UserCheck,
   Gem,
   FlaskRound,
+  Cog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -131,6 +132,7 @@ function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHa
       ? [
           { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
           { title: "Nichos", href: "/admin/nichos", icon: Settings },
+          { title: "Configurações", href: "/admin/configuracoes", icon: Cog },
         ]
       : colaboradorNavItems;
   }, [abaConfig, ordemAbas, isAdmin]);
