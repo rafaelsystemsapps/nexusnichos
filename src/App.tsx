@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import LoadingScreen from "./components/LoadingScreen";
 import NoRoleAssigned from "./components/NoRoleAssigned";
 import NoNichoAssigned from "./components/NoNichoAssigned";
+import { LembretePopup } from "./components/colaborador/LembretePopup";
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: "admin" | "colaborador" }) {
   const { user, role, loading } = useAuth();
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/" element={<HomePage />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/install" element={<Install />} />
+            <Route path="/lembrete-popup/:id" element={<LembretePopup />} />
             <Route path="/no-role" element={<NoRoleAssigned />} />
             <Route path="/no-nicho" element={<NoNichoAssigned />} />
             <Route 
