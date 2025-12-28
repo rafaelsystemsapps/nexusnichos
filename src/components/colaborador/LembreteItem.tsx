@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Trash2, CalendarDays } from "lucide-react";
+import { Check, Trash2, CalendarDays, PinIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,19 @@ interface LembreteItemProps {
   onUpdate: () => void;
   isAmanha?: boolean;
 }
+
+const openLembretePopup = (lembreteId: string) => {
+  const width = 320;
+  const height = 400;
+  const left = window.screen.width - width - 20;
+  const top = 80;
+  
+  window.open(
+    `/lembrete-popup/${lembreteId}`,
+    `lembrete-${lembreteId}`,
+    `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no,status=no,menubar=no,toolbar=no`
+  );
+};
 
 const PRIORIDADE_CONFIG = {
   alta: {
@@ -108,6 +121,20 @@ export function LembreteItem({ lembrete, onUpdate, isAmanha = false }: LembreteI
       </div>
 
       <div className="flex items-center gap-2 ml-3">
+        {/* Botão Destacar - sempre visível se não estiver concluído/encerrado */}
+        {!isConcluida && !isEncerrada && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => openLembretePopup(lembrete.id)}
+            className="h-8 px-2 text-amber-500 hover:text-amber-600 hover:bg-amber-500/10"
+            title="Abrir como sticky note"
+          >
+            <PinIcon className="h-4 w-4 mr-1" />
+            Destacar
+          </Button>
+        )}
+
         {isConcluida ? (
           <span className="text-xs text-emerald-500 font-medium flex items-center gap-1">
             <Check className="h-3.5 w-3.5" />
