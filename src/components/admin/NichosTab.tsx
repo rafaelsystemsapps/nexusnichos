@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, DollarSign, User, Users, Mail, Lock, UserX, Radar, Archive, AlertTriangle, Network, FlaskConical, Lightbulb, Package, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, User, Users, Mail, Lock, UserX, Radar, Archive, AlertTriangle, Network, FlaskConical, Lightbulb, Package, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 interface NichoWithUser {
@@ -46,6 +46,7 @@ export function NichosTab() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [isCopyingCredentials, setIsCopyingCredentials] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
@@ -287,6 +288,48 @@ export function NichosTab() {
       toast.error("Erro ao excluir: " + error.message);
     } finally {
       setIsDeletingUser(false);
+    }
+  };
+
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
+  const handleCopyCredentials = async (nicho: NichoWithUser) => {
+    if (!nicho.usuario) return;
+    
+    setIsCopyingCredentials(nicho.id);
+    const newPass = generatePassword();
+    
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("reset-password", {
+        body: { 
+          user_id: nicho.usuario.id,
+          new_password: newPass 
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || "Erro ao gerar nova senha");
+      }
+
+      const credentials = `Email: ${nicho.usuario.email}\nSenha: ${newPass}`;
+      await navigator.clipboard.writeText(credentials);
+      
+      toast.success("Credenciais copiadas! Nova senha gerada.", { duration: 5000 });
+    } catch (error: any) {
+      toast.error("Erro ao copiar credenciais: " + error.message);
+    } finally {
+      setIsCopyingCredentials(null);
     }
   };
 
@@ -793,9 +836,19 @@ export function NichosTab() {
                   )}
                 </div>
 
-                {/* Botão sempre na parte inferior */}
+                {/* Botões sempre na parte inferior */}
                 {nicho.usuario && (
-                  <div className="mt-4 pt-4 border-t border-border/30">
+                  <div className="mt-4 pt-4 border-t border-border/30 space-y-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => handleCopyCredentials(nicho)}
+                      disabled={isCopyingCredentials === nicho.id}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      {isCopyingCredentials === nicho.id ? "Gerando..." : "Copiar Credenciais"}
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
