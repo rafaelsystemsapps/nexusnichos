@@ -23,6 +23,7 @@ import {
   Gem,
   FlaskRound,
   Cog,
+  FolderKanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -59,6 +60,7 @@ interface AppSidebarProps {
 }
 
 const DEFAULT_ORDER = [
+  "projeto",
   "contas",
   "logistica",
   "time",
@@ -96,6 +98,7 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
 
   // Configuração de todas as abas disponíveis - memoized
   const abaConfig = useMemo(() => ({
+    projeto: { title: "Projeto", href: `/workspace/${nichoId}`, icon: FolderKanban, enabled: true },
     contas: { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2, enabled: contasHabilitado !== false },
     logistica: { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck, enabled: contasHabilitado === true },
     time: { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users, enabled: timeHabilitado !== false },
@@ -140,6 +143,10 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
   const isActive = (href: string) => {
     if (href === "/admin") {
       return location.pathname === href;
+    }
+    // Para a aba "Projeto", só ativa se for exatamente a rota raiz do workspace
+    if (href.match(/^\/workspace\/[^/]+$/)) {
+      return location.pathname === href || location.pathname === href + "/projeto";
     }
     return location.pathname.startsWith(href);
   };

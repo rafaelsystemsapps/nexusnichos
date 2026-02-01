@@ -3,6 +3,7 @@ import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNicho, useInvalidateNicho } from "@/hooks/queries";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { ProjetoTab } from "@/components/colaborador/ProjetoTab";
 import { ContasNichoTab } from "@/components/colaborador/ContasNichoTab";
 import { TimeNichoTab } from "@/components/colaborador/TimeNichoTab";
 import { PedidosTab } from "@/components/colaborador/PedidosTab";
@@ -52,7 +53,7 @@ export default function ColaboradorWorkspace() {
   }
 
   const getPageTitle = () => {
-    if (!subPath || subPath === "") return "Contas do Nicho";
+    if (!subPath || subPath === "" || subPath === "projeto") return "Projeto";
     if (subPath === "contas") return "Contas do Nicho";
     if (subPath === "logistica") return "Logistica Semanal";
     if (subPath === "time") return "Time";
@@ -71,16 +72,9 @@ export default function ColaboradorWorkspace() {
   };
 
   const renderContent = () => {
-    // Rota raiz vai mostrar primeira aba disponível
-    if (!subPath || subPath === "") {
-      if (nicho.contas_habilitado !== false) {
-        return <ContasNichoTab nichoId={nichoId!} />;
-      }
-      if (nicho.time_habilitado !== false) {
-        return <TimeNichoTab nichoId={nichoId!} />;
-      }
-      // Fallback: Configurações (sempre disponível)
-      return <ConfiguracoesNichoTab nichoId={nichoId!} nicho={nicho} onConfigUpdate={invalidateNicho} />;
+    // Rota raiz agora mostra ProjetoTab (primeira aba fixa)
+    if (!subPath || subPath === "" || subPath === "projeto") {
+      return <ProjetoTab nichoId={nichoId!} />;
     }
     if (subPath === "contas" && nicho.contas_habilitado !== false) {
       return <ContasNichoTab nichoId={nichoId!} />;

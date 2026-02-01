@@ -1575,6 +1575,47 @@ export type Database = {
         }
         Relationships: []
       }
+      workspace_links: {
+        Row: {
+          created_at: string | null
+          id: string
+          nicho_id: string
+          provider: string | null
+          title: string
+          type: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nicho_id: string
+          provider?: string | null
+          title?: string
+          type: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nicho_id?: string
+          provider?: string | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_links_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

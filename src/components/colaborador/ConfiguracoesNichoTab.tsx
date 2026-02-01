@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useWorkspaceLink, useUpsertWorkspaceLink } from "@/hooks/queries/useWorkspaceLinks";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { 
   DollarSign, 
@@ -20,6 +24,10 @@ import {
   Smartphone,
   Gem,
   FlaskRound,
+  Brain,
+  Save,
+  Loader2,
+  Link,
 } from "lucide-react";
 import { OrdemAbasEditor } from "./OrdemAbasEditor";
 
@@ -187,10 +195,35 @@ const COLOR_CLASSES: Record<string, { bg: string; text: string }> = {
   purple: { bg: "bg-purple-500/10", text: "text-purple-500" },
 };
 
+const MINDMAP_PROVIDERS = [
+  { value: "tldraw", label: "Tldraw" },
+  { value: "docs", label: "Google Docs" },
+  { value: "miro", label: "Miro" },
+] as const;
+
+type MindmapProvider = typeof MINDMAP_PROVIDERS[number]["value"];
+
+function validateUrl(url: string): boolean {
+  return url.startsWith("http://") || url.startsWith("https://");
+}
+
 export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: ConfiguracoesNichoTabProps) {
   const [modulosState, setModulosState] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState<string | null>(null);
-
+  
+  // Mapa Mental state
+  const { data: mindmapLink, isLoading: mindmapLoading } = useWorkspaceLink(nichoId, "mindmap");
+  const upsertMindmap = useUpsertWorkspaceLink();
+  const [mindmapProvider, setMindmapProvider] = useState<MindmapProvider>("tldraw");
+  const [mindmapUrl, setMindmapUrl] = useState("");
+  
+  useEffect(() => {
+    if (mindmapLink) {
+      setMindmapProvider((mindmapLink.provider as MindmapProvider) || "tldraw");
+      setMindmapUrl(mindmapLink.url);
+    }
+  }, [mindmapLink]);
+  
   useEffect(() => {
     const state: Record<string, boolean> = {};
     MODULOS_CONFIG.forEach((modulo) => {
@@ -198,6 +231,31 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
     });
     setModulosState(state);
   }, [nicho]);
+
+  const handleSaveMindmap = async () => {
+    if (!mindmapUrl.trim()) {
+      toast.error("A URL é obrigatória");
+      return;
+    }
+
+    if (!validateUrl(mindmapUrl.trim())) {
+      toast.error("A URL deve começar com http:// ou https://");
+      return;
+    }
+
+    try {
+      await upsertMindmap.mutateAsync({
+        nicho_id: nichoId,
+        type: "mindmap",
+        provider: mindmapProvider,
+        title: "Mapa Mental",
+        url: mindmapUrl.trim(),
+      });
+      toast.success("Mapa mental salvo!");
+    } catch (error: any) {
+      toast.error("Erro ao salvar: " + error.message);
+    }
+  };
 
   const handleToggle = async (modulo: ModuloConfig, enabled: boolean) => {
     const moduloId = modulo.id;
@@ -266,6 +324,72 @@ export function ConfiguracoesNichoTab({ nichoId, nicho, onConfigUpdate }: Config
           <p className="text-sm text-muted-foreground">Personalize as funcionalidades do seu nicho</p>
         </div>
       </div>
+
+      {/* Links do Projeto */}
+      <Card className="bg-card/50 border-border/50">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-purple-500/10">
+              <Link className="h-5 w-5 text-purple-400" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Links do Projeto</CardTitle>
+              <CardDescription>Configure os links externos do workspace</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Mapa Mental */}
+          <div className="p-4 rounded-lg border border-border/30 bg-surface/50">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-1.5 rounded-md bg-purple-500/10">
+                <Brain className="h-4 w-4 text-purple-400" />
+              </div>
+              <Label className="font-medium">Mapa Mental</Label>
+            </div>
+            
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Provedor</Label>
+                <Select value={mindmapProvider} onValueChange={(v) => setMindmapProvider(v as MindmapProvider)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o provedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MINDMAP_PROVIDERS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">URL</Label>
+                <Input
+                  placeholder="https://..."
+                  value={mindmapUrl}
+                  onChange={(e) => setMindmapUrl(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <Button 
+              onClick={handleSaveMindmap} 
+              disabled={upsertMindmap.isPending}
+              size="sm"
+              className="mt-4"
+            >
+              {upsertMindmap.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Salvar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Módulos */}
       <Card className="bg-card/50 border-border/50">

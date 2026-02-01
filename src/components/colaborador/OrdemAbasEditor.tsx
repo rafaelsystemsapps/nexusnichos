@@ -41,6 +41,7 @@ import {
   UserPlus,
   Gem,
   FlaskRound,
+  FolderKanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -75,7 +76,7 @@ interface OrdemAbasEditorProps {
 }
 
 const DEFAULT_ORDER = [
-  "dashboard",
+  "projeto",
   "contas",
   "logistica",
   "time",
@@ -95,7 +96,7 @@ const DEFAULT_ORDER = [
 ];
 
 const ABA_CONFIG: Record<string, { title: string; icon: React.ComponentType<{ className?: string }> }> = {
-  dashboard: { title: "Dashboard", icon: LayoutDashboard },
+  projeto: { title: "Projeto", icon: FolderKanban },
   contas: { title: "Contas", icon: Share2 },
   logistica: { title: "Logística", icon: CalendarCheck },
   time: { title: "Time", icon: Users },
@@ -190,7 +191,7 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
     const order = nicho.ordem_abas || DEFAULT_ORDER;
     
     const enabledMap: Record<string, boolean> = {
-      dashboard: true, // sempre habilitado
+      projeto: true, // sempre habilitado (fixo)
       contas: nicho.contas_habilitado !== false,
       logistica: true, // sempre habilitado
       time: nicho.time_habilitado !== false,
@@ -209,7 +210,7 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
       configuracoes: true, // sempre habilitado
     };
 
-    const fixedItems = ["dashboard", "configuracoes"];
+    const fixedItems = ["projeto", "configuracoes"];
 
     // Garantir que todos os itens estejam na ordem
     const allIds = [...new Set([...order, ...DEFAULT_ORDER])];
@@ -236,11 +237,11 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
         const oldIndex = items.findIndex((i) => i.id === active.id);
         const newIndex = items.findIndex((i) => i.id === over.id);
         
-        // Não permitir mover para antes do dashboard ou depois de configurações
-        const dashboardIndex = items.findIndex(i => i.id === "dashboard");
+        // Não permitir mover para antes do projeto ou depois de configurações
+        const projetoIndex = items.findIndex(i => i.id === "projeto");
         const configIndex = items.findIndex(i => i.id === "configuracoes");
         
-        if (newIndex <= dashboardIndex || newIndex >= configIndex) {
+        if (newIndex <= projetoIndex || newIndex >= configIndex) {
           return items;
         }
 
@@ -275,7 +276,7 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
 
   const handleReset = () => {
     const enabledMap: Record<string, boolean> = {
-      dashboard: true,
+      projeto: true,
       contas: nicho.contas_habilitado !== false,
       logistica: true,
       time: nicho.time_habilitado !== false,
@@ -294,7 +295,7 @@ export function OrdemAbasEditor({ nichoId, nicho, onConfigUpdate }: OrdemAbasEdi
       configuracoes: true,
     };
 
-    const fixedItems = ["dashboard", "configuracoes"];
+    const fixedItems = ["projeto", "configuracoes"];
 
     const items: AbaItem[] = DEFAULT_ORDER
       .filter(id => ABA_CONFIG[id])
