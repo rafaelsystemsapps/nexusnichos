@@ -1,61 +1,60 @@
 
+## Plano: Adicionar Campo Mapa Mental URL no Formulario de App do Cliente
 
-## Plano: Adicionar Campo de Mapa Mental do Cliente
+### Contexto
 
-### Resumo
-
-Adicionar um campo `mapa_mental_url` na tabela `clientes` e na interface (formulario + card) para que cada cliente tenha seu proprio link de mapa mental, visivel e clicavel no card.
+O campo "Mapa Mental URL" foi adicionado anteriormente ao formulario de **Cliente** (ClienteForm.tsx). Porem, voce quer que esse campo apareca no formulario de **App do Cliente** (ClienteAppForm.tsx) - o formulario que adiciona apps/servicos vinculados ao cliente.
 
 ---
 
-### 1. Migracao de Banco de Dados
+### O Que Sera Feito
 
-Adicionar coluna `mapa_mental_url` na tabela `clientes`:
+#### 1. Migracao de Banco de Dados
+
+Adicionar coluna `mapa_mental_url` na tabela `client_apps`:
 
 ```sql
-ALTER TABLE clientes ADD COLUMN IF NOT EXISTS mapa_mental_url text NULL;
+ALTER TABLE client_apps ADD COLUMN IF NOT EXISTS mapa_mental_url text NULL;
 ```
 
 ---
 
-### 2. Modificacoes no ClienteForm.tsx
+#### 2. Modificacoes no ClienteAppForm.tsx
 
-Adicionar campo na secao "Links Rapidos":
+Adicionar campo no formulario:
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  Links Rapidos                                              │
+│  Adicionar App                                              │
 ├─────────────────────────────────────────────────────────────┤
-│  [Instagram URL *]          [TikTok URL]                    │
-│  [Outro Link Label]         [Outro Link URL]                │
-│  [Link Principal]                                           │
+│  [Nome do App/Servico *]                                    │
+│  [Tipo de Custo]        [Valor (R$)]                        │
+│  [Periodicidade]        [Rateio]                            │
 │  [Mapa Mental URL] ← NOVO                                   │
+│  [Observacao (opcional)]                                    │
+│  [Ativo - Switch]                                           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 **Mudancas:**
-- Adicionar `mapa_mental_url` ao estado `formData`
-- Adicionar campo Input com placeholder "https://tldraw.com/..." ou "https://docs.google.com/..."
-- Incluir no payload de salvamento
+- Adicionar `mapa_mental_url` ao schema Zod de validacao
+- Adicionar campo Input com placeholder "https://tldraw.com/..."
+- Incluir no payload de criacao/atualizacao
 
 ---
 
-### 3. Modificacoes no ClienteCard.tsx
+#### 3. Modificacoes no ClienteAppItem.tsx
 
-Adicionar botao/link visivel na area de "Links Rapidos" do card:
+Exibir botao para acessar o mapa mental se a URL existir:
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  [📸 Instagram] [🎵 TikTok] [🔗 Outro] [🔗 Principal]       │
-│  [🧠 Mapa Mental] ← NOVO - botao destacado                  │
+│  📱 Lovable Pro - R$ 100/mes         [🧠] [✏️] [🗑️]        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Caracteristicas:**
-- Icone: Brain ou Map (Lucide)
-- Cor: Roxo/Violeta para destacar
-- Texto: "Mapa Mental"
-- Abre em nova aba com `noopener,noreferrer`
+- Icone Brain (🧠) que abre a URL em nova aba
+- Cor violeta para destacar
 
 ---
 
@@ -63,28 +62,17 @@ Adicionar botao/link visivel na area de "Links Rapidos" do card:
 
 | Arquivo | Acao |
 |---------|------|
-| `supabase/migrations/` | Adicionar coluna `mapa_mental_url` |
-| `src/components/colaborador/ClienteForm.tsx` | Adicionar campo no formulario |
-| `src/components/colaborador/ClienteCard.tsx` | Exibir botao de acesso ao mapa |
-
----
-
-### Resultado Visual no Card
-
-O card do cliente tera um novo botao na linha de links:
-
-```
-[Instagram] [TikTok] [Link] [🧠 Mapa Mental]
-```
-
-Ao clicar, abre a URL do mapa mental em nova aba.
+| `supabase/migrations/` | Adicionar coluna `mapa_mental_url` em `client_apps` |
+| `src/components/colaborador/ClienteAppForm.tsx` | Adicionar campo no formulario |
+| `src/components/colaborador/ClienteAppItem.tsx` | Exibir botao de acesso ao mapa |
+| `src/hooks/queries/useClienteApps.ts` | Atualizar tipos se necessario |
 
 ---
 
 ### Criterios de Aceite
 
-1. Campo "Mapa Mental URL" aparece no formulario de cliente (opcional)
-2. Se preenchido, botao "Mapa Mental" aparece no card do cliente
-3. Ao clicar no botao, abre a URL em nova aba
+1. Campo "Mapa Mental URL" aparece no formulario de App do cliente (opcional)
+2. Se preenchido, icone de mapa mental aparece no item do app
+3. Ao clicar no icone, abre a URL em nova aba
 4. URL e salva e carregada corretamente no banco
 
