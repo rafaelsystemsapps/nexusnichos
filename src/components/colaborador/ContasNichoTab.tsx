@@ -8,12 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical, KeyRound, Copy, ChevronDown, ChevronUp, Phone, Send, Globe, GripVertical, Flame, Snowflake, Thermometer, CheckCircle2, Rocket, AlertTriangle, CalendarIcon, Pause, Power } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Progress } from "@/components/ui/progress";
+import { Plus, Pencil, Trash2, Instagram, Youtube, Twitter, Music2, MessageCircle, MoreVertical, KeyRound, Copy, ChevronDown, ChevronUp, Phone, Send, Globe, GripVertical, Flame, Snowflake, CalendarIcon, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { format, differenceInDays } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   AlertDialog,
@@ -119,94 +117,36 @@ const STATUS_FILTROS = [
   { value: "desativada", label: "Desativadas" },
 ];
 
-// === SISTEMA DE AQUECIMENTO CONTROLADO ===
-type FaseAquecimento = "fria" | "aquecendo" | "pausado" | "aquecida";
+// === SISTEMA DE AQUECIMENTO MANUAL ===
+type StatusAquecimento = "fria" | "quente";
 
-// Planos de aquecimento disponíveis
-const PLANOS_AQUECIMENTO = [
-  { value: 3, label: "⚡ 3 dias (rápido)" },
-  { value: 7, label: "⏱️ 7 dias (padrão)" },
-  { value: 15, label: "🔥 15 dias (moderado)" },
-  { value: 30, label: "💪 30 dias (completo)" },
-];
-
-const FASE_CONFIG: Record<FaseAquecimento, { 
+const AQUECIMENTO_CONFIG: Record<StatusAquecimento, { 
   label: string; 
   icon: React.ReactNode; 
   className: string;
-  shortLabel: string;
 }> = {
   fria: { 
     label: "Fria", 
-    shortLabel: "Fria",
     icon: <Snowflake className="h-3 w-3" />,
     className: "bg-sky-500/20 text-sky-400 border-sky-500/30" 
   },
-  aquecendo: { 
-    label: "Aquecendo", 
-    shortLabel: "Aquec.",
+  quente: { 
+    label: "Quente", 
     icon: <Flame className="h-3 w-3" />,
     className: "bg-orange-500/20 text-orange-400 border-orange-500/30" 
   },
-  pausado: { 
-    label: "Pausado", 
-    shortLabel: "Pausado",
-    icon: <Pause className="h-3 w-3" />,
-    className: "bg-amber-500/20 text-amber-400 border-amber-500/30" 
-  },
-  aquecida: { 
-    label: "Aquecida", 
-    shortLabel: "Aquecida",
-    icon: <CheckCircle2 className="h-3 w-3" />,
-    className: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" 
-  },
 };
 
-const FASE_FILTROS = [
-  { value: "todas", label: "Todas fases" },
+const AQUECIMENTO_FILTROS = [
+  { value: "todas", label: "Todas" },
   { value: "fria", label: "❄️ Fria" },
-  { value: "aquecendo", label: "🔥 Aquecendo" },
-  { value: "pausado", label: "⏸️ Pausado" },
-  { value: "aquecida", label: "✅ Aquecida" },
+  { value: "quente", label: "🔥 Quente" },
 ];
 
-// Calcula a fase de aquecimento baseada no sistema controlado
-const calcularFaseAquecimento = (conta: any): FaseAquecimento => {
-  // Se não tem plano definido = Fria
-  if (!conta.aquecimento_meta_dias) return 'fria';
-  
-  // Se toggle está DESATIVADO
-  if (!conta.aquecimento_ativo) {
-    // Se já tinha iniciado antes = Pausado
-    if (conta.aquecimento_inicio) return 'pausado';
-    return 'fria';
-  }
-  
-  // Toggle ATIVO - calcular progresso
-  if (!conta.aquecimento_inicio) return 'fria';
-  
-  const diasAquecendo = differenceInDays(new Date(), new Date(conta.aquecimento_inicio));
-  
-  if (diasAquecendo >= conta.aquecimento_meta_dias) {
-    return 'aquecida'; // ✅ Completou!
-  }
-  
-  return 'aquecendo'; // 🔥 Em progresso
-};
-
-// Calcula dias desde início do aquecimento
-const calcularDiasAquecendo = (conta: any): { dias: number; meta: number } | null => {
-  if (!conta.aquecimento_inicio || !conta.aquecimento_meta_dias) return null;
-  const dias = differenceInDays(new Date(), new Date(conta.aquecimento_inicio));
-  return { dias: Math.max(0, dias), meta: conta.aquecimento_meta_dias };
-};
-
-// Calcula progresso do aquecimento (0-100)
-const calcularProgressoAquecimento = (conta: any): number => {
-  const info = calcularDiasAquecendo(conta);
-  if (!info) return 0;
-  const progresso = (info.dias / info.meta) * 100;
-  return Math.min(100, Math.max(0, progresso));
+// Mapeia status do banco para o novo sistema simplificado
+const mapAquecimentoFromDB = (status: string | null): StatusAquecimento => {
+  if (status === "quente") return "quente";
+  return "fria"; // default para qualquer outro valor
 };
 
 // Mapeamento do enum antigo para o novo status minimalista
@@ -232,13 +172,23 @@ interface SortableContaItemProps {
   onDelete: (conta: any) => void;
   onCredenciais: (conta: any) => void;
   onToggleAquecimento: (conta: any) => void;
-  onSelectPlano: (conta: any, dias: number) => void;
   hasCredenciais: (conta: any) => boolean;
   getStatusDisplay: (status: string) => React.ReactNode;
-  getFaseDisplay: (conta: any) => React.ReactNode;
+  getAquecimentoDisplay: (status: string | null) => React.ReactNode;
+  ultimaTarefa: string | null;
 }
 
-function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, onToggleAquecimento, onSelectPlano, hasCredenciais, getStatusDisplay, getFaseDisplay }: SortableContaItemProps) {
+function SortableContaItem({ 
+  conta, 
+  onEdit, 
+  onDelete, 
+  onCredenciais, 
+  onToggleAquecimento, 
+  hasCredenciais, 
+  getStatusDisplay, 
+  getAquecimentoDisplay,
+  ultimaTarefa 
+}: SortableContaItemProps) {
   const {
     attributes,
     listeners,
@@ -256,9 +206,7 @@ function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, onToggleAqu
 
   const status = mapStatusFromDB(conta.status);
   const needsAction = status === "risco" || status === "desativada";
-  const infoAquecimento = calcularDiasAquecendo(conta);
-  const progressoAquecimento = calcularProgressoAquecimento(conta);
-  const faseAquecimento = calcularFaseAquecimento(conta);
+  const statusAquecimento = mapAquecimentoFromDB(conta.status_aquecimento);
 
   return (
     <div 
@@ -289,41 +237,20 @@ function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, onToggleAqu
         <div className="flex items-center flex-wrap gap-1.5">
           <span className="font-medium text-sm truncate max-w-[120px] shrink-0">{conta.nome_conta}</span>
           {getStatusDisplay(conta.status)}
-          {getFaseDisplay(conta)}
+          {getAquecimentoDisplay(conta.status_aquecimento)}
           <span className="text-sm" title={PAISES.find(p => p.value === conta.pais)?.label || conta.pais}>
             {getPaisFlag(conta.pais)}
           </span>
         </div>
 
-        {/* Barra de progresso do aquecimento */}
-        {infoAquecimento && (faseAquecimento === 'aquecendo' || faseAquecimento === 'pausado' || faseAquecimento === 'aquecida') && (
-          <div className="mt-2 space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className={faseAquecimento === 'aquecida' ? 'text-emerald-400' : faseAquecimento === 'aquecendo' ? 'text-orange-400' : 'text-amber-400'}>
-                {faseAquecimento === 'aquecida' ? '✅' : faseAquecimento === 'aquecendo' ? '🔥' : '⏸️'} 
-                {' '}{Math.min(infoAquecimento.dias, infoAquecimento.meta)}/{infoAquecimento.meta} dias
-              </span>
-              <span className="text-muted-foreground">{Math.round(progressoAquecimento)}%</span>
-            </div>
-            <Progress 
-              value={progressoAquecimento} 
-              className={cn(
-                "h-1.5",
-                faseAquecimento === 'aquecida' && "[&>div]:bg-emerald-500",
-                faseAquecimento === 'aquecendo' && "[&>div]:bg-orange-500",
-                faseAquecimento === 'pausado' && "[&>div]:bg-amber-500"
-              )}
-            />
-          </div>
-        )}
-
-        {/* Aviso se não tem plano definido */}
-        {!conta.aquecimento_meta_dias && (
-          <p className="text-xs text-amber-400/70 mt-1">
-            ⚠️ Definir plano de aquecimento
+        {/* Última tarefa concluída - integração com logística */}
+        {ultimaTarefa && (
+          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+            <Clock className="h-3 w-3 opacity-60" />
+            <span>Última tarefa: {formatDistanceToNow(new Date(ultimaTarefa), { addSuffix: true, locale: ptBR })}</span>
           </p>
         )}
-        
+
         {/* Telefone para WhatsApp/Telegram */}
         {(conta.plataforma === "whatsapp" || conta.plataforma === "telegram") && conta.telefone && (
           <p className="text-xs text-muted-foreground mt-1">
@@ -369,71 +296,23 @@ function SortableContaItem({ conta, onEdit, onDelete, onCredenciais, onToggleAqu
 
       {/* Acoes rapidas */}
       <div className="flex items-center gap-1 shrink-0">
-        {/* Seletor de plano + Toggle de aquecimento */}
-        {faseAquecimento !== 'aquecida' && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "h-8 w-8",
-                  conta.aquecimento_ativo ? "text-orange-400 hover:text-orange-300" : "text-muted-foreground"
-                )}
-                title={conta.aquecimento_meta_dias 
-                  ? `Plano: ${conta.aquecimento_meta_dias} dias` 
-                  : "Definir plano de aquecimento"
-                }
-              >
-                {conta.aquecimento_ativo ? <Flame className="h-4 w-4" /> : <Thermometer className="h-4 w-4" />}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-popover w-48">
-              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                Plano de Aquecimento
-              </div>
-              {PLANOS_AQUECIMENTO.map(p => (
-                <DropdownMenuItem 
-                  key={p.value}
-                  onClick={() => onSelectPlano(conta, p.value)}
-                  className={cn(
-                    conta.aquecimento_meta_dias === p.value && "bg-accent"
-                  )}
-                >
-                  {p.label}
-                </DropdownMenuItem>
-              ))}
-              {conta.aquecimento_meta_dias && (
-                <>
-                  <div className="my-1 border-t border-border" />
-                  <DropdownMenuItem 
-                    onClick={() => onToggleAquecimento(conta)}
-                    className={conta.aquecimento_ativo ? "text-amber-400" : "text-emerald-400"}
-                  >
-                    {conta.aquecimento_ativo ? (
-                      <>
-                        <Pause className="h-3.5 w-3.5 mr-2" />
-                        Pausar aquecimento
-                      </>
-                    ) : (
-                      <>
-                        <Power className="h-3.5 w-3.5 mr-2" />
-                        Iniciar aquecimento
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-
-        {/* Badge de aquecida */}
-        {faseAquecimento === 'aquecida' && (
-          <span className="text-emerald-400" title="Conta aquecida">
-            <CheckCircle2 className="h-4 w-4" />
-          </span>
-        )}
+        {/* Toggle de aquecimento manual - botão simples */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onToggleAquecimento(conta)}
+          className={cn(
+            "h-8 w-8",
+            statusAquecimento === "quente" 
+              ? "text-orange-400 hover:text-orange-300" 
+              : "text-sky-400 hover:text-sky-300"
+          )}
+          title={statusAquecimento === "quente" ? "Marcar como fria" : "Marcar como quente"}
+        >
+          {statusAquecimento === "quente" 
+            ? <Flame className="h-4 w-4" /> 
+            : <Snowflake className="h-4 w-4" />}
+        </Button>
 
         {/* Botao de credenciais */}
         {hasCredenciais(conta) && (
@@ -484,6 +363,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     plataforma: "tiktok",
     nome_conta: "",
     status: "ativa" as StatusConta,
+    status_aquecimento: "fria" as StatusAquecimento,
     ultima_acao: "",
     proxima_acao: "",
     login_email: "",
@@ -496,8 +376,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     pin: "",
     data_criacao_conta: "",
     pais: "BR",
-    aquecimento_meta_dias: null as number | null,
-    aquecimento_ativo: false,
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contaToDelete, setContaToDelete] = useState<any>(null);
@@ -507,10 +385,13 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const [credenciaisModalOpen, setCredenciaisModalOpen] = useState(false);
   const [contaCredenciais, setContaCredenciais] = useState<any>(null);
 
+  // Estado para última tarefa por conta
+  const [ultimasTarefas, setUltimasTarefas] = useState<Record<string, string>>({});
+
   // Filtros
   const [filtroStatus, setFiltroStatus] = useState<string>("todas");
   const [filtroPlataforma, setFiltroPlataforma] = useState<string>("todas");
-  const [filtroFase, setFiltroFase] = useState<string>("todas");
+  const [filtroAquecimento, setFiltroAquecimento] = useState<string>("todas");
   const [filtroPais, setFiltroPais] = useState<string>("todos");
 
   // Sensor para drag and drop
@@ -524,6 +405,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
 
   useEffect(() => {
     fetchContas();
+    fetchUltimasTarefas();
   }, [nichoId]);
 
   const fetchContas = async () => {
@@ -543,18 +425,63 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     }
   };
 
+  // Buscar última tarefa concluída por conta (via templates de logística)
+  const fetchUltimasTarefas = async () => {
+    try {
+      // 1. Buscar templates que têm conta_id associado
+      const { data: templatesComConta, error: templatesError } = await supabase
+        .from("tarefa_templates")
+        .select("id, conta_id")
+        .eq("nicho_id", nichoId)
+        .not("conta_id", "is", null);
+
+      if (templatesError) throw templatesError;
+      if (!templatesComConta?.length) return;
+
+      // Agrupar templates por conta_id
+      const templatePorConta: Record<string, string[]> = {};
+      templatesComConta.forEach(t => {
+        if (t.conta_id) {
+          if (!templatePorConta[t.conta_id]) templatePorConta[t.conta_id] = [];
+          templatePorConta[t.conta_id].push(t.id);
+        }
+      });
+
+      const ultimasMap: Record<string, string> = {};
+      
+      // Para cada conta, buscar a última tarefa concluída
+      for (const [contaId, templateIds] of Object.entries(templatePorConta)) {
+        const { data } = await supabase
+          .from("tarefa_diaria")
+          .select("updated_at")
+          .in("template_id", templateIds)
+          .eq("status", "concluida")
+          .order("updated_at", { ascending: false })
+          .limit(1);
+        
+        if (data?.[0]) {
+          ultimasMap[contaId] = data[0].updated_at;
+        }
+      }
+      
+      setUltimasTarefas(ultimasMap);
+    } catch (error) {
+      console.error("Erro ao buscar últimas tarefas:", error);
+    }
+  };
+
   // Filtrar contas
   const contasFiltradas = useMemo(() => {
     return contas.filter(conta => {
       const statusConta = mapStatusFromDB(conta.status);
-      const faseConta = calcularFaseAquecimento(conta);
+      const aquecimentoConta = mapAquecimentoFromDB(conta.status_aquecimento);
       const matchStatus = filtroStatus === "todas" || statusConta === filtroStatus;
       const matchPlataforma = filtroPlataforma === "todas" || conta.plataforma === filtroPlataforma;
-      const matchFase = filtroFase === "todas" || faseConta === filtroFase;
+      const matchAquecimento = filtroAquecimento === "todas" || aquecimentoConta === filtroAquecimento;
       const matchPais = filtroPais === "todos" || conta.pais === filtroPais;
-      return matchStatus && matchPlataforma && matchFase && matchPais;
+      return matchStatus && matchPlataforma && matchAquecimento && matchPais;
     });
-  }, [contas, filtroStatus, filtroPlataforma, filtroFase, filtroPais]);
+  }, [contas, filtroStatus, filtroPlataforma, filtroAquecimento, filtroPais]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -596,6 +523,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         plataforma: formData.plataforma as any,
         nome_conta: formData.nome_conta,
         status: mapStatusToDB(formData.status) as any,
+        status_aquecimento: formData.status_aquecimento,
         ultima_acao: formData.ultima_acao || null,
         proxima_acao: formData.proxima_acao || null,
         login_email: formData.login_email || null,
@@ -608,12 +536,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         pin: formData.pin || null,
         data_criacao_conta: formData.data_criacao_conta || null,
         pais: formData.pais || 'BR',
-        aquecimento_meta_dias: formData.aquecimento_meta_dias || null,
-        aquecimento_ativo: formData.aquecimento_ativo,
-        // Se está ativando o aquecimento pela primeira vez, definir data de início
-        aquecimento_inicio: formData.aquecimento_ativo && !editingConta?.aquecimento_inicio 
-          ? format(new Date(), "yyyy-MM-dd") 
-          : editingConta?.aquecimento_inicio || null,
         nicho_id: nichoId,
         responsavel_id: user?.id || null,
         ordem: editingConta ? editingConta.ordem : contas.length,
@@ -647,6 +569,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       plataforma: "tiktok",
       nome_conta: "",
       status: "ativa",
+      status_aquecimento: "fria",
       ultima_acao: "",
       proxima_acao: "",
       login_email: "",
@@ -659,8 +582,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       pin: "",
       data_criacao_conta: "",
       pais: "BR",
-      aquecimento_meta_dias: null,
-      aquecimento_ativo: false,
     });
     setEditingConta(null);
     setCredenciaisOpen(false);
@@ -672,6 +593,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       plataforma: conta.plataforma,
       nome_conta: conta.nome_conta,
       status: mapStatusFromDB(conta.status),
+      status_aquecimento: mapAquecimentoFromDB(conta.status_aquecimento),
       ultima_acao: conta.ultima_acao || "",
       proxima_acao: conta.proxima_acao || "",
       login_email: conta.login_email || "",
@@ -684,53 +606,26 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       pin: conta.pin || "",
       data_criacao_conta: conta.data_criacao_conta || "",
       pais: conta.pais || "BR",
-      aquecimento_meta_dias: conta.aquecimento_meta_dias || null,
-      aquecimento_ativo: conta.aquecimento_ativo || false,
     });
     // Abrir secao de credenciais se ja existem dados
     setCredenciaisOpen(!!(conta.login_email || conta.senha_acesso || conta.url_conta || conta.gmail_email || conta.gmail_senha));
     setDialogOpen(true);
   };
 
-  // Toggle rápido de aquecimento
+  // Toggle rápido de aquecimento (fria <-> quente)
   const handleToggleAquecimento = async (conta: any) => {
-    const novoAtivo = !conta.aquecimento_ativo;
+    const statusAtual = mapAquecimentoFromDB(conta.status_aquecimento);
+    const novoStatus = statusAtual === "quente" ? "fria" : "quente";
     
     try {
-      const updateData: any = {
-        aquecimento_ativo: novoAtivo,
-      };
-      
-      // Se está ativando e não tem data de início, definir agora
-      if (novoAtivo && !conta.aquecimento_inicio) {
-        updateData.aquecimento_inicio = format(new Date(), "yyyy-MM-dd");
-      }
-      
       const { error } = await supabase
         .from("contas_redes_sociais")
-        .update(updateData)
+        .update({ status_aquecimento: novoStatus })
         .eq("id", conta.id);
 
       if (error) throw error;
       
-      toast.success(novoAtivo ? "Aquecimento iniciado!" : "Aquecimento pausado!");
-      fetchContas();
-    } catch (error: any) {
-      toast.error("Erro: " + error.message);
-    }
-  };
-
-  // Selecionar plano de aquecimento rapidamente
-  const handleSelectPlano = async (conta: any, dias: number) => {
-    try {
-      const { error } = await supabase
-        .from("contas_redes_sociais")
-        .update({ aquecimento_meta_dias: dias })
-        .eq("id", conta.id);
-
-      if (error) throw error;
-      
-      toast.success(`Plano de ${dias} dias definido!`);
+      toast.success(`Conta marcada como ${novoStatus}!`);
       fetchContas();
     } catch (error: any) {
       toast.error("Erro: " + error.message);
@@ -793,13 +688,13 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     );
   };
 
-  const getFaseDisplay = (conta: any) => {
-    const fase = calcularFaseAquecimento(conta);
-    const config = FASE_CONFIG[fase];
+  const getAquecimentoDisplay = (statusAquec: string | null) => {
+    const status = mapAquecimentoFromDB(statusAquec);
+    const config = AQUECIMENTO_CONFIG[status];
     return (
       <span className={`text-xs font-medium px-2 py-0.5 rounded-md border inline-flex items-center gap-1 ${config.className}`}>
         {config.icon}
-        {config.shortLabel}
+        {config.label}
       </span>
     );
   };
@@ -818,7 +713,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h2 className="text-xl font-semibold">Controle de Contas</h2>
-          <p className="text-xs text-muted-foreground">Arraste para reordenar. Filtre por status ou plataforma.</p>
+          <p className="text-xs text-muted-foreground">Arraste para reordenar. Clique ❄️/🔥 para alternar aquecimento.</p>
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
@@ -842,6 +737,18 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
             <SelectContent>
               {PLATAFORMAS.map(p => (
                 <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Filtro de Aquecimento */}
+          <Select value={filtroAquecimento} onValueChange={setFiltroAquecimento}>
+            <SelectTrigger className="h-8 w-[110px]">
+              <SelectValue placeholder="Aquec." />
+            </SelectTrigger>
+            <SelectContent>
+              {AQUECIMENTO_FILTROS.map(a => (
+                <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -909,23 +816,41 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   </div>
                 </div>
 
-                <div>
-                  <Label className="text-xs">País *</Label>
-                  <Select
-                    value={formData.pais}
-                    onValueChange={(value) => setFormData({ ...formData, pais: value })}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAISES.map(p => (
-                        <SelectItem key={p.value} value={p.value}>
-                          {p.flag} {p.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">País *</Label>
+                    <Select
+                      value={formData.pais}
+                      onValueChange={(value) => setFormData({ ...formData, pais: value })}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAISES.map(p => (
+                          <SelectItem key={p.value} value={p.value}>
+                            {p.flag} {p.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs">Aquecimento</Label>
+                    <Select
+                      value={formData.status_aquecimento}
+                      onValueChange={(value) => setFormData({ ...formData, status_aquecimento: value as StatusAquecimento })}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fria">❄️ Fria</SelectItem>
+                        <SelectItem value="quente">🔥 Quente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div>
@@ -1175,10 +1100,10 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                   onDelete={openDeleteDialog}
                   onCredenciais={openCredenciaisModal}
                   onToggleAquecimento={handleToggleAquecimento}
-                  onSelectPlano={handleSelectPlano}
                   hasCredenciais={hasCredenciais}
                   getStatusDisplay={getStatusDisplay}
-                  getFaseDisplay={getFaseDisplay}
+                  getAquecimentoDisplay={getAquecimentoDisplay}
+                  ultimaTarefa={ultimasTarefas[conta.id] || null}
                 />
               ))}
             </div>
@@ -1353,27 +1278,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
               </div>
             )}
 
-            {/* PIN para Instagram */}
-            {contaCredenciais?.pin && (
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">PIN de Seguranca</Label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm font-mono">
-                    {contaCredenciais.pin}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="shrink-0 h-9 w-9"
-                    onClick={() => copyToClipboard(contaCredenciais.pin, "PIN")}
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-            )}
-
             {/* URL do Site */}
             {contaCredenciais?.url_site && (
               <div className="space-y-1.5">
@@ -1393,6 +1297,27 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                     size="icon"
                     className="shrink-0 h-9 w-9"
                     onClick={() => copyToClipboard(contaCredenciais.url_site, "URL do Site")}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* PIN */}
+            {contaCredenciais?.pin && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">PIN de Seguranca</Label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm font-mono">
+                    {contaCredenciais.pin}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 h-9 w-9"
+                    onClick={() => copyToClipboard(contaCredenciais.pin, "PIN")}
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
