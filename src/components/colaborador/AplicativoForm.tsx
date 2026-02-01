@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -20,7 +19,6 @@ export function AplicativoForm({ open, onOpenChange, nichoId, aplicativo, onSave
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     nome: "",
-    descricao: "",
     tipo_app: "guia",
     status: "ideia",
     tecnologias: "",
@@ -34,7 +32,6 @@ export function AplicativoForm({ open, onOpenChange, nichoId, aplicativo, onSave
     if (aplicativo) {
       setFormData({
         nome: aplicativo.nome || "",
-        descricao: aplicativo.descricao || "",
         tipo_app: aplicativo.tipo_app || "guia",
         status: aplicativo.status || "ideia",
         tecnologias: aplicativo.tecnologias || "",
@@ -46,7 +43,6 @@ export function AplicativoForm({ open, onOpenChange, nichoId, aplicativo, onSave
     } else {
       setFormData({
         nome: "",
-        descricao: "",
         tipo_app: "guia",
         status: "ideia",
         tecnologias: "",
@@ -70,7 +66,6 @@ export function AplicativoForm({ open, onOpenChange, nichoId, aplicativo, onSave
       const payload = {
         nicho_id: nichoId,
         nome: formData.nome.trim(),
-        descricao: formData.descricao || null,
         tipo_app: formData.tipo_app,
         status: formData.status,
         tecnologias: formData.tecnologias || null,
@@ -121,15 +116,6 @@ export function AplicativoForm({ open, onOpenChange, nichoId, aplicativo, onSave
             />
           </div>
 
-          <div>
-            <Label>Descricao</Label>
-            <Textarea
-              value={formData.descricao}
-              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-              placeholder="Descreva a ideia do aplicativo..."
-              rows={3}
-            />
-          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
