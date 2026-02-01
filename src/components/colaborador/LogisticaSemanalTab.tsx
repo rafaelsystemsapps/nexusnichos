@@ -28,9 +28,9 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { format, startOfWeek, endOfWeek, addDays, getWeek, getYear } from "date-fns";
+import { format, startOfWeek, endOfWeek, addDays, getWeek, getYear, startOfMonth, endOfMonth, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Clock, XCircle, Trash2, ListChecks, Pencil, ChevronDown, Settings2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Clock, XCircle, Trash2, ListChecks, Pencil, ChevronDown, Settings2, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TemplateForm } from "./TemplateForm";
 
@@ -76,6 +76,15 @@ interface SemanaLogistica {
   status: string;
 }
 
+interface MetricasMes {
+  total: number;
+  concluida: number;
+  pendente: number;
+  em_andamento: number;
+  nao_concluida: number;
+  percentual: number;
+}
+
 const STATUS_CONFIG = {
   pendente: { icon: Circle, label: "Pendente", color: "bg-muted text-muted-foreground" },
   em_andamento: { icon: Clock, label: "Em Andamento", color: "bg-yellow-500/20 text-yellow-500" },
@@ -104,12 +113,92 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<TarefaTemplate | null>(null);
 
+  // Navegação mensal e métricas
+  const [monthOffset, setMonthOffset] = useState(0);
+  const [metricasMes, setMetricasMes] = useState<MetricasMes>({
+    total: 0,
+    concluida: 0,
+    pendente: 0,
+    em_andamento: 0,
+    nao_concluida: 0,
+    percentual: 0,
+  });
+  const [loadingMetricasMes, setLoadingMetricasMes] = useState(false);
+
   const getWeekDates = useCallback(() => {
     const hoje = new Date();
     const semanaInicio = startOfWeek(addDays(hoje, weekOffset * 7), { weekStartsOn: 1 });
     const semanaFim = endOfWeek(addDays(hoje, weekOffset * 7), { weekStartsOn: 1 });
     return { semanaInicio, semanaFim };
   }, [weekOffset]);
+
+  const getMonthDates = useCallback(() => {
+    const base = new Date();
+    const mesReferencia = addMonths(base, monthOffset);
+    const inicioMes = startOfMonth(mesReferencia);
+    const fimMes = endOfMonth(mesReferencia);
+    return { mesReferencia, inicioMes, fimMes };
+  }, [monthOffset]);
+
+  const fetchMetricasMes = useCallback(async () => {
+    if (!nichoId) return;
+    setLoadingMetricasMes(true);
+
+    try {
+      const { inicioMes, fimMes } = getMonthDates();
+      const inicioStr = format(inicioMes, "yyyy-MM-dd");
+      const fimStr = format(fimMes, "yyyy-MM-dd");
+
+      // 1) Buscar semanas do nicho que intersectam com o mês
+      const { data: semanasData, error: semanasError } = await supabase
+        .from("semana_logistica")
+        .select("id")
+        .eq("nicho_id", nichoId)
+        .or(`semana_inicio.lte.${fimStr},semana_fim.gte.${inicioStr}`);
+
+      if (semanasError) throw semanasError;
+
+      if (!semanasData || semanasData.length === 0) {
+        setMetricasMes({ total: 0, concluida: 0, pendente: 0, em_andamento: 0, nao_concluida: 0, percentual: 0 });
+        return;
+      }
+
+      const semanaIds = semanasData.map((s) => s.id);
+
+      // 2) Buscar tarefas dessas semanas no range de datas do mês
+      const { data: tarefasData, error: tarefasError } = await supabase
+        .from("tarefa_diaria")
+        .select("id, status, data")
+        .in("semana_id", semanaIds)
+        .gte("data", inicioStr)
+        .lte("data", fimStr);
+
+      if (tarefasError) throw tarefasError;
+
+      // 3) Calcular métricas
+      const metricas = (tarefasData || []).reduce(
+        (acc, t) => {
+          acc.total += 1;
+          if (t.status === "concluida") acc.concluida += 1;
+          else if (t.status === "pendente") acc.pendente += 1;
+          else if (t.status === "em_andamento") acc.em_andamento += 1;
+          else if (t.status === "nao_concluida") acc.nao_concluida += 1;
+          return acc;
+        },
+        { total: 0, concluida: 0, pendente: 0, em_andamento: 0, nao_concluida: 0, percentual: 0 }
+      );
+
+      metricas.percentual = metricas.total > 0 
+        ? Math.round((metricas.concluida / metricas.total) * 100 * 10) / 10 
+        : 0;
+
+      setMetricasMes(metricas);
+    } catch (error: any) {
+      toast.error("Erro ao carregar métricas do mês: " + error.message);
+    } finally {
+      setLoadingMetricasMes(false);
+    }
+  }, [nichoId, getMonthDates]);
 
   const fetchData = useCallback(async () => {
     if (!nichoId) return;
@@ -229,6 +318,10 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    fetchMetricasMes();
+  }, [fetchMetricasMes]);
+
   const gerarTarefasSemana = async () => {
     if (!semanaAtual || templates.length === 0) {
       toast.error("Nenhum template de tarefa configurado");
@@ -288,6 +381,7 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
         if (error) throw error;
         toast.success(`${novasTarefas.length} tarefas criadas!`);
         fetchData();
+        fetchMetricasMes(); // Atualizar métricas mensais
       } else {
         toast.info("Todas as tarefas já foram geradas");
       }
@@ -308,6 +402,9 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
       setTarefas((prev) =>
         prev.map((t) => (t.id === tarefaId ? { ...t, status: novoStatus } : t))
       );
+      
+      // Atualizar métricas mensais após mudança de status
+      fetchMetricasMes();
     } catch (error: any) {
       toast.error("Erro ao atualizar: " + error.message);
     }
@@ -329,6 +426,7 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
       setAllTemplates((prev) => prev.filter((t) => t.id !== templateParaDeletar.id));
       setTarefas((prev) => prev.filter((t) => t.template_id !== templateParaDeletar.id));
       toast.success("Template removido com sucesso");
+      fetchMetricasMes(); // Atualizar métricas
     } catch (error: any) {
       toast.error("Erro ao remover template: " + error.message);
     } finally {
@@ -392,6 +490,7 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
       
       setTarefas((prev) => prev.filter((t) => t.id !== tarefaId));
       toast.success("Tarefa removida");
+      fetchMetricasMes(); // Atualizar métricas
     } catch (error: any) {
       toast.error("Erro ao remover: " + error.message);
     }
@@ -415,15 +514,102 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-24 w-full" />
         <Skeleton className="h-96 w-full" />
       </div>
     );
   }
 
   const { semanaInicio, semanaFim } = getWeekDates();
+  const { mesReferencia } = getMonthDates();
 
   return (
     <div className="space-y-6">
+      {/* Navegação Mensal e Métricas */}
+      <div className="space-y-4">
+        {/* Barra de navegação do mês */}
+        <div className="flex items-center justify-center gap-4">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => setMonthOffset((m) => m - 1)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex items-center gap-2 min-w-[180px] justify-center">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-lg font-semibold capitalize">
+              {format(mesReferencia, "MMMM yyyy", { locale: ptBR })}
+            </span>
+          </div>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => setMonthOffset((m) => m + 1)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setMonthOffset(0)}
+            disabled={monthOffset === 0}
+          >
+            Mês Atual
+          </Button>
+        </div>
+
+        {/* Card de métricas mensais */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Resumo do Mês
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingMetricasMes ? (
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <div className="text-center p-3 rounded-lg bg-muted/30">
+                  <div className="text-2xl font-bold">{metricasMes.total}</div>
+                  <div className="text-xs text-muted-foreground">Total</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-green-500/10">
+                  <div className="text-2xl font-bold text-green-500">
+                    {metricasMes.concluida}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Concluídas</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-primary/10">
+                  <div className="text-2xl font-bold text-primary">
+                    {metricasMes.percentual}%
+                  </div>
+                  <div className="text-xs text-muted-foreground">Conclusão</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-yellow-500/10">
+                  <div className="text-2xl font-bold text-yellow-500">
+                    {metricasMes.pendente + metricasMes.em_andamento}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Pendentes</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-destructive/10">
+                  <div className="text-2xl font-bold text-destructive">
+                    {metricasMes.nao_concluida}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Não Concluídas</div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
