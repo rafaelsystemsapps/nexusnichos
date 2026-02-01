@@ -21,6 +21,7 @@ import {
   Smartphone,
   Calendar,
   GripVertical,
+  Brain,
 } from "lucide-react";
 import { TarefaClienteItem } from "./TarefaClienteItem";
 import { ClienteForm } from "./ClienteForm";
@@ -238,6 +239,17 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
                   >
                     <ExternalLink className="h-3 w-3" />
                     Link Principal
+                  </a>
+                )}
+                {cliente.mapa_mental_url && (
+                  <a
+                    href={cliente.mapa_mental_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-2 py-1 rounded-md bg-violet-500/10 hover:bg-violet-500/20 text-xs text-violet-400 transition-colors"
+                  >
+                    <Brain className="h-3 w-3" />
+                    Mapa Mental
                   </a>
                 )}
               </div>

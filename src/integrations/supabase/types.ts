@@ -353,6 +353,7 @@ export type Database = {
           id: string
           instagram_url: string | null
           link_principal: string | null
+          mapa_mental_url: string | null
           meta_descricao: string | null
           meta_status: Database["public"]["Enums"]["meta_status"]
           meta_valor: number | null
@@ -380,6 +381,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           link_principal?: string | null
+          mapa_mental_url?: string | null
           meta_descricao?: string | null
           meta_status?: Database["public"]["Enums"]["meta_status"]
           meta_valor?: number | null
@@ -407,6 +409,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           link_principal?: string | null
+          mapa_mental_url?: string | null
           meta_descricao?: string | null
           meta_status?: Database["public"]["Enums"]["meta_status"]
           meta_valor?: number | null
