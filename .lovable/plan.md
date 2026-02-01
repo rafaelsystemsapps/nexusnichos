@@ -1,228 +1,312 @@
 
 
-## Plano: Sistema de Aquecimento Manual com Métrica de Última Atividade
+## Plano: Aba "Projeto" - Visão do Workspace com Card Mapa Mental
 
 ### Resumo
 
-Substituir o sistema automático de aquecimento de contas (baseado em dias e progresso) por um sistema manual simples onde o usuário define se a conta está "fria" ou "quente". Além disso, integrar com o módulo de Logística para exibir a data da última tarefa concluída associada à conta.
+Criar uma nova aba fixa "Projeto" como **primeira aba** do workspace colaborador. Essa aba servirá como Home do workspace, contendo inicialmente um Card "Mapa Mental" que permite configurar e acessar um link externo (Tldraw, Google Docs ou Miro). A estrutura é escalável para futuros cards (Briefing, Drive, CRM, etc.).
 
 ---
 
-### Mudanças no Modelo de Dados
+### Modelo de Dados
 
-#### 1. Campos a MANTER na tabela `contas_redes_sociais`
+#### Nova Tabela: `workspace_links`
 
-| Campo | Novo Uso |
-|-------|----------|
-| `status_aquecimento` | Armazenar o status manual: "fria" ou "quente" |
+```sql
+CREATE TABLE workspace_links (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  nicho_id uuid NOT NULL REFERENCES nichos(id) ON DELETE CASCADE,
+  type text NOT NULL,
+  provider text,
+  title text NOT NULL DEFAULT 'Link',
+  url text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(nicho_id, type)
+);
 
-#### 2. Campos a IGNORAR (não deletar, mas parar de usar)
-
-| Campo | Motivo |
-|-------|--------|
-| `aquecimento_ativo` | Sistema automático removido |
-| `aquecimento_meta_dias` | Sistema automático removido |
-| `aquecimento_inicio` | Sistema automático removido |
-
-Nota: Os campos ficam no banco (evita migration destrutiva), mas o frontend para de usá-los.
-
-#### 3. Novo Campo (opcional via migration)
-
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| `ultima_tarefa_concluida` | `timestamp` | Cache da última tarefa concluída (opcional, pode ser calculado em runtime) |
-
-**Recomendação**: Calcular em runtime para evitar complexidade de sync.
-
----
-
-### Arquivo: `src/components/colaborador/ContasNichoTab.tsx`
-
-#### Remover
-
-1. **Tipos e constantes do sistema automático:**
-   - `PLANOS_AQUECIMENTO` (linhas 126-131)
-   - Lógica de `calcularFaseAquecimento` (linhas 174-195)
-   - Lógica de `calcularDiasAquecendo` (linhas 198-202)
-   - Lógica de `calcularProgressoAquecimento` (linhas 205-210)
-
-2. **Interface e props:**
-   - `onToggleAquecimento` e `onSelectPlano` do `SortableContaItemProps`
-   - Props relacionadas no componente `SortableContaItem`
-
-3. **UI de progresso:**
-   - Barra de progresso do aquecimento (linhas 298-318)
-   - Aviso "Definir plano de aquecimento" (linhas 321-325)
-   - Dropdown de planos de aquecimento (linhas 373-429)
-   - Badge de aquecida (linhas 432-436)
-
-4. **Handlers:**
-   - `handleToggleAquecimento` (linhas 696-721)
-   - `handleSelectPlano` (linhas 724-738)
-
-5. **Form fields:**
-   - Campos de aquecimento no formulário (`aquecimento_meta_dias`, `aquecimento_ativo`)
-
-#### Modificar
-
-1. **Novo tipo de aquecimento manual:**
-```typescript
-type StatusAquecimento = "fria" | "quente";
-
-const AQUECIMENTO_CONFIG: Record<StatusAquecimento, { 
-  label: string; 
-  icon: React.ReactNode; 
-  className: string;
-}> = {
-  fria: { 
-    label: "Fria", 
-    icon: <Snowflake className="h-3 w-3" />,
-    className: "bg-sky-500/20 text-sky-400 border-sky-500/30" 
-  },
-  quente: { 
-    label: "Quente", 
-    icon: <Flame className="h-3 w-3" />,
-    className: "bg-orange-500/20 text-orange-400 border-orange-500/30" 
-  },
-};
+-- Trigger para updated_at
+CREATE TRIGGER workspace_links_updated_at
+  BEFORE UPDATE ON workspace_links
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
 ```
 
-2. **Novo filtro simplificado:**
+| Campo | Tipo | Descricao |
+|-------|------|-----------|
+| `id` | uuid | Identificador unico |
+| `nicho_id` | uuid | FK para nichos |
+| `type` | text | Tipo do link: `mindmap`, `briefing`, `drive`, etc. |
+| `provider` | text | Provedor: `tldraw`, `docs`, `miro` |
+| `title` | text | Titulo do card |
+| `url` | text | URL do link externo |
+
+A constraint `UNIQUE(nicho_id, type)` garante apenas 1 link de cada tipo por nicho.
+
+---
+
+### Seguranca (RLS)
+
+```sql
+ALTER TABLE workspace_links ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Colaboradores podem ver links do seu nicho
+CREATE POLICY "Colaboradores podem ver links do seu nicho"
+ON workspace_links FOR SELECT
+USING (
+  has_role(auth.uid(), 'admin'::app_role) 
+  OR nicho_id = get_user_nicho(auth.uid())
+);
+
+-- INSERT: Colaboradores podem criar links no seu nicho
+CREATE POLICY "Colaboradores podem criar links no seu nicho"
+ON workspace_links FOR INSERT
+WITH CHECK (
+  has_role(auth.uid(), 'admin'::app_role) 
+  OR nicho_id = get_user_nicho(auth.uid())
+);
+
+-- UPDATE: Colaboradores podem editar links do seu nicho
+CREATE POLICY "Colaboradores podem editar links do seu nicho"
+ON workspace_links FOR UPDATE
+USING (
+  has_role(auth.uid(), 'admin'::app_role) 
+  OR nicho_id = get_user_nicho(auth.uid())
+);
+
+-- DELETE: Colaboradores podem deletar links do seu nicho
+CREATE POLICY "Colaboradores podem deletar links do seu nicho"
+ON workspace_links FOR DELETE
+USING (
+  has_role(auth.uid(), 'admin'::app_role) 
+  OR nicho_id = get_user_nicho(auth.uid())
+);
+```
+
+---
+
+### Arquivos a Criar/Modificar
+
+| Arquivo | Acao | Descricao |
+|---------|------|-----------|
+| `src/components/colaborador/ProjetoTab.tsx` | **CRIAR** | Componente principal da aba Projeto |
+| `src/hooks/queries/useWorkspaceLinks.ts` | **CRIAR** | Hook para buscar/upsert links |
+| `src/hooks/queries/index.ts` | **MODIFICAR** | Exportar novo hook |
+| `src/pages/ColaboradorWorkspace.tsx` | **MODIFICAR** | Adicionar rota "projeto" como primeira |
+| `src/components/layout/AppSidebar.tsx` | **MODIFICAR** | Adicionar "Projeto" como primeira aba fixa |
+| `src/components/colaborador/OrdemAbasEditor.tsx` | **MODIFICAR** | Adicionar "projeto" como item fixo |
+| `src/components/colaborador/ConfiguracoesNichoTab.tsx` | **MODIFICAR** | Adicionar secao "Mapa Mental" |
+
+---
+
+### Componente: ProjetoTab.tsx
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  Projeto                                                    │
+│  Visao geral e links principais do workspace                │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  🧠 Mapa Mental                                     │    │
+│  │                                                     │    │
+│  │  [ESTADO VAZIO]                                     │    │
+│  │  Configure o mapa mental do projeto                 │    │
+│  │                                                     │    │
+│  │  Provedor: [Tldraw ▼]                               │    │
+│  │  URL: [_____________________________]               │    │
+│  │                                                     │    │
+│  │  [Salvar]                                           │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  🧠 Mapa Mental                          [Miro]     │    │
+│  │                                                     │    │
+│  │  [ESTADO CONFIGURADO]                               │    │
+│  │  miro.com/app/board/xyz...                          │    │
+│  │                                                     │    │
+│  │  [Abrir]  [Editar]  [Remover]                       │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Estados do Card:**
+
+1. **Vazio**: Select de provedor + Input de URL + Botao Salvar
+2. **Configurado**: Badge do provider, URL truncada, botoes Abrir/Editar/Remover
+3. **Editando**: Formulario com valores atuais
+
+**Provedores disponiveis:**
+- `tldraw` - Tldraw
+- `docs` - Google Docs  
+- `miro` - Miro
+
+---
+
+### Hook: useWorkspaceLinks.ts
+
 ```typescript
-const AQUECIMENTO_FILTROS = [
-  { value: "todas", label: "Todas" },
-  { value: "fria", label: "❄️ Fria" },
-  { value: "quente", label: "🔥 Quente" },
+// Buscar link por tipo
+export function useWorkspaceLink(nichoId: string, type: string) {
+  return useQuery({
+    queryKey: ["workspace-link", nichoId, type],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("workspace_links")
+        .select("*")
+        .eq("nicho_id", nichoId)
+        .eq("type", type)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!nichoId && !!type,
+  });
+}
+
+// Upsert link (cria ou atualiza)
+export function useUpsertWorkspaceLink() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: {
+      nicho_id: string;
+      type: string;
+      provider: string;
+      title: string;
+      url: string;
+    }) => {
+      const { error } = await supabase
+        .from("workspace_links")
+        .upsert(data, { 
+          onConflict: "nicho_id,type",
+          ignoreDuplicates: false 
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ 
+        queryKey: ["workspace-link", variables.nicho_id, variables.type] 
+      });
+    },
+  });
+}
+
+// Deletar link
+export function useDeleteWorkspaceLink() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ nichoId, type }: { nichoId: string; type: string }) => {
+      const { error } = await supabase
+        .from("workspace_links")
+        .delete()
+        .eq("nicho_id", nichoId)
+        .eq("type", type);
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ 
+        queryKey: ["workspace-link", variables.nichoId, variables.type] 
+      });
+    },
+  });
+}
+```
+
+---
+
+### Modificacoes na Navegacao
+
+#### AppSidebar.tsx
+
+**Adicionar no DEFAULT_ORDER (primeiro item):**
+```typescript
+const DEFAULT_ORDER = [
+  "projeto",  // NOVA - primeira posicao
+  "contas",
+  "logistica",
+  // ...resto
 ];
 ```
 
-3. **Estado do formulário:**
+**Adicionar no abaConfig:**
 ```typescript
-// Adicionar ao formData
-status_aquecimento: "fria" as StatusAquecimento,
-
-// Remover do formData
-// aquecimento_meta_dias
-// aquecimento_ativo
+projeto: { 
+  title: "Projeto", 
+  href: `/workspace/${nichoId}`, // rota raiz
+  icon: FolderKanban, // ou Target
+  enabled: true // sempre habilitado
+},
 ```
 
-4. **Buscar última tarefa concluída por conta:**
+#### OrdemAbasEditor.tsx
+
+**Adicionar como item fixo:**
 ```typescript
-// Nova função para buscar última atividade
-const [ultimasTarefas, setUltimasTarefas] = useState<Record<string, string>>({});
+const fixedItems = ["projeto", "configuracoes"];
 
-const fetchUltimasTarefas = async () => {
-  // Buscar tarefas concluídas agrupadas por conta_id via template
-  const { data: templatesComConta } = await supabase
-    .from("tarefa_templates")
-    .select("id, conta_id")
-    .eq("nicho_id", nichoId)
-    .not("conta_id", "is", null);
+// Remover "dashboard" das referencias (ja foi removido anteriormente)
+```
 
-  if (!templatesComConta?.length) return;
+**Adicionar no ABA_CONFIG:**
+```typescript
+projeto: { title: "Projeto", icon: FolderKanban },
+```
 
-  const templatePorConta: Record<string, string[]> = {};
-  templatesComConta.forEach(t => {
-    if (t.conta_id) {
-      if (!templatePorConta[t.conta_id]) templatePorConta[t.conta_id] = [];
-      templatePorConta[t.conta_id].push(t.id);
-    }
-  });
+---
 
-  const ultimasMap: Record<string, string> = {};
-  
-  for (const [contaId, templateIds] of Object.entries(templatePorConta)) {
-    const { data } = await supabase
-      .from("tarefa_diaria")
-      .select("data, updated_at")
-      .in("template_id", templateIds)
-      .eq("status", "concluida")
-      .order("updated_at", { ascending: false })
-      .limit(1);
-    
-    if (data?.[0]) {
-      ultimasMap[contaId] = data[0].updated_at;
-    }
-  }
-  
-  setUltimasTarefas(ultimasMap);
+### Modificacoes no ColaboradorWorkspace.tsx
+
+**Atualizar getPageTitle():**
+```typescript
+if (!subPath || subPath === "" || subPath === "projeto") return "Projeto";
+```
+
+**Atualizar renderContent():**
+```typescript
+// Rota raiz agora mostra ProjetoTab
+if (!subPath || subPath === "" || subPath === "projeto") {
+  return <ProjetoTab nichoId={nichoId!} />;
+}
+```
+
+---
+
+### Secao nas Configuracoes do Nicho
+
+Adicionar uma secao "Links do Projeto" no `ConfiguracoesNichoTab.tsx`:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  Links do Projeto                                           │
+│  Configure os links externos do workspace                   │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  🧠 Mapa Mental                                             │
+│  Provedor: [Miro ▼]                                         │
+│  URL: [https://miro.com/app/board/xyz]                      │
+│  [Salvar]                                                   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Validacoes
+
+1. **URL obrigatoria** - nao pode estar vazia
+2. **Formato valido** - deve comecar com `http://` ou `https://`
+3. **Provider obrigatorio** - deve selecionar um provedor
+
+```typescript
+const validateUrl = (url: string): boolean => {
+  return url.startsWith("http://") || url.startsWith("https://");
 };
-```
-
-5. **UI do card da conta:**
-```typescript
-// Substituir barra de progresso por:
-{/* Status de aquecimento manual + Última atividade */}
-<div className="flex items-center gap-2 mt-1">
-  {getAquecimentoDisplay(conta.status_aquecimento)}
-  {ultimasTarefas[conta.id] && (
-    <span className="text-xs text-muted-foreground">
-      Última tarefa: {formatDistanceToNow(new Date(ultimasTarefas[conta.id]), { addSuffix: true, locale: ptBR })}
-    </span>
-  )}
-</div>
-```
-
-6. **Toggle rápido de aquecimento:**
-```typescript
-// Novo handler simples
-const handleToggleAquecimento = async (conta: any) => {
-  const novoStatus = conta.status_aquecimento === "quente" ? "fria" : "quente";
-  
-  const { error } = await supabase
-    .from("contas_redes_sociais")
-    .update({ status_aquecimento: novoStatus })
-    .eq("id", conta.id);
-
-  if (error) {
-    toast.error("Erro: " + error.message);
-    return;
-  }
-  
-  toast.success(`Conta marcada como ${novoStatus}!`);
-  fetchContas();
-};
-```
-
-7. **Botão de toggle no card:**
-```typescript
-// Substituir dropdown complexo por botão simples
-<Button
-  variant="ghost"
-  size="icon"
-  onClick={() => handleToggleAquecimento(conta)}
-  className={cn(
-    "h-8 w-8",
-    conta.status_aquecimento === "quente" 
-      ? "text-orange-400 hover:text-orange-300" 
-      : "text-sky-400 hover:text-sky-300"
-  )}
-  title={conta.status_aquecimento === "quente" ? "Marcar como fria" : "Marcar como quente"}
->
-  {conta.status_aquecimento === "quente" 
-    ? <Flame className="h-4 w-4" /> 
-    : <Snowflake className="h-4 w-4" />}
-</Button>
-```
-
-8. **Formulário de edição:**
-```typescript
-// Adicionar select simples para status de aquecimento
-<div>
-  <Label className="text-xs">Aquecimento</Label>
-  <Select
-    value={formData.status_aquecimento}
-    onValueChange={(value) => setFormData({ ...formData, status_aquecimento: value as StatusAquecimento })}
-  >
-    <SelectTrigger className="h-9">
-      <SelectValue />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="fria">❄️ Fria</SelectItem>
-      <SelectItem value="quente">🔥 Quente</SelectItem>
-    </SelectContent>
-  </Select>
-</div>
 ```
 
 ---
@@ -230,67 +314,69 @@ const handleToggleAquecimento = async (conta: any) => {
 ### Fluxo de Dados
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│                    CONTAS SOCIAIS                           │
-├─────────────────────────────────────────────────────────────┤
-│  @usuario1 [TikTok]                                         │
-│  ❄️ Fria  •  Última tarefa: há 3 dias                       │
-│                                                             │
-│  @usuario2 [Instagram]                                      │
-│  🔥 Quente  •  Última tarefa: há 2 horas                    │
-│                                                             │
-│  @usuario3 [TikTok]                                         │
-│  ❄️ Fria  •  Sem tarefas recentes                           │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              LOGÍSTICA SEMANAL                              │
-├─────────────────────────────────────────────────────────────┤
-│  Template: "Postar vídeo" → conta_id: @usuario2             │
-│  ┌─────┬─────┬─────┬─────┬─────┬─────┬─────┐                │
-│  │ Seg │ Ter │ Qua │ Qui │ Sex │ Sáb │ Dom │                │
-│  │  ✅ │  ✅ │  ⏳ │  ○  │  ○  │  ○  │  ○  │                │
-│  └─────┴─────┴─────┴─────┴─────┴─────┴─────┘                │
-│  Quando tarefa é concluída → atualiza "última tarefa"       │
-└─────────────────────────────────────────────────────────────┘
+Colaborador acessa /workspace/{nichoId}
+           │
+           ▼
+    ProjetoTab carrega
+           │
+           ▼
+    useWorkspaceLink(nichoId, "mindmap")
+           │
+           ├── null → Estado Vazio (formulario)
+           │
+           └── data → Estado Configurado
+                       │
+                       ├── Abrir → window.open(url, "_blank", "noopener,noreferrer")
+                       │
+                       ├── Editar → mostrar formulario com valores
+                       │
+                       └── Remover → confirm + delete
 ```
 
 ---
 
-### Arquivos Afetados
+### Criterios de Aceite
 
-| Arquivo | Ação | Detalhes |
-|---------|------|----------|
-| `src/components/colaborador/ContasNichoTab.tsx` | **MODIFICAR** | Remover sistema automático, adicionar toggle manual e métrica de última tarefa |
-
----
-
-### Critérios de Aceite
-
-1. Toggle de aquecimento alterna entre "fria" e "quente" com um clique
-2. Badge mostra ❄️ ou 🔥 conforme status atual
-3. Filtro funciona para fria/quente
-4. "Última tarefa" mostra tempo relativo (ex: "há 2 dias")
-5. Contas sem tarefas associadas mostram "Sem tarefas recentes"
-6. Formulário permite definir status inicial ao criar/editar
-7. Performance: busca de últimas tarefas não trava a UI
-8. Sem regressão: demais funcionalidades de contas continuam funcionando
+1. Ao entrar em `/workspace/{id}`, a primeira aba e "Projeto"
+2. Se nao houver mapa mental, aparece estado vazio com select + input
+3. Ao salvar, fica persistido no banco e ao recarregar continua
+4. Ao clicar em "Abrir", abre a URL em nova aba com seguranca (`noopener,noreferrer`)
+5. URL pode ser alterada na propria pagina Projeto e tambem nas Configuracoes
+6. Usuario de outro nicho nao consegue ver/editar link (RLS funcionando)
+7. Sidebar sempre mostra "Projeto" como primeira aba (fixo, nao desabilitavel)
+8. Formulario valida URL (obrigatoria, formato http/https)
+9. Toast de feedback apos salvar/remover
 
 ---
 
-### Nota sobre Migration
+### Icones Sugeridos
 
-**Não é necessária migration.** O campo `status_aquecimento` já existe na tabela com default `'media'::text`. Apenas precisamos:
-
-1. Atualizar registros existentes de `'media'` para `'fria'` (pode ser feito via query manual ou automaticamente no frontend)
-2. Parar de usar os campos `aquecimento_*` do sistema automático
-
-Se preferir migration para limpar dados:
-```sql
--- Normalizar valores existentes
-UPDATE contas_redes_sociais 
-SET status_aquecimento = 'fria' 
-WHERE status_aquecimento NOT IN ('fria', 'quente');
+```typescript
+import { 
+  FolderKanban, // Para aba "Projeto"
+  Brain,        // Para card "Mapa Mental"
+  ExternalLink, // Para botao "Abrir"
+  Pencil,       // Para botao "Editar"
+  Trash2,       // Para botao "Remover"
+} from "lucide-react";
 ```
+
+---
+
+### Extensibilidade Futura
+
+A tabela `workspace_links` e estrutura de componentes permitem adicionar facilmente novos cards:
+
+| type | title | Uso |
+|------|-------|-----|
+| `mindmap` | Mapa Mental | Link para mapa visual |
+| `briefing` | Briefing | Documento de briefing |
+| `drive` | Drive | Pasta compartilhada |
+| `sop` | SOPs | Procedimentos operacionais |
+| `crm` | CRM | Sistema de CRM |
+
+Para adicionar um novo card, basta:
+1. Criar componente do card seguindo o padrao
+2. Adicionar na `ProjetoTab`
+3. Usar `useWorkspaceLink(nichoId, "novo_tipo")`
 
