@@ -33,6 +33,7 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
     outro_link_label: "",
     outro_link_url: "",
     link_principal: "",
+    mapa_mental_url: "",
     observacao_texto: "",
     modelo_pagamento: "" as "" | "porcentagem" | "valor_fixo",
     valor_contrato: "",
@@ -68,6 +69,7 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
         outro_link_label: cliente.outro_link_label || "",
         outro_link_url: cliente.outro_link_url || "",
         link_principal: cliente.link_principal || "",
+        mapa_mental_url: cliente.mapa_mental_url || "",
         observacao_texto: cliente.observacao_texto || "",
         modelo_pagamento: cliente.modelo_pagamento || "",
         valor_contrato: cliente.valor_contrato?.toString() || "",
@@ -86,6 +88,7 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
         outro_link_label: "",
         outro_link_url: "",
         link_principal: "",
+        mapa_mental_url: "",
         observacao_texto: "",
         modelo_pagamento: "",
         valor_contrato: "",
@@ -148,6 +151,7 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
       outro_link_label: formData.outro_link_label || null,
       outro_link_url: formData.outro_link_url || null,
       link_principal: formData.link_principal || null,
+      mapa_mental_url: formData.mapa_mental_url || null,
       observacao_texto: formData.observacao_texto || null,
       modelo_pagamento: formData.modelo_pagamento || null,
       valor_contrato: formData.valor_contrato ? parseFloat(formData.valor_contrato) : null,
@@ -277,6 +281,14 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
                   value={formData.link_principal}
                   onChange={(e) => setFormData({ ...formData, link_principal: e.target.value })}
                   placeholder="Link principal de acesso rápido"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label>Mapa Mental URL</Label>
+                <Input
+                  value={formData.mapa_mental_url}
+                  onChange={(e) => setFormData({ ...formData, mapa_mental_url: e.target.value })}
+                  placeholder="https://tldraw.com/... ou https://docs.google.com/..."
                 />
               </div>
             </div>
