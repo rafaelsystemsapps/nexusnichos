@@ -1,382 +1,332 @@
 
 
-## Plano: Aba "Projeto" - Visão do Workspace com Card Mapa Mental
+## Plano: PATCH Modulo Gestao de Clientes e Apps
 
-### Resumo
+### Resumo do Patch
 
-Criar uma nova aba fixa "Projeto" como **primeira aba** do workspace colaborador. Essa aba servirá como Home do workspace, contendo inicialmente um Card "Mapa Mental" que permite configurar e acessar um link externo (Tldraw, Google Docs ou Miro). A estrutura é escalável para futuros cards (Briefing, Drive, CRM, etc.).
+Simplificar o cadastro de clientes removendo campos de "Meta da Semana" e ajustando a logica de pagamento para incluir campo `ticket_valor` quando modelo for porcentagem. Garantir que todas as abas (Clientes, Aplicativos, Custos, Prospeccao) reflitam mudancas automaticamente via invalidacao centralizada do React Query.
 
 ---
 
-### Modelo de Dados
+### 1. Migracao de Banco de Dados
 
-#### Nova Tabela: `workspace_links`
+Adicionar campo `ticket_valor` na tabela `clientes`:
 
 ```sql
-CREATE TABLE workspace_links (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  nicho_id uuid NOT NULL REFERENCES nichos(id) ON DELETE CASCADE,
-  type text NOT NULL,
-  provider text,
-  title text NOT NULL DEFAULT 'Link',
-  url text NOT NULL,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now(),
-  UNIQUE(nicho_id, type)
-);
-
--- Trigger para updated_at
-CREATE TRIGGER workspace_links_updated_at
-  BEFORE UPDATE ON workspace_links
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
+ALTER TABLE clientes ADD COLUMN ticket_valor numeric NULL;
 ```
 
-| Campo | Tipo | Descricao |
-|-------|------|-----------|
-| `id` | uuid | Identificador unico |
-| `nicho_id` | uuid | FK para nichos |
-| `type` | text | Tipo do link: `mindmap`, `briefing`, `drive`, etc. |
-| `provider` | text | Provedor: `tldraw`, `docs`, `miro` |
-| `title` | text | Titulo do card |
-| `url` | text | URL do link externo |
+O campo sera usado quando `modelo_pagamento = 'porcentagem'` para armazenar o valor do ticket do cliente.
 
-A constraint `UNIQUE(nicho_id, type)` garante apenas 1 link de cada tipo por nicho.
+**Nota**: Os campos `meta_descricao`, `meta_valor`, `meta_status` continuam no banco mas nao serao mais usados na UI.
 
 ---
 
-### Seguranca (RLS)
+### 2. Modificacoes no ClienteForm.tsx
 
-```sql
-ALTER TABLE workspace_links ENABLE ROW LEVEL SECURITY;
+**Remover da UI:**
+- Secao inteira "Meta da Semana" (linhas 258-296)
+- Campos: `meta_descricao`, `meta_valor`, `meta_status` do formData
 
--- SELECT: Colaboradores podem ver links do seu nicho
-CREATE POLICY "Colaboradores podem ver links do seu nicho"
-ON workspace_links FOR SELECT
-USING (
-  has_role(auth.uid(), 'admin'::app_role) 
-  OR nicho_id = get_user_nicho(auth.uid())
-);
+**Ajustar secao "Pagamento":**
 
--- INSERT: Colaboradores podem criar links no seu nicho
-CREATE POLICY "Colaboradores podem criar links no seu nicho"
-ON workspace_links FOR INSERT
-WITH CHECK (
-  has_role(auth.uid(), 'admin'::app_role) 
-  OR nicho_id = get_user_nicho(auth.uid())
-);
+| Modelo | Campos Obrigatorios |
+|--------|---------------------|
+| Valor Fixo | `valor_contrato` (R$) |
+| Porcentagem | `valor_contrato` (%), `ticket_valor` (R$) |
 
--- UPDATE: Colaboradores podem editar links do seu nicho
-CREATE POLICY "Colaboradores podem editar links do seu nicho"
-ON workspace_links FOR UPDATE
-USING (
-  has_role(auth.uid(), 'admin'::app_role) 
-  OR nicho_id = get_user_nicho(auth.uid())
-);
-
--- DELETE: Colaboradores podem deletar links do seu nicho
-CREATE POLICY "Colaboradores podem deletar links do seu nicho"
-ON workspace_links FOR DELETE
-USING (
-  has_role(auth.uid(), 'admin'::app_role) 
-  OR nicho_id = get_user_nicho(auth.uid())
-);
-```
-
----
-
-### Arquivos a Criar/Modificar
-
-| Arquivo | Acao | Descricao |
-|---------|------|-----------|
-| `src/components/colaborador/ProjetoTab.tsx` | **CRIAR** | Componente principal da aba Projeto |
-| `src/hooks/queries/useWorkspaceLinks.ts` | **CRIAR** | Hook para buscar/upsert links |
-| `src/hooks/queries/index.ts` | **MODIFICAR** | Exportar novo hook |
-| `src/pages/ColaboradorWorkspace.tsx` | **MODIFICAR** | Adicionar rota "projeto" como primeira |
-| `src/components/layout/AppSidebar.tsx` | **MODIFICAR** | Adicionar "Projeto" como primeira aba fixa |
-| `src/components/colaborador/OrdemAbasEditor.tsx` | **MODIFICAR** | Adicionar "projeto" como item fixo |
-| `src/components/colaborador/ConfiguracoesNichoTab.tsx` | **MODIFICAR** | Adicionar secao "Mapa Mental" |
-
----
-
-### Componente: ProjetoTab.tsx
+**Nova estrutura da secao Contrato:**
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  Projeto                                                    │
-│  Visao geral e links principais do workspace                │
+│  Contrato                                                   │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  🧠 Mapa Mental                                     │    │
-│  │                                                     │    │
-│  │  [ESTADO VAZIO]                                     │    │
-│  │  Configure o mapa mental do projeto                 │    │
-│  │                                                     │    │
-│  │  Provedor: [Tldraw ▼]                               │    │
-│  │  URL: [_____________________________]               │    │
-│  │                                                     │    │
-│  │  [Salvar]                                           │    │
-│  └─────────────────────────────────────────────────────┘    │
+│  [Modelo de Pagamento: Valor Fixo ▼]                        │
 │                                                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  🧠 Mapa Mental                          [Miro]     │    │
-│  │                                                     │    │
-│  │  [ESTADO CONFIGURADO]                               │    │
-│  │  miro.com/app/board/xyz...                          │    │
-│  │                                                     │    │
-│  │  [Abrir]  [Editar]  [Remover]                       │    │
-│  └─────────────────────────────────────────────────────┘    │
+│  Se Valor Fixo:                                             │
+│    Valor Mensal (R$): [_________]  (obrigatorio)            │
 │                                                             │
+│  Se Porcentagem:                                            │
+│    Percentual (%): [____]  (obrigatorio, 0-100)             │
+│    Ticket (R$): [________]  (obrigatorio, > 0)              │
+│                                                             │
+│  [Aplicativo Vinculado] [URL do App] [Data Inicio]          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Estados do Card:**
+**Validacoes:**
+- Se `modelo_pagamento === "valor_fixo"`:
+  - `valor_contrato` obrigatorio e > 0
+- Se `modelo_pagamento === "porcentagem"`:
+  - `valor_contrato` obrigatorio e entre 0 e 100
+  - `ticket_valor` obrigatorio e > 0
 
-1. **Vazio**: Select de provedor + Input de URL + Botao Salvar
-2. **Configurado**: Badge do provider, URL truncada, botoes Abrir/Editar/Remover
-3. **Editando**: Formulario com valores atuais
-
-**Provedores disponiveis:**
-- `tldraw` - Tldraw
-- `docs` - Google Docs  
-- `miro` - Miro
-
----
-
-### Hook: useWorkspaceLinks.ts
-
+**Payload de salvamento:**
 ```typescript
-// Buscar link por tipo
-export function useWorkspaceLink(nichoId: string, type: string) {
-  return useQuery({
-    queryKey: ["workspace-link", nichoId, type],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("workspace_links")
-        .select("*")
-        .eq("nicho_id", nichoId)
-        .eq("type", type)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!nichoId && !!type,
-  });
-}
-
-// Upsert link (cria ou atualiza)
-export function useUpsertWorkspaceLink() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (data: {
-      nicho_id: string;
-      type: string;
-      provider: string;
-      title: string;
-      url: string;
-    }) => {
-      const { error } = await supabase
-        .from("workspace_links")
-        .upsert(data, { 
-          onConflict: "nicho_id,type",
-          ignoreDuplicates: false 
-        });
-      
-      if (error) throw error;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: ["workspace-link", variables.nicho_id, variables.type] 
-      });
-    },
-  });
-}
-
-// Deletar link
-export function useDeleteWorkspaceLink() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ nichoId, type }: { nichoId: string; type: string }) => {
-      const { error } = await supabase
-        .from("workspace_links")
-        .delete()
-        .eq("nicho_id", nichoId)
-        .eq("type", type);
-      
-      if (error) throw error;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: ["workspace-link", variables.nichoId, variables.type] 
-      });
-    },
-  });
-}
-```
-
----
-
-### Modificacoes na Navegacao
-
-#### AppSidebar.tsx
-
-**Adicionar no DEFAULT_ORDER (primeiro item):**
-```typescript
-const DEFAULT_ORDER = [
-  "projeto",  // NOVA - primeira posicao
-  "contas",
-  "logistica",
-  // ...resto
-];
-```
-
-**Adicionar no abaConfig:**
-```typescript
-projeto: { 
-  title: "Projeto", 
-  href: `/workspace/${nichoId}`, // rota raiz
-  icon: FolderKanban, // ou Target
-  enabled: true // sempre habilitado
-},
-```
-
-#### OrdemAbasEditor.tsx
-
-**Adicionar como item fixo:**
-```typescript
-const fixedItems = ["projeto", "configuracoes"];
-
-// Remover "dashboard" das referencias (ja foi removido anteriormente)
-```
-
-**Adicionar no ABA_CONFIG:**
-```typescript
-projeto: { title: "Projeto", icon: FolderKanban },
-```
-
----
-
-### Modificacoes no ColaboradorWorkspace.tsx
-
-**Atualizar getPageTitle():**
-```typescript
-if (!subPath || subPath === "" || subPath === "projeto") return "Projeto";
-```
-
-**Atualizar renderContent():**
-```typescript
-// Rota raiz agora mostra ProjetoTab
-if (!subPath || subPath === "" || subPath === "projeto") {
-  return <ProjetoTab nichoId={nichoId!} />;
-}
-```
-
----
-
-### Secao nas Configuracoes do Nicho
-
-Adicionar uma secao "Links do Projeto" no `ConfiguracoesNichoTab.tsx`:
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  Links do Projeto                                           │
-│  Configure os links externos do workspace                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  🧠 Mapa Mental                                             │
-│  Provedor: [Miro ▼]                                         │
-│  URL: [https://miro.com/app/board/xyz]                      │
-│  [Salvar]                                                   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-### Validacoes
-
-1. **URL obrigatoria** - nao pode estar vazia
-2. **Formato valido** - deve comecar com `http://` ou `https://`
-3. **Provider obrigatorio** - deve selecionar um provedor
-
-```typescript
-const validateUrl = (url: string): boolean => {
-  return url.startsWith("http://") || url.startsWith("https://");
+const payload = {
+  // ... outros campos
+  valor_contrato: parseFloat(formData.valor_contrato) || null,
+  ticket_valor: formData.modelo_pagamento === "porcentagem" 
+    ? parseFloat(formData.ticket_valor) 
+    : null,
+  // Remover: meta_descricao, meta_valor, meta_status
 };
 ```
 
 ---
 
-### Fluxo de Dados
+### 3. Modificacoes no ClienteCard.tsx
+
+**Remover completamente:**
+- Bloco "Meta da Semana" (linhas 305-318)
+- Variaveis: `metaStatusConfig`, `MetaIcon`
+- Imports: `Target`, `CheckCircle2`, `AlertCircle`, `XCircle`
+
+**Ajustar exibicao de pagamento (linhas 270-301):**
 
 ```text
-Colaborador acessa /workspace/{nichoId}
+Se modelo_pagamento === "porcentagem":
+  - Badge: "20%"
+  - Texto adicional: "Ticket: R$ X" (ou "Ticket nao informado" se null)
+
+Se modelo_pagamento === "valor_fixo":
+  - Badge: "R$ 500"
+```
+
+**Nova funcao formatarValorContrato:**
+```typescript
+const formatarValorContrato = () => {
+  if (!cliente.valor_contrato) return null;
+  if (cliente.modelo_pagamento === "porcentagem") {
+    return `${cliente.valor_contrato}%`;
+  }
+  return `R$ ${cliente.valor_contrato.toLocaleString("pt-BR")}`;
+};
+
+const formatarTicket = () => {
+  if (cliente.modelo_pagamento !== "porcentagem") return null;
+  if (!cliente.ticket_valor) return "Ticket nao informado";
+  return `Ticket: R$ ${cliente.ticket_valor.toLocaleString("pt-BR")}`;
+};
+```
+
+**Migrar delete para usar mutation hook:**
+
+Atualmente o `handleDelete` usa supabase direto. Criar e usar hook `useDeleteCliente`:
+
+```typescript
+// Em useClientes.ts - novo hook
+export function useDeleteCliente(nichoId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (clienteId: string) => {
+      const { error } = await supabase
+        .from("clientes")
+        .delete()
+        .eq("id", clienteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes", nichoId] });
+      queryClient.invalidateQueries({ queryKey: ["all-cliente-apps", nichoId] });
+      toast.success("Cliente removido");
+    },
+    onError: (error: any) => {
+      toast.error("Erro: " + error.message);
+    },
+  });
+}
+```
+
+---
+
+### 4. Criar hooks de Cliente (Create/Update)
+
+Atualmente `ClienteForm` usa supabase direto. Criar hooks para centralizar invalidacao:
+
+```typescript
+// Em useClientes.ts
+
+export function useCreateCliente(nichoId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: any) => {
+      const { data, error } = await supabase
+        .from("clientes")
+        .insert(payload)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes", nichoId] });
+      queryClient.invalidateQueries({ queryKey: ["all-cliente-apps", nichoId] });
+      toast.success("Cliente criado!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro: " + error.message);
+    },
+  });
+}
+
+export function useUpdateCliente(nichoId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: { id: string } & any) => {
+      const { data, error } = await supabase
+        .from("clientes")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes", nichoId] });
+      queryClient.invalidateQueries({ queryKey: ["all-cliente-apps", nichoId] });
+      toast.success("Cliente atualizado!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro: " + error.message);
+    },
+  });
+}
+```
+
+---
+
+### 5. Atualizar Hooks de Apps para Invalidar Corretamente
+
+Modificar `useClienteApps.ts` para invalidar tambem a query de custos consolidados:
+
+```typescript
+// useCreateClienteApp - adicionar ao onSuccess:
+queryClient.invalidateQueries({ queryKey: ["all-cliente-apps", variables.nicho_id] });
+
+// useUpdateClienteApp - adicionar ao onSuccess:
+queryClient.invalidateQueries({ queryKey: ["all-cliente-apps", data.nicho_id] });
+
+// useDeleteClienteApp - precisa receber nichoId como parametro:
+mutationFn: async ({ id, clienteId, nichoId }: { id: string; clienteId: string; nichoId: string }) => {
+  // ...
+},
+onSuccess: (_, variables) => {
+  queryClient.invalidateQueries({ queryKey: ["cliente-apps", variables.clienteId] });
+  queryClient.invalidateQueries({ queryKey: ["all-cliente-apps", variables.nichoId] });
+  toast.success("App removido");
+}
+```
+
+---
+
+### 6. Atualizar useAllClienteApps.ts
+
+Incluir `ticket_valor` na busca para exibicao futura:
+
+```typescript
+const { data: clientes, error: clientesError } = await supabase
+  .from("clientes")
+  .select("id, nome, status, valor_contrato, modelo_pagamento, ticket_valor")
+  .eq("nicho_id", nichoId);
+```
+
+Atualizar interface:
+```typescript
+export interface ClienteComCustos {
+  // ... existentes
+  ticket_valor: number | null;
+}
+```
+
+---
+
+### 7. Atualizar CustosAppsTab.tsx
+
+Exibir ticket quando modelo for porcentagem:
+
+Na tabela, na coluna "Contrato":
+```typescript
+<TableCell className="text-right">
+  {cliente.modelo_pagamento === "porcentagem" ? (
+    <div className="flex flex-col items-end">
+      <span>{cliente.valor_contrato}%</span>
+      {cliente.ticket_valor && (
+        <span className="text-xs text-muted-foreground">
+          Ticket: {formatCurrency(cliente.ticket_valor)}
+        </span>
+      )}
+    </div>
+  ) : cliente.valor_contrato ? (
+    formatCurrency(cliente.valor_contrato)
+  ) : (
+    "-"
+  )}
+</TableCell>
+```
+
+---
+
+### Arquivos a Modificar
+
+| Arquivo | Acao | Mudancas |
+|---------|------|----------|
+| `supabase/migrations/` | **CRIAR** | Adicionar coluna `ticket_valor` |
+| `src/hooks/queries/useClientes.ts` | **MODIFICAR** | Adicionar hooks `useCreateCliente`, `useUpdateCliente`, `useDeleteCliente` |
+| `src/hooks/queries/useClienteApps.ts` | **MODIFICAR** | Adicionar invalidacao de `all-cliente-apps` |
+| `src/hooks/queries/useAllClienteApps.ts` | **MODIFICAR** | Incluir `ticket_valor` na query |
+| `src/components/colaborador/ClienteForm.tsx` | **MODIFICAR** | Remover meta, ajustar pagamento, usar hooks |
+| `src/components/colaborador/ClienteCard.tsx` | **MODIFICAR** | Remover meta, ajustar pagamento, usar hooks |
+| `src/components/colaborador/CustosAppsTab.tsx` | **MODIFICAR** | Exibir ticket em clientes % |
+| `src/components/colaborador/ClienteAppItem.tsx` | **MODIFICAR** | Passar nichoId para delete |
+| `src/components/colaborador/ClienteAppsSection.tsx` | **VERIFICAR** | Repassar nichoId corretamente |
+
+---
+
+### Diagrama de Invalidacao
+
+```text
+Criar/Editar/Deletar Cliente
            │
-           ▼
-    ProjetoTab carrega
+           ├── invalidate ["clientes", nichoId]
+           │       └── Atualiza: ClientesTab (lista)
            │
-           ▼
-    useWorkspaceLink(nichoId, "mindmap")
+           └── invalidate ["all-cliente-apps", nichoId]
+                   └── Atualiza: CustosAppsTab (tabela consolidada)
+
+Criar/Editar/Deletar App do Cliente
            │
-           ├── null → Estado Vazio (formulario)
+           ├── invalidate ["cliente-apps", clienteId]
+           │       └── Atualiza: ClienteAppsSection (lista no card)
            │
-           └── data → Estado Configurado
-                       │
-                       ├── Abrir → window.open(url, "_blank", "noopener,noreferrer")
-                       │
-                       ├── Editar → mostrar formulario com valores
-                       │
-                       └── Remover → confirm + delete
+           └── invalidate ["all-cliente-apps", nichoId]
+                   └── Atualiza: CustosAppsTab (tabela consolidada)
 ```
 
 ---
 
 ### Criterios de Aceite
 
-1. Ao entrar em `/workspace/{id}`, a primeira aba e "Projeto"
-2. Se nao houver mapa mental, aparece estado vazio com select + input
-3. Ao salvar, fica persistido no banco e ao recarregar continua
-4. Ao clicar em "Abrir", abre a URL em nova aba com seguranca (`noopener,noreferrer`)
-5. URL pode ser alterada na propria pagina Projeto e tambem nas Configuracoes
-6. Usuario de outro nicho nao consegue ver/editar link (RLS funcionando)
-7. Sidebar sempre mostra "Projeto" como primeira aba (fixo, nao desabilitavel)
-8. Formulario valida URL (obrigatoria, formato http/https)
-9. Toast de feedback apos salvar/remover
+1. Criar cliente novo pede: nome, tipo, instagram e pagamento (com validacao correta)
+2. Meta da semana nao aparece mais nem no form nem no card
+3. Se pagamento = porcentagem, pede percentual e ticket (obrigatorios)
+4. Se pagamento = valor fixo, pede valor R$ (obrigatorio) e ticket nao aparece
+5. Ao salvar/editar cliente, a aba Custos atualiza imediatamente (sem refresh)
+6. Ao adicionar/remover apps, a aba Custos atualiza imediatamente
+7. RLS continua respeitado por nicho
+8. Campo ticket_valor aparece na tabela de custos para clientes com modelo porcentagem
 
 ---
 
-### Icones Sugeridos
+### Ordem de Implementacao
 
-```typescript
-import { 
-  FolderKanban, // Para aba "Projeto"
-  Brain,        // Para card "Mapa Mental"
-  ExternalLink, // Para botao "Abrir"
-  Pencil,       // Para botao "Editar"
-  Trash2,       // Para botao "Remover"
-} from "lucide-react";
-```
-
----
-
-### Extensibilidade Futura
-
-A tabela `workspace_links` e estrutura de componentes permitem adicionar facilmente novos cards:
-
-| type | title | Uso |
-|------|-------|-----|
-| `mindmap` | Mapa Mental | Link para mapa visual |
-| `briefing` | Briefing | Documento de briefing |
-| `drive` | Drive | Pasta compartilhada |
-| `sop` | SOPs | Procedimentos operacionais |
-| `crm` | CRM | Sistema de CRM |
-
-Para adicionar um novo card, basta:
-1. Criar componente do card seguindo o padrao
-2. Adicionar na `ProjetoTab`
-3. Usar `useWorkspaceLink(nichoId, "novo_tipo")`
+1. Migration: adicionar `ticket_valor`
+2. Hooks: criar mutations de cliente e atualizar invalidacoes
+3. ClienteForm: remover meta + ajustar pagamento + usar hooks
+4. ClienteCard: remover meta + ajustar exibicao + usar hooks
+5. useAllClienteApps: incluir ticket_valor
+6. CustosAppsTab: exibir ticket
+7. Testar fluxo completo de sincronizacao entre abas
 
