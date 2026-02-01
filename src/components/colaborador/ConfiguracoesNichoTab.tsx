@@ -18,7 +18,6 @@ import {
   UserCheck,
   Briefcase,
   Smartphone,
-  LayoutDashboard,
   Gem,
   FlaskRound,
 } from "lucide-react";
@@ -27,7 +26,6 @@ import { OrdemAbasEditor } from "./OrdemAbasEditor";
 interface ConfiguracoesNichoTabProps {
   nichoId: string;
   nicho: {
-    dashboard_habilitado?: boolean;
     financeiro_habilitado: boolean;
     pedidos_habilitado?: boolean;
     radar_habilitado?: boolean;
@@ -49,14 +47,6 @@ interface ConfiguracoesNichoTabProps {
 
 // Configuração de módulos para facilitar a manutenção
 const MODULOS_CONFIG = [
-  {
-    id: "dashboard",
-    dbField: "dashboard_habilitado",
-    label: "Dashboard",
-    description: "Visão geral do workspace com foco do dia e alertas",
-    icon: LayoutDashboard,
-    color: "blue",
-  },
   {
     id: "financeiro",
     dbField: "financeiro_habilitado",
