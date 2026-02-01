@@ -32,7 +32,6 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
     tiktok_url: "",
     outro_link_label: "",
     outro_link_url: "",
-    link_principal: "",
     mapa_mental_url: "",
     observacao_texto: "",
     modelo_pagamento: "" as "" | "porcentagem" | "valor_fixo",
@@ -68,7 +67,6 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
         tiktok_url: cliente.tiktok_url || "",
         outro_link_label: cliente.outro_link_label || "",
         outro_link_url: cliente.outro_link_url || "",
-        link_principal: cliente.link_principal || "",
         mapa_mental_url: cliente.mapa_mental_url || "",
         observacao_texto: cliente.observacao_texto || "",
         modelo_pagamento: cliente.modelo_pagamento || "",
@@ -87,7 +85,6 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
         tiktok_url: "",
         outro_link_label: "",
         outro_link_url: "",
-        link_principal: "",
         mapa_mental_url: "",
         observacao_texto: "",
         modelo_pagamento: "",
@@ -150,7 +147,6 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
       tiktok_url: formData.tiktok_url || null,
       outro_link_label: formData.outro_link_label || null,
       outro_link_url: formData.outro_link_url || null,
-      link_principal: formData.link_principal || null,
       mapa_mental_url: formData.mapa_mental_url || null,
       observacao_texto: formData.observacao_texto || null,
       modelo_pagamento: formData.modelo_pagamento || null,
@@ -273,14 +269,6 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
                   value={formData.outro_link_url}
                   onChange={(e) => setFormData({ ...formData, outro_link_url: e.target.value })}
                   placeholder="https://..."
-                />
-              </div>
-              <div className="col-span-2">
-                <Label>Link Principal</Label>
-                <Input
-                  value={formData.link_principal}
-                  onChange={(e) => setFormData({ ...formData, link_principal: e.target.value })}
-                  placeholder="Link principal de acesso rápido"
                 />
               </div>
               <div className="col-span-2">
