@@ -1,0 +1,1 @@
+ALTER TABLE client_apps ADD COLUMN IF NOT EXISTS mapa_mental_url text NULL;
