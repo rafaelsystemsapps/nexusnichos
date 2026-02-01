@@ -366,6 +366,7 @@ export type Database = {
           outro_link_label: string | null
           outro_link_url: string | null
           status: Database["public"]["Enums"]["status_cliente"]
+          ticket_valor: number | null
           tiktok_url: string | null
           tipo: Database["public"]["Enums"]["tipo_cliente"]
           updated_at: string
@@ -392,6 +393,7 @@ export type Database = {
           outro_link_label?: string | null
           outro_link_url?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
+          ticket_valor?: number | null
           tiktok_url?: string | null
           tipo?: Database["public"]["Enums"]["tipo_cliente"]
           updated_at?: string
@@ -418,6 +420,7 @@ export type Database = {
           outro_link_label?: string | null
           outro_link_url?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
+          ticket_valor?: number | null
           tiktok_url?: string | null
           tipo?: Database["public"]["Enums"]["tipo_cliente"]
           updated_at?: string

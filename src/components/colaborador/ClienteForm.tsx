@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCreateCliente, useUpdateCliente } from "@/hooks/queries/useClientes";
 
 interface Aplicativo {
   id: string;
@@ -22,7 +23,6 @@ interface ClienteFormProps {
 }
 
 export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: ClienteFormProps) {
-  const [saving, setSaving] = useState(false);
   const [aplicativos, setAplicativos] = useState<Aplicativo[]>([]);
   const [formData, setFormData] = useState({
     nome: "",
@@ -33,16 +33,17 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
     outro_link_label: "",
     outro_link_url: "",
     link_principal: "",
-    meta_descricao: "",
-    meta_valor: "",
-    meta_status: "on_track" as "on_track" | "atencao" | "longe",
     observacao_texto: "",
     modelo_pagamento: "" as "" | "porcentagem" | "valor_fixo",
     valor_contrato: "",
+    ticket_valor: "",
     app_url: "",
     app_id: "",
     data_inicio_parceria: "",
   });
+
+  const createCliente = useCreateCliente(nichoId);
+  const updateCliente = useUpdateCliente(nichoId);
 
   useEffect(() => {
     const fetchAplicativos = async () => {
@@ -67,12 +68,10 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
         outro_link_label: cliente.outro_link_label || "",
         outro_link_url: cliente.outro_link_url || "",
         link_principal: cliente.link_principal || "",
-        meta_descricao: cliente.meta_descricao || "",
-        meta_valor: cliente.meta_valor?.toString() || "",
-        meta_status: cliente.meta_status || "on_track",
         observacao_texto: cliente.observacao_texto || "",
         modelo_pagamento: cliente.modelo_pagamento || "",
         valor_contrato: cliente.valor_contrato?.toString() || "",
+        ticket_valor: cliente.ticket_valor?.toString() || "",
         app_url: cliente.app_url || "",
         app_id: cliente.app_id || "",
         data_inicio_parceria: cliente.data_inicio_parceria || "",
@@ -87,12 +86,10 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
         outro_link_label: "",
         outro_link_url: "",
         link_principal: "",
-        meta_descricao: "",
-        meta_valor: "",
-        meta_status: "on_track",
         observacao_texto: "",
         modelo_pagamento: "",
         valor_contrato: "",
+        ticket_valor: "",
         app_url: "",
         app_id: "",
         data_inicio_parceria: "",
@@ -102,57 +99,87 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validações obrigatórias
     if (!formData.nome.trim()) {
       toast.error("Nome é obrigatório");
       return;
     }
+    
+    if (!formData.instagram_url.trim()) {
+      toast.error("Instagram é obrigatório");
+      return;
+    }
+    
+    if (!formData.modelo_pagamento) {
+      toast.error("Modelo de pagamento é obrigatório");
+      return;
+    }
 
-    setSaving(true);
-    try {
-      const payload = {
-        nicho_id: nichoId,
-        nome: formData.nome.trim(),
-        tipo: formData.tipo,
-        status: formData.status,
-        instagram_url: formData.instagram_url || null,
-        tiktok_url: formData.tiktok_url || null,
-        outro_link_label: formData.outro_link_label || null,
-        outro_link_url: formData.outro_link_url || null,
-        link_principal: formData.link_principal || null,
-        meta_descricao: formData.meta_descricao || null,
-        meta_valor: formData.meta_valor ? parseFloat(formData.meta_valor) : null,
-        meta_status: formData.meta_status,
-        observacao_texto: formData.observacao_texto || null,
-        modelo_pagamento: formData.modelo_pagamento || null,
-        valor_contrato: formData.valor_contrato ? parseFloat(formData.valor_contrato) : null,
-        app_url: formData.app_url || null,
-        app_id: formData.app_id || null,
-        data_inicio_parceria: formData.data_inicio_parceria || null,
-      };
-
-      if (cliente) {
-        const { error } = await supabase
-          .from("clientes")
-          .update(payload)
-          .eq("id", cliente.id);
-        if (error) throw error;
-        toast.success("Cliente atualizado!");
-      } else {
-        const { error } = await supabase
-          .from("clientes")
-          .insert(payload);
-        if (error) throw error;
-        toast.success("Cliente criado!");
+    // Validações condicionais do pagamento
+    if (formData.modelo_pagamento === "valor_fixo") {
+      const valor = parseFloat(formData.valor_contrato);
+      if (!valor || valor <= 0) {
+        toast.error("Valor mensal é obrigatório e deve ser maior que 0");
+        return;
       }
+    }
 
-      onSave();
-      onOpenChange(false);
-    } catch (error: any) {
-      toast.error("Erro: " + error.message);
-    } finally {
-      setSaving(false);
+    if (formData.modelo_pagamento === "porcentagem") {
+      const percentual = parseFloat(formData.valor_contrato);
+      if (!percentual || percentual <= 0 || percentual > 100) {
+        toast.error("Percentual deve estar entre 0 e 100");
+        return;
+      }
+      const ticket = parseFloat(formData.ticket_valor);
+      if (!ticket || ticket <= 0) {
+        toast.error("Ticket é obrigatório e deve ser maior que 0");
+        return;
+      }
+    }
+
+    const payload = {
+      nicho_id: nichoId,
+      nome: formData.nome.trim(),
+      tipo: formData.tipo,
+      status: formData.status,
+      instagram_url: formData.instagram_url || null,
+      tiktok_url: formData.tiktok_url || null,
+      outro_link_label: formData.outro_link_label || null,
+      outro_link_url: formData.outro_link_url || null,
+      link_principal: formData.link_principal || null,
+      observacao_texto: formData.observacao_texto || null,
+      modelo_pagamento: formData.modelo_pagamento || null,
+      valor_contrato: formData.valor_contrato ? parseFloat(formData.valor_contrato) : null,
+      ticket_valor: formData.modelo_pagamento === "porcentagem" && formData.ticket_valor 
+        ? parseFloat(formData.ticket_valor) 
+        : null,
+      app_url: formData.app_url || null,
+      app_id: formData.app_id || null,
+      data_inicio_parceria: formData.data_inicio_parceria || null,
+    };
+
+    if (cliente) {
+      updateCliente.mutate(
+        { id: cliente.id, ...payload },
+        {
+          onSuccess: () => {
+            onSave();
+            onOpenChange(false);
+          },
+        }
+      );
+    } else {
+      createCliente.mutate(payload, {
+        onSuccess: () => {
+          onSave();
+          onOpenChange(false);
+        },
+      });
     }
   };
+
+  const isSaving = createCliente.isPending || updateCliente.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -213,7 +240,7 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
             <h3 className="text-sm font-medium text-muted-foreground">Links Rápidos</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Instagram URL</Label>
+                <Label>Instagram URL *</Label>
                 <Input
                   value={formData.instagram_url}
                   onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
@@ -255,74 +282,68 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
             </div>
           </div>
 
-          {/* Meta da Semana */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground">Meta da Semana</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2">
-                <Label>Descrição da Meta</Label>
-                <Input
-                  value={formData.meta_descricao}
-                  onChange={(e) => setFormData({ ...formData, meta_descricao: e.target.value })}
-                  placeholder="Ex: Alcançar 10k seguidores"
-                />
-              </div>
-              <div>
-                <Label>Valor (opcional)</Label>
-                <Input
-                  type="number"
-                  value={formData.meta_valor}
-                  onChange={(e) => setFormData({ ...formData, meta_valor: e.target.value })}
-                  placeholder="10000"
-                />
-              </div>
-              <div>
-                <Label>Status da Meta</Label>
-                <Select
-                  value={formData.meta_status}
-                  onValueChange={(v) => setFormData({ ...formData, meta_status: v as any })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="on_track">No Caminho</SelectItem>
-                    <SelectItem value="atencao">Atenção</SelectItem>
-                    <SelectItem value="longe">Longe</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
           {/* Contrato */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-muted-foreground">Contrato</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Modelo de Pagamento</Label>
+                <Label>Modelo de Pagamento *</Label>
                 <Select
                   value={formData.modelo_pagamento}
-                  onValueChange={(v) => setFormData({ ...formData, modelo_pagamento: v as any })}
+                  onValueChange={(v) => setFormData({ 
+                    ...formData, 
+                    modelo_pagamento: v as any,
+                    // Limpar ticket se mudar para valor_fixo
+                    ticket_valor: v === "valor_fixo" ? "" : formData.ticket_valor
+                  })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="porcentagem">Porcentagem</SelectItem>
                     <SelectItem value="valor_fixo">Valor Fixo</SelectItem>
+                    <SelectItem value="porcentagem">Porcentagem</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Valor do Contrato {formData.modelo_pagamento === "porcentagem" ? "(%)" : "(R$)"}</Label>
-                <Input
-                  type="number"
-                  value={formData.valor_contrato}
-                  onChange={(e) => setFormData({ ...formData, valor_contrato: e.target.value })}
-                  placeholder={formData.modelo_pagamento === "porcentagem" ? "15" : "500"}
-                />
-              </div>
+              
+              {formData.modelo_pagamento === "valor_fixo" && (
+                <div>
+                  <Label>Valor Mensal (R$) *</Label>
+                  <Input
+                    type="number"
+                    value={formData.valor_contrato}
+                    onChange={(e) => setFormData({ ...formData, valor_contrato: e.target.value })}
+                    placeholder="500"
+                  />
+                </div>
+              )}
+
+              {formData.modelo_pagamento === "porcentagem" && (
+                <>
+                  <div>
+                    <Label>Percentual (%) *</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={formData.valor_contrato}
+                      onChange={(e) => setFormData({ ...formData, valor_contrato: e.target.value })}
+                      placeholder="20"
+                    />
+                  </div>
+                  <div>
+                    <Label>Ticket (R$) *</Label>
+                    <Input
+                      type="number"
+                      value={formData.ticket_valor}
+                      onChange={(e) => setFormData({ ...formData, ticket_valor: e.target.value })}
+                      placeholder="150"
+                    />
+                  </div>
+                </>
+              )}
+
               <div>
                 <Label>Aplicativo Vinculado</Label>
                 <Select
@@ -373,8 +394,8 @@ export function ClienteForm({ open, onOpenChange, nichoId, cliente, onSave }: Cl
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Salvando..." : cliente ? "Atualizar" : "Criar"}
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? "Salvando..." : cliente ? "Atualizar" : "Criar"}
             </Button>
           </div>
         </form>

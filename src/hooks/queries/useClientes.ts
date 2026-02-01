@@ -20,6 +20,77 @@ export function useClientes(nichoId: string) {
   });
 }
 
+export function useCreateCliente(nichoId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: any) => {
+      const { data, error } = await supabase
+        .from("clientes")
+        .insert(payload)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes", nichoId] });
+      queryClient.invalidateQueries({ queryKey: ["all-cliente-apps", nichoId] });
+      toast.success("Cliente criado!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro: " + error.message);
+    },
+  });
+}
+
+export function useUpdateCliente(nichoId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: { id: string } & any) => {
+      const { data, error } = await supabase
+        .from("clientes")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes", nichoId] });
+      queryClient.invalidateQueries({ queryKey: ["all-cliente-apps", nichoId] });
+      toast.success("Cliente atualizado!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro: " + error.message);
+    },
+  });
+}
+
+export function useDeleteCliente(nichoId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (clienteId: string) => {
+      const { error } = await supabase
+        .from("clientes")
+        .delete()
+        .eq("id", clienteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes", nichoId] });
+      queryClient.invalidateQueries({ queryKey: ["all-cliente-apps", nichoId] });
+      toast.success("Cliente removido!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro: " + error.message);
+    },
+  });
+}
+
 export function useUpdateClienteOrdem(nichoId: string) {
   const queryClient = useQueryClient();
 
