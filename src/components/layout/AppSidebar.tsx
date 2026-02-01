@@ -43,7 +43,6 @@ interface NavItem {
 interface AppSidebarProps {
   nichoId?: string;
   nichoNome?: string;
-  dashboardHabilitado?: boolean;
   contasHabilitado?: boolean;
   pedidosHabilitado?: boolean;
   radarHabilitado?: boolean;
@@ -60,7 +59,6 @@ interface AppSidebarProps {
 }
 
 const DEFAULT_ORDER = [
-  "dashboard",
   "contas",
   "logistica",
   "time",
@@ -77,7 +75,7 @@ const DEFAULT_ORDER = [
   "configuracoes",
 ];
 
-function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, offerVaultHabilitado, appLabHabilitado, ordemAbas }: AppSidebarProps) {
+function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, offerVaultHabilitado, appLabHabilitado, ordemAbas }: AppSidebarProps) {
   const location = useLocation();
   const { user, role, signOut } = useAuth();
   const isAdmin = role === "admin";
@@ -98,7 +96,6 @@ function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHa
 
   // Configuração de todas as abas disponíveis - memoized
   const abaConfig = useMemo(() => ({
-    dashboard: { title: "Dashboard", href: `/workspace/${nichoId}`, icon: LayoutDashboard, enabled: dashboardHabilitado !== false },
     contas: { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2, enabled: contasHabilitado !== false },
     logistica: { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck, enabled: contasHabilitado === true },
     time: { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users, enabled: timeHabilitado !== false },
@@ -113,7 +110,7 @@ function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHa
     aprendizado: { title: "Aprendizado", href: `/workspace/${nichoId}/aprendizado`, icon: Lightbulb, enabled: logsAprendizadoHabilitado === true },
     lembretes: { title: "Lembretes", href: `/workspace/${nichoId}/lembretes`, icon: Bell, enabled: lembretesHojeHabilitado === true },
     configuracoes: { title: "Configurações", href: `/workspace/${nichoId}/configuracoes`, icon: Settings, enabled: true },
-  }), [nichoId, dashboardHabilitado, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, offerVaultHabilitado, appLabHabilitado]);
+  }), [nichoId, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, offerVaultHabilitado, appLabHabilitado]);
 
   // Usa ordem customizada ou padrão - memoized
   const navItems = useMemo(() => {
@@ -141,7 +138,7 @@ function AppSidebarComponent({ nichoId, nichoNome, dashboardHabilitado, contasHa
   const mobileNavItems = useMemo(() => navItems.slice(0, 5), [navItems]);
 
   const isActive = (href: string) => {
-    if (href === `/workspace/${nichoId}` || href === "/admin") {
+    if (href === "/admin") {
       return location.pathname === href;
     }
     return location.pathname.startsWith(href);
