@@ -19,6 +19,7 @@ export interface ClienteComCustos {
   cliente_status: string;
   valor_contrato: number | null;
   modelo_pagamento: string | null;
+  ticket_valor: number | null;
   apps: ClienteAppConsolidado[];
   custo_mensal: number;
   custo_estrutural: number;
@@ -38,10 +39,10 @@ export function useAllClienteApps(nichoId: string) {
 
       if (appsError) throw appsError;
 
-      // Buscar todos os clientes do nicho
+      // Buscar todos os clientes do nicho (incluindo ticket_valor)
       const { data: clientes, error: clientesError } = await supabase
         .from("clientes")
-        .select("id, nome, status, valor_contrato, modelo_pagamento")
+        .select("id, nome, status, valor_contrato, modelo_pagamento, ticket_valor")
         .eq("nicho_id", nichoId);
 
       if (clientesError) throw clientesError;
@@ -66,7 +67,7 @@ export function useAllClienteApps(nichoId: string) {
           .filter((app) => app.tipo_custo === "estrutural")
           .reduce((acc, app) => acc + app.valor, 0);
 
-        // Calcular margem bruta
+        // Calcular margem bruta (só para valor_fixo)
         let margemBruta = 0;
         if (cliente.valor_contrato && cliente.modelo_pagamento === "valor_fixo") {
           margemBruta = cliente.valor_contrato - custoMensal;
@@ -78,6 +79,7 @@ export function useAllClienteApps(nichoId: string) {
           cliente_status: cliente.status,
           valor_contrato: cliente.valor_contrato,
           modelo_pagamento: cliente.modelo_pagamento,
+          ticket_valor: cliente.ticket_valor,
           apps: clienteApps,
           custo_mensal: custoMensal,
           custo_estrutural: custoEstrutural,

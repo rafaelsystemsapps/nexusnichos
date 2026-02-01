@@ -14,10 +14,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Target,
-  CheckCircle2,
-  AlertCircle,
-  XCircle,
   Save,
   X,
   Percent,
@@ -29,6 +25,7 @@ import {
 import { TarefaClienteItem } from "./TarefaClienteItem";
 import { ClienteForm } from "./ClienteForm";
 import { ClienteAppsSection } from "./ClienteAppsSection";
+import { useDeleteCliente } from "@/hooks/queries/useClientes";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +53,8 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
   const [editingObs, setEditingObs] = useState(false);
   const [obsText, setObsText] = useState(cliente.observacao_texto || "");
   const [savingObs, setSavingObs] = useState(false);
+
+  const deleteCliente = useDeleteCliente(nichoId);
 
   useEffect(() => {
     fetchTarefas();
@@ -91,18 +90,13 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      const { error } = await supabase
-        .from("clientes")
-        .delete()
-        .eq("id", cliente.id);
-      if (error) throw error;
-      toast.success("Cliente removido");
-      onUpdate();
-    } catch (error: any) {
-      toast.error("Erro: " + error.message);
-    }
+  const handleDelete = () => {
+    deleteCliente.mutate(cliente.id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false);
+        onUpdate();
+      },
+    });
   };
 
   const handleSaveObs = async () => {
@@ -136,14 +130,6 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
     finalizado: "bg-muted text-muted-foreground",
   };
 
-  const metaStatusConfig = {
-    on_track: { icon: CheckCircle2, color: "text-emerald-400", label: "No Caminho" },
-    atencao: { icon: AlertCircle, color: "text-amber-400", label: "Atenção" },
-    longe: { icon: XCircle, color: "text-red-400", label: "Longe" },
-  };
-
-  const MetaIcon = metaStatusConfig[cliente.meta_status as keyof typeof metaStatusConfig]?.icon || CheckCircle2;
-
   // TikTok icon component
   const TikTokIcon = () => (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -173,6 +159,12 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
       return `${cliente.valor_contrato}%`;
     }
     return `R$ ${cliente.valor_contrato.toLocaleString("pt-BR")}`;
+  };
+
+  const formatarTicket = () => {
+    if (cliente.modelo_pagamento !== "porcentagem") return null;
+    if (!cliente.ticket_valor) return "Ticket não informado";
+    return `Ticket: R$ ${cliente.ticket_valor.toLocaleString("pt-BR")}`;
   };
 
   return (
@@ -278,6 +270,11 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
                     <DollarSign className="h-4 w-4 text-emerald-400" />
                   )}
                   <span className="text-foreground font-medium">{formatarValorContrato()}</span>
+                  {cliente.modelo_pagamento === "porcentagem" && (
+                    <span className="text-muted-foreground text-xs ml-1">
+                      ({formatarTicket()})
+                    </span>
+                  )}
                 </div>
               )}
               {cliente.app_url && (
@@ -302,21 +299,6 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Meta da Semana */}
-          {cliente.meta_descricao && (
-            <div className="p-3 rounded-lg bg-muted/30 border border-border/30">
-              <div className="flex items-center gap-2 mb-1">
-                <Target className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">Meta da Semana</span>
-                <MetaIcon className={cn("h-4 w-4 ml-auto", metaStatusConfig[cliente.meta_status as keyof typeof metaStatusConfig]?.color)} />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {cliente.meta_descricao}
-                {cliente.meta_valor && <span className="ml-1 text-foreground font-medium">({cliente.meta_valor})</span>}
-              </p>
-            </div>
-          )}
-
           {/* Tarefas Semanais */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -431,8 +413,12 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Remover
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteCliente.isPending}
+            >
+              {deleteCliente.isPending ? "Removendo..." : "Remover"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

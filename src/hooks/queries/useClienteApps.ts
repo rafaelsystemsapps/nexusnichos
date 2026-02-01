@@ -55,6 +55,7 @@ export function useCreateClienteApp() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["cliente-apps", variables.cliente_id] });
+      queryClient.invalidateQueries({ queryKey: ["all-cliente-apps", variables.nicho_id] });
       toast.success("App adicionado");
     },
     onError: (error: any) => {
@@ -81,6 +82,7 @@ export function useUpdateClienteApp() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["cliente-apps", data.cliente_id] });
+      queryClient.invalidateQueries({ queryKey: ["all-cliente-apps", data.nicho_id] });
       toast.success("App atualizado");
     },
     onError: (error: any) => {
@@ -94,17 +96,18 @@ export function useDeleteClienteApp() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, clienteId }: { id: string; clienteId: string }) => {
+    mutationFn: async ({ id, clienteId, nichoId }: { id: string; clienteId: string; nichoId: string }) => {
       const { error } = await supabase
         .from("client_apps")
         .delete()
         .eq("id", id);
 
       if (error) throw error;
-      return clienteId;
+      return { clienteId, nichoId };
     },
-    onSuccess: (clienteId) => {
-      queryClient.invalidateQueries({ queryKey: ["cliente-apps", clienteId] });
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["cliente-apps", result.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ["all-cliente-apps", result.nichoId] });
       toast.success("App removido");
     },
     onError: (error: any) => {

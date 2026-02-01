@@ -172,9 +172,20 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
                         <Badge variant="secondary">{cliente.apps.length}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        {cliente.valor_contrato
-                          ? formatCurrency(cliente.valor_contrato)
-                          : "-"}
+                        {cliente.modelo_pagamento === "porcentagem" ? (
+                          <div className="flex flex-col items-end">
+                            <span>{cliente.valor_contrato}%</span>
+                            {cliente.ticket_valor && (
+                              <span className="text-xs text-muted-foreground">
+                                Ticket: {formatCurrency(cliente.ticket_valor)}
+                              </span>
+                            )}
+                          </div>
+                        ) : cliente.valor_contrato ? (
+                          formatCurrency(cliente.valor_contrato)
+                        ) : (
+                          "-"
+                        )}
                       </TableCell>
                       <TableCell className="text-right text-amber-400">
                         {cliente.custo_mensal > 0

@@ -19,9 +19,10 @@ import {
 interface ClienteAppItemProps {
   app: ClienteApp;
   onEdit: (app: ClienteApp) => void;
+  nichoId: string;
 }
 
-export function ClienteAppItem({ app, onEdit }: ClienteAppItemProps) {
+export function ClienteAppItem({ app, onEdit, nichoId }: ClienteAppItemProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const updateApp = useUpdateClienteApp();
   const deleteApp = useDeleteClienteApp();
@@ -31,8 +32,10 @@ export function ClienteAppItem({ app, onEdit }: ClienteAppItemProps) {
   };
 
   const handleDelete = () => {
-    deleteApp.mutate({ id: app.id, clienteId: app.cliente_id });
-    setDeleteOpen(false);
+    deleteApp.mutate(
+      { id: app.id, clienteId: app.cliente_id, nichoId },
+      { onSuccess: () => setDeleteOpen(false) }
+    );
   };
 
   const formatarValor = () => {
@@ -132,8 +135,9 @@ export function ClienteAppItem({ app, onEdit }: ClienteAppItemProps) {
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteApp.isPending}
             >
-              Remover
+              {deleteApp.isPending ? "Removendo..." : "Remover"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

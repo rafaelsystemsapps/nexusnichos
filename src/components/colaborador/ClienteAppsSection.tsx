@@ -134,7 +134,7 @@ export function ClienteAppsSection({
             </p>
           ) : (
             apps.map((app) => (
-              <ClienteAppItem key={app.id} app={app} onEdit={handleEdit} />
+              <ClienteAppItem key={app.id} app={app} onEdit={handleEdit} nichoId={nichoId} />
             ))
           )}
         </div>
