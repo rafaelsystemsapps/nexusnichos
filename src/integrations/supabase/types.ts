@@ -252,6 +252,7 @@ export type Database = {
           cliente_id: string
           created_at: string
           id: string
+          mapa_mental_url: string | null
           nicho_id: string
           nome_app: string
           observacao: string | null
@@ -266,6 +267,7 @@ export type Database = {
           cliente_id: string
           created_at?: string
           id?: string
+          mapa_mental_url?: string | null
           nicho_id: string
           nome_app: string
           observacao?: string | null
@@ -280,6 +282,7 @@ export type Database = {
           cliente_id?: string
           created_at?: string
           id?: string
+          mapa_mental_url?: string | null
           nicho_id?: string
           nome_app?: string
           observacao?: string | null

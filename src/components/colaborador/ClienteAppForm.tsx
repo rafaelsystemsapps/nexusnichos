@@ -34,6 +34,7 @@ const formSchema = z.object({
   valor: z.coerce.number().min(0, "Valor inválido"),
   periodicidade: z.enum(["mensal", "anual", "unico"]),
   rateio: z.enum(["exclusivo", "compartilhado"]),
+  mapa_mental_url: z.string().url("URL inválida").optional().or(z.literal("")),
   observacao: z.string().max(200).optional(),
   ativo: z.boolean(),
 });
@@ -67,6 +68,7 @@ export function ClienteAppForm({
       valor: app?.valor || 0,
       periodicidade: app?.periodicidade || "mensal",
       rateio: app?.rateio || "exclusivo",
+      mapa_mental_url: app?.mapa_mental_url || "",
       observacao: app?.observacao || "",
       ativo: app?.ativo ?? true,
     },
@@ -77,6 +79,7 @@ export function ClienteAppForm({
       await updateApp.mutateAsync({
         id: app.id,
         ...data,
+        mapa_mental_url: data.mapa_mental_url || null,
         observacao: data.observacao || null,
       });
     } else {
@@ -88,6 +91,7 @@ export function ClienteAppForm({
         valor: data.valor,
         periodicidade: data.periodicidade,
         rateio: data.rateio,
+        mapa_mental_url: data.mapa_mental_url || null,
         observacao: data.observacao || null,
         ativo: data.ativo,
       });
@@ -104,6 +108,7 @@ export function ClienteAppForm({
         valor: 0,
         periodicidade: "mensal",
         rateio: "exclusivo",
+        mapa_mental_url: "",
         observacao: "",
         ativo: true,
       });
@@ -218,6 +223,23 @@ export function ClienteAppForm({
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="mapa_mental_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mapa Mental URL (opcional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="https://tldraw.com/..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

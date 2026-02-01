@@ -12,6 +12,7 @@ export interface ClienteApp {
   periodicidade: "mensal" | "anual" | "unico";
   rateio: "exclusivo" | "compartilhado";
   observacao: string | null;
+  mapa_mental_url: string | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;
