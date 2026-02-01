@@ -647,6 +647,53 @@ export type Database = {
           },
         ]
       }
+      ferramentas_trabalho: {
+        Row: {
+          ativo: boolean
+          categoria: string | null
+          created_at: string
+          id: string
+          nicho_id: string
+          nome: string
+          observacao: string | null
+          periodicidade: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          id?: string
+          nicho_id: string
+          nome: string
+          observacao?: string | null
+          periodicidade?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          id?: string
+          nicho_id?: string
+          nome?: string
+          observacao?: string | null
+          periodicidade?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ferramentas_trabalho_nicho_id_fkey"
+            columns: ["nicho_id"]
+            isOneToOne: false
+            referencedRelation: "nichos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lembretes_hoje: {
         Row: {
           created_at: string

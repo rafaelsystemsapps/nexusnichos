@@ -1,8 +1,10 @@
 import { useAllClienteApps } from "@/hooks/queries/useAllClienteApps";
+import { useFerramentasTrabalho, calcularCustoMensalFerramentas } from "@/hooks/queries/useFerramentasTrabalho";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, TrendingDown, AlertTriangle, Package, Users } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, AlertTriangle, Package, Users, Wrench } from "lucide-react";
+import { FerramentaTrabalhoTable } from "./FerramentaTrabalhoTable";
 
 interface CustosAppsTabProps {
   nichoId: string;
@@ -10,15 +12,19 @@ interface CustosAppsTabProps {
 
 export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
   const { data, isLoading } = useAllClienteApps(nichoId);
+  const { data: ferramentas = [], isLoading: ferramentasLoading } = useFerramentasTrabalho(nichoId);
+
+  const custoMensalFerramentas = calcularCustoMensalFerramentas(ferramentas);
 
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {[1, 2, 3, 4, 5].map((i) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-24 rounded-lg skeleton-pulse bg-muted" />
           ))}
         </div>
+        <div className="h-48 rounded-lg skeleton-pulse bg-muted" />
         <div className="h-96 rounded-lg skeleton-pulse bg-muted" />
       </div>
     );
@@ -45,10 +51,14 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
     }).format(value);
   };
 
+  // Calcular custo total (clientes + ferramentas)
+  const custoTotal = totais.custo_mensal_total + custoMensalFerramentas;
+  const margemAjustada = totais.margem_bruta_total - custoMensalFerramentas;
+
   return (
     <div className="space-y-6">
       {/* Cards de Resumo */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="border-blue-500/20 bg-blue-500/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -73,7 +83,7 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign className="h-4 w-4 text-amber-400" />
-              <span className="text-xs text-muted-foreground">Custo Mensal</span>
+              <span className="text-xs text-muted-foreground">Custo Clientes</span>
             </div>
             <p className="text-2xl font-bold text-amber-400">
               {formatCurrency(totais.custo_mensal_total)}
@@ -84,31 +94,50 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
         <Card className="border-orange-500/20 bg-orange-500/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-4 w-4 text-orange-400" />
-              <span className="text-xs text-muted-foreground">Custo Estrutural</span>
+              <Wrench className="h-4 w-4 text-orange-400" />
+              <span className="text-xs text-muted-foreground">Ferramentas</span>
             </div>
             <p className="text-2xl font-bold text-orange-400">
-              {formatCurrency(totais.custo_estrutural_total)}
+              {formatCurrency(custoMensalFerramentas)}
             </p>
           </CardContent>
         </Card>
 
-        <Card className={`border-${totais.margem_bruta_total >= 0 ? 'emerald' : 'red'}-500/20 bg-${totais.margem_bruta_total >= 0 ? 'emerald' : 'red'}-500/5`}>
+        <Card className="border-rose-500/20 bg-rose-500/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              {totais.margem_bruta_total >= 0 ? (
+              <DollarSign className="h-4 w-4 text-rose-400" />
+              <span className="text-xs text-muted-foreground">Custo Total</span>
+            </div>
+            <p className="text-2xl font-bold text-rose-400">
+              {formatCurrency(custoTotal)}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className={`border-${margemAjustada >= 0 ? 'emerald' : 'red'}-500/20 bg-${margemAjustada >= 0 ? 'emerald' : 'red'}-500/5`}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              {margemAjustada >= 0 ? (
                 <TrendingUp className="h-4 w-4 text-emerald-400" />
               ) : (
                 <TrendingDown className="h-4 w-4 text-red-400" />
               )}
-              <span className="text-xs text-muted-foreground">Margem Total</span>
+              <span className="text-xs text-muted-foreground">Margem Real</span>
             </div>
-            <p className={`text-2xl font-bold ${totais.margem_bruta_total >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {formatCurrency(totais.margem_bruta_total)}
+            <p className={`text-2xl font-bold ${margemAjustada >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              {formatCurrency(margemAjustada)}
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Seção de Ferramentas de Trabalho */}
+      <FerramentaTrabalhoTable
+        nichoId={nichoId}
+        ferramentas={ferramentas}
+        isLoading={ferramentasLoading}
+      />
 
       {/* Tabela de Custos por Cliente */}
       <Card>
