@@ -51,77 +51,70 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
     }).format(value);
   };
 
-  // Calcular MRR (soma dos contratos mensais de clientes com valor fixo)
-  const mrr = clientes
+  // RECEITA: soma dos contratos mensais de clientes com valor fixo
+  const receita = clientes
     .filter(c => c.modelo_pagamento === 'valor_fixo' && c.valor_contrato)
     .reduce((acc, c) => acc + (c.valor_contrato || 0), 0);
 
-  // Custo operacional = ferramentas de trabalho
-  const custoOperacional = custoMensalFerramentas;
+  // CUSTOS: ferramentas de trabalho + custos dos clientes (domínios, assinaturas)
+  const custoClientes = totais.custo_mensal_total;
+  const custoFerramentas = custoMensalFerramentas;
+  const custoTotal = custoClientes + custoFerramentas;
   
-  // Margem = MRR - Custo Operacional
-  const margemReal = mrr - custoOperacional;
+  // SOBRA: Receita - Custos
+  const sobra = receita - custoTotal;
 
   return (
     <div className="space-y-6">
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <Card className="border-cyan-500/20 bg-cyan-500/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Globe className="h-4 w-4 text-cyan-400" />
-              <span className="text-xs text-muted-foreground">Total Domínios</span>
+      {/* Cards de Resumo - Simplificado */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* RECEITA - O que entra */}
+        <Card className="border-emerald-500/30 bg-emerald-500/10">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="h-5 w-5 text-emerald-400" />
+              <span className="text-sm font-medium text-emerald-300">Receita Mensal</span>
             </div>
-            <p className="text-2xl font-bold text-cyan-400">{totais.total_dominios}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-purple-500/20 bg-purple-500/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Users className="h-4 w-4 text-purple-400" />
-              <span className="text-xs text-muted-foreground">Clientes c/ Domínios</span>
-            </div>
-            <p className="text-2xl font-bold text-purple-400">{totais.clientes_com_dominios}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-teal-500/20 bg-teal-500/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-teal-400" />
-              <span className="text-xs text-muted-foreground">MRR</span>
-            </div>
-            <p className="text-2xl font-bold text-teal-400">
-              {formatCurrency(mrr)}
+            <p className="text-3xl font-bold text-emerald-400">
+              {formatCurrency(receita)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              O que entra dos clientes
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-orange-500/20 bg-orange-500/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Wrench className="h-4 w-4 text-orange-400" />
-              <span className="text-xs text-muted-foreground">Custo Operacional</span>
+        {/* CUSTOS - O que sai */}
+        <Card className="border-red-500/30 bg-red-500/10">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingDown className="h-5 w-5 text-red-400" />
+              <span className="text-sm font-medium text-red-300">Custos Mensais</span>
             </div>
-            <p className="text-2xl font-bold text-orange-400">
-              {formatCurrency(custoOperacional)}
+            <p className="text-3xl font-bold text-red-400">
+              {formatCurrency(custoTotal)}
             </p>
+            <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+              <p>Ferramentas: {formatCurrency(custoFerramentas)}</p>
+              <p>Clientes: {formatCurrency(custoClientes)}</p>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className={`border-${margemReal >= 0 ? 'emerald' : 'red'}-500/20 bg-${margemReal >= 0 ? 'emerald' : 'red'}-500/5`}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              {margemReal >= 0 ? (
-                <TrendingUp className="h-4 w-4 text-emerald-400" />
-              ) : (
-                <TrendingDown className="h-4 w-4 text-red-400" />
-              )}
-              <span className="text-xs text-muted-foreground">Margem Real</span>
+        {/* SOBRA - O que fica */}
+        <Card className={`border-${sobra >= 0 ? 'cyan' : 'orange'}-500/30 bg-${sobra >= 0 ? 'cyan' : 'orange'}-500/10`}>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <DollarSign className={`h-5 w-5 ${sobra >= 0 ? 'text-cyan-400' : 'text-orange-400'}`} />
+              <span className={`text-sm font-medium ${sobra >= 0 ? 'text-cyan-300' : 'text-orange-300'}`}>
+                {sobra >= 0 ? 'Sobra' : 'Falta'}
+              </span>
             </div>
-            <p className={`text-2xl font-bold ${margemReal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {formatCurrency(margemReal)}
+            <p className={`text-3xl font-bold ${sobra >= 0 ? 'text-cyan-400' : 'text-orange-400'}`}>
+              {formatCurrency(Math.abs(sobra))}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {sobra >= 0 ? 'Lucro líquido mensal' : 'Prejuízo mensal'}
             </p>
           </CardContent>
         </Card>
