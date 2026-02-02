@@ -16,7 +16,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -30,12 +29,9 @@ import { useCreateClienteApp, useUpdateClienteApp, ClienteApp } from "@/hooks/qu
 
 const formSchema = z.object({
   nome_app: z.string().min(1, "Nome obrigatório").max(100),
-  tipo_custo: z.enum(["recorrente", "estrutura"]),
   valor: z.coerce.number().min(0, "Valor inválido"),
   periodicidade: z.enum(["mensal", "anual", "unico"]),
-  rateio: z.enum(["exclusivo", "compartilhado"]),
   mapa_mental_url: z.string().url("URL inválida").optional().or(z.literal("")),
-  observacao: z.string().max(200).optional(),
   ativo: z.boolean(),
 });
 
@@ -64,12 +60,9 @@ export function ClienteAppForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       nome_app: app?.nome_app || "",
-      tipo_custo: app?.tipo_custo || "recorrente",
       valor: app?.valor || 0,
-      periodicidade: app?.periodicidade || "mensal",
-      rateio: app?.rateio || "exclusivo",
+      periodicidade: app?.periodicidade || "anual",
       mapa_mental_url: app?.mapa_mental_url || "",
-      observacao: app?.observacao || "",
       ativo: app?.ativo ?? true,
     },
   });
@@ -78,21 +71,23 @@ export function ClienteAppForm({
     if (isEditing && app) {
       await updateApp.mutateAsync({
         id: app.id,
-        ...data,
+        nome_app: data.nome_app,
+        valor: data.valor,
+        periodicidade: data.periodicidade,
         mapa_mental_url: data.mapa_mental_url || null,
-        observacao: data.observacao || null,
+        ativo: data.ativo,
       });
     } else {
       await createApp.mutateAsync({
         cliente_id: clienteId,
         nicho_id: nichoId,
         nome_app: data.nome_app,
-        tipo_custo: data.tipo_custo,
+        tipo_custo: "recorrente", // Default value
         valor: data.valor,
         periodicidade: data.periodicidade,
-        rateio: data.rateio,
+        rateio: "exclusivo", // Default value
         mapa_mental_url: data.mapa_mental_url || null,
-        observacao: data.observacao || null,
+        observacao: null, // Default value
         ativo: data.ativo,
       });
     }
@@ -104,12 +99,9 @@ export function ClienteAppForm({
     if (!open) {
       form.reset({
         nome_app: "",
-        tipo_custo: "recorrente",
         valor: 0,
-        periodicidade: "mensal",
-        rateio: "exclusivo",
+        periodicidade: "anual",
         mapa_mental_url: "",
-        observacao: "",
         ativo: true,
       });
     }
@@ -118,9 +110,9 @@ export function ClienteAppForm({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Editar App" : "Adicionar App"}</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar Domínio" : "Adicionar Domínio"}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -130,9 +122,9 @@ export function ClienteAppForm({
               name="nome_app"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do App/Serviço</FormLabel>
+                  <FormLabel>Nome do Domínio</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Lovable Pro" {...field} />
+                    <Input placeholder="Ex: doguetto.com.br" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -140,28 +132,6 @@ export function ClienteAppForm({
             />
 
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="tipo_custo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Custo</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="recorrente">🔁 Recorrente</SelectItem>
-                        <SelectItem value="estrutura">🧱 Estrutura</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <FormField
                 control={form.control}
                 name="valor"
@@ -175,9 +145,7 @@ export function ClienteAppForm({
                   </FormItem>
                 )}
               />
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="periodicidade"
@@ -194,28 +162,6 @@ export function ClienteAppForm({
                         <SelectItem value="mensal">Mensal</SelectItem>
                         <SelectItem value="anual">Anual</SelectItem>
                         <SelectItem value="unico">Único</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="rateio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Rateio</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="exclusivo">Exclusivo</SelectItem>
-                        <SelectItem value="compartilhado">Compartilhado</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -243,31 +189,13 @@ export function ClienteAppForm({
 
             <FormField
               control={form.control}
-              name="observacao"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Observação (opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Ex: Pago em dólar, vai subir mês que vem..."
-                      rows={2}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="ativo"
               render={({ field }) => (
                 <FormItem className="flex items-center justify-between rounded-lg border p-3">
                   <div>
                     <FormLabel className="cursor-pointer">Ativo</FormLabel>
                     <p className="text-xs text-muted-foreground">
-                      Apps inativos não contam no custo mensal
+                      Domínios inativos não contam no custo
                     </p>
                   </div>
                   <FormControl>

@@ -117,28 +117,13 @@ export function useDeleteClienteApp() {
   });
 }
 
-// Funções de cálculo
+// Função de cálculo de custo mensal
 export function calcularCustoMensal(apps: ClienteApp[]): number {
   return apps
-    .filter((a) => a.ativo && a.tipo_custo === "recorrente")
+    .filter((a) => a.ativo)
     .reduce((acc, a) => {
       if (a.periodicidade === "mensal") return acc + a.valor;
       if (a.periodicidade === "anual") return acc + a.valor / 12;
       return acc; // único não conta no mensal
     }, 0);
-}
-
-export function calcularCustoEstrutural(apps: ClienteApp[]): number {
-  return apps
-    .filter((a) => a.tipo_custo === "estrutura")
-    .reduce((acc, a) => acc + a.valor, 0);
-}
-
-export function calcularMargemBruta(
-  valorContrato: number | null,
-  modeloPagamento: string | null,
-  custoMensal: number
-): number | null {
-  if (!valorContrato || modeloPagamento !== "valor_fixo") return null;
-  return valorContrato - custoMensal;
 }
