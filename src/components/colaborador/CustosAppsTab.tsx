@@ -73,7 +73,7 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="h-5 w-5 text-emerald-400" />
-              <span className="text-sm font-medium text-emerald-300">Receita Mensal</span>
+              <span className="text-sm font-medium text-emerald-300">Faturamento Mensal</span>
             </div>
             <p className="text-3xl font-bold text-emerald-400">
               {formatCurrency(receita)}
