@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,10 +26,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useCreateClienteApp, useUpdateClienteApp, ClienteApp } from "@/hooks/queries/useClienteApps";
+import { Globe, CreditCard, Key, Package } from "lucide-react";
+import { useCreateClienteApp, useUpdateClienteApp, ClienteApp, CategoriaClienteApp } from "@/hooks/queries/useClienteApps";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   nome_app: z.string().min(1, "Nome obrigatório").max(100),
+  categoria: z.enum(["dominio", "assinatura", "licenca", "outro"]),
   valor: z.coerce.number().min(0, "Valor inválido"),
   periodicidade: z.enum(["mensal", "anual", "unico"]),
   ativo: z.boolean(),
@@ -36,21 +40,30 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-interface ClienteAppFormProps {
+const CATEGORIA_CONFIG: Record<CategoriaClienteApp, { label: string; icon: typeof Globe; colorClass: string; placeholder: string }> = {
+  dominio: { label: "Domínio", icon: Globe, colorClass: "text-cyan-400", placeholder: "Ex: doguetto.com.br" },
+  assinatura: { label: "Assinatura", icon: CreditCard, colorClass: "text-purple-400", placeholder: "Ex: Hotmart PRO" },
+  licenca: { label: "Licença", icon: Key, colorClass: "text-amber-400", placeholder: "Ex: Adobe Creative Cloud" },
+  outro: { label: "Outro", icon: Package, colorClass: "text-muted-foreground", placeholder: "Ex: Custo adicional" },
+};
+
+interface ClienteCustoFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clienteId: string;
   nichoId: string;
   app?: ClienteApp | null;
+  defaultCategoria?: CategoriaClienteApp;
 }
 
-export function ClienteAppForm({
+export function ClienteCustoForm({
   open,
   onOpenChange,
   clienteId,
   nichoId,
   app,
-}: ClienteAppFormProps) {
+  defaultCategoria = "dominio",
+}: ClienteCustoFormProps) {
   const createApp = useCreateClienteApp();
   const updateApp = useUpdateClienteApp();
   const isEditing = !!app;
@@ -59,17 +72,35 @@ export function ClienteAppForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       nome_app: app?.nome_app || "",
+      categoria: app?.categoria || defaultCategoria,
       valor: app?.valor || 0,
-      periodicidade: app?.periodicidade || "anual",
+      periodicidade: app?.periodicidade || "mensal",
       ativo: app?.ativo ?? true,
     },
   });
+
+  // Reset form when app or defaultCategoria changes
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        nome_app: app?.nome_app || "",
+        categoria: app?.categoria || defaultCategoria,
+        valor: app?.valor || 0,
+        periodicidade: app?.periodicidade || "mensal",
+        ativo: app?.ativo ?? true,
+      });
+    }
+  }, [open, app, defaultCategoria, form]);
+
+  const watchCategoria = form.watch("categoria") as CategoriaClienteApp;
+  const categoriaConfig = CATEGORIA_CONFIG[watchCategoria];
 
   const onSubmit = async (data: FormData) => {
     if (isEditing && app) {
       await updateApp.mutateAsync({
         id: app.id,
         nome_app: data.nome_app,
+        categoria: data.categoria as CategoriaClienteApp,
         valor: data.valor,
         periodicidade: data.periodicidade,
         ativo: data.ativo,
@@ -79,6 +110,7 @@ export function ClienteAppForm({
         cliente_id: clienteId,
         nicho_id: nichoId,
         nome_app: data.nome_app,
+        categoria: data.categoria as CategoriaClienteApp,
         tipo_custo: "recorrente",
         valor: data.valor,
         periodicidade: data.periodicidade,
@@ -89,38 +121,79 @@ export function ClienteAppForm({
       });
     }
     onOpenChange(false);
-    form.reset();
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       form.reset({
         nome_app: "",
+        categoria: defaultCategoria,
         valor: 0,
-        periodicidade: "anual",
+        periodicidade: "mensal",
         ativo: true,
       });
     }
     onOpenChange(open);
   };
 
+  const getCategoriaLabel = () => {
+    return CATEGORIA_CONFIG[watchCategoria]?.label || "Custo";
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Editar Domínio" : "Adicionar Domínio"}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? `Editar ${getCategoriaLabel()}` : `Adicionar ${getCategoriaLabel()}`}
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Seletor de Categoria */}
+            <FormField
+              control={form.control}
+              name="categoria"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de Custo</FormLabel>
+                  <div className="grid grid-cols-4 gap-2">
+                    {(["dominio", "assinatura", "licenca", "outro"] as CategoriaClienteApp[]).map((cat) => {
+                      const config = CATEGORIA_CONFIG[cat];
+                      const Icon = config.icon;
+                      const isSelected = field.value === cat;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => field.onChange(cat)}
+                          className={cn(
+                            "flex flex-col items-center gap-1 p-2.5 rounded-lg border transition-all",
+                            isSelected
+                              ? "border-primary bg-primary/10"
+                              : "border-border/50 hover:border-border"
+                          )}
+                        >
+                          <Icon className={cn("h-4 w-4", config.colorClass)} />
+                          <span className="text-xs">{config.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="nome_app"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do Domínio</FormLabel>
+                  <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: doguetto.com.br" {...field} />
+                    <Input placeholder={categoriaConfig.placeholder} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -174,7 +247,7 @@ export function ClienteAppForm({
                   <div>
                     <FormLabel className="cursor-pointer">Ativo</FormLabel>
                     <p className="text-xs text-muted-foreground">
-                      Domínios inativos não contam no custo
+                      Custos inativos não contam no total
                     </p>
                   </div>
                   <FormControl>

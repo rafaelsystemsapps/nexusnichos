@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { Pencil, Trash2, Globe } from "lucide-react";
-import { ClienteApp, useUpdateClienteApp, useDeleteClienteApp } from "@/hooks/queries/useClienteApps";
+import { Pencil, Trash2, Globe, CreditCard, Key, Package } from "lucide-react";
+import { ClienteApp, useUpdateClienteApp, useDeleteClienteApp, CategoriaClienteApp } from "@/hooks/queries/useClienteApps";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,16 +15,27 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface ClienteAppItemProps {
+interface ClienteCustoItemProps {
   app: ClienteApp;
   onEdit: (app: ClienteApp) => void;
   nichoId: string;
 }
 
-export function ClienteAppItem({ app, onEdit, nichoId }: ClienteAppItemProps) {
+const CATEGORIA_CONFIG: Record<CategoriaClienteApp, { label: string; icon: typeof Globe; colorClass: string }> = {
+  dominio: { label: "Domínio", icon: Globe, colorClass: "text-cyan-400 bg-cyan-500/10" },
+  assinatura: { label: "Assinatura", icon: CreditCard, colorClass: "text-purple-400 bg-purple-500/10" },
+  licenca: { label: "Licença", icon: Key, colorClass: "text-amber-400 bg-amber-500/10" },
+  outro: { label: "Outro", icon: Package, colorClass: "text-muted-foreground bg-muted/50" },
+};
+
+export function ClienteCustoItem({ app, onEdit, nichoId }: ClienteCustoItemProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const updateApp = useUpdateClienteApp();
   const deleteApp = useDeleteClienteApp();
+
+  const categoria = (app.categoria || "dominio") as CategoriaClienteApp;
+  const config = CATEGORIA_CONFIG[categoria];
+  const Icon = config.icon;
 
   const handleToggleAtivo = () => {
     updateApp.mutate({ id: app.id, ativo: !app.ativo });
@@ -68,9 +79,9 @@ export function ClienteAppItem({ app, onEdit, nichoId }: ClienteAppItemProps) {
             : "bg-muted/10 border-border/20 opacity-60"
         )}
       >
-        {/* Ícone de Domínio */}
-        <div className="p-1.5 rounded-md bg-cyan-500/10 text-cyan-400">
-          <Globe className="h-4 w-4" />
+        {/* Ícone por Categoria */}
+        <div className={cn("p-1.5 rounded-md", config.colorClass.split(" ")[1])}>
+          <Icon className={cn("h-4 w-4", config.colorClass.split(" ")[0])} />
         </div>
 
         {/* Info */}
@@ -119,7 +130,7 @@ export function ClienteAppItem({ app, onEdit, nichoId }: ClienteAppItemProps) {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover Domínio</AlertDialogTitle>
+            <AlertDialogTitle>Remover {config.label}</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja remover "{app.nome_app}"?
             </AlertDialogDescription>

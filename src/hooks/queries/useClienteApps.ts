@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+export type CategoriaClienteApp = "dominio" | "assinatura" | "licenca" | "outro";
+
 export interface ClienteApp {
   id: string;
   cliente_id: string;
@@ -14,6 +16,7 @@ export interface ClienteApp {
   observacao: string | null;
   mapa_mental_url: string | null;
   ativo: boolean;
+  categoria: CategoriaClienteApp;
   created_at: string;
   updated_at: string;
 }

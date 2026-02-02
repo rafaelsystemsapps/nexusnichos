@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { TarefaClienteItem } from "./TarefaClienteItem";
 import { ClienteForm } from "./ClienteForm";
-import { ClienteAppsSection } from "./ClienteAppsSection";
+import { ClienteCustosSection } from "./ClienteCustosSection";
 import { useDeleteCliente } from "@/hooks/queries/useClientes";
 import {
   AlertDialog,
@@ -332,8 +332,8 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
             )}
           </div>
 
-          {/* Domínios */}
-          <ClienteAppsSection
+          {/* Custos do Cliente */}
+          <ClienteCustosSection
             clienteId={cliente.id}
             nichoId={nichoId}
           />

@@ -249,6 +249,7 @@ export type Database = {
       client_apps: {
         Row: {
           ativo: boolean
+          categoria: string
           cliente_id: string
           created_at: string
           id: string
@@ -264,6 +265,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          categoria?: string
           cliente_id: string
           created_at?: string
           id?: string
@@ -279,6 +281,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          categoria?: string
           cliente_id?: string
           created_at?: string
           id?: string
