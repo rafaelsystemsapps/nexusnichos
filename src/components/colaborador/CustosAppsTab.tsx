@@ -3,7 +3,7 @@ import { useFerramentasTrabalho, calcularCustoMensalFerramentas } from "@/hooks/
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, TrendingDown, Package, Users, Wrench } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Globe, Users, Wrench } from "lucide-react";
 import { FerramentaTrabalhoTable } from "./FerramentaTrabalhoTable";
 
 interface CustosAppsTabProps {
@@ -34,14 +34,14 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
 
   const { clientes, totais } = data;
 
-  // Filtrar apenas clientes com apps ou com valor de contrato
+  // Filtrar apenas clientes com domínios ou com valor de contrato
   const clientesComDados = clientes.filter(
-    (c) => c.apps.length > 0 || c.valor_contrato
+    (c) => c.dominios.length > 0 || c.valor_contrato
   );
 
-  // Ordenar por margem (menor primeiro para destacar problemas)
+  // Ordenar por custo mensal (maior primeiro)
   const clientesOrdenados = [...clientesComDados].sort(
-    (a, b) => a.margem_bruta - b.margem_bruta
+    (a, b) => b.custo_mensal - a.custo_mensal
   );
 
   const formatCurrency = (value: number) => {
@@ -66,13 +66,13 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
     <div className="space-y-6">
       {/* Cards de Resumo */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <Card className="border-blue-500/20 bg-blue-500/5">
+        <Card className="border-cyan-500/20 bg-cyan-500/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Package className="h-4 w-4 text-blue-400" />
-              <span className="text-xs text-muted-foreground">Total Apps</span>
+              <Globe className="h-4 w-4 text-cyan-400" />
+              <span className="text-xs text-muted-foreground">Total Domínios</span>
             </div>
-            <p className="text-2xl font-bold text-blue-400">{totais.total_apps}</p>
+            <p className="text-2xl font-bold text-cyan-400">{totais.total_dominios}</p>
           </CardContent>
         </Card>
 
@@ -80,9 +80,9 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <Users className="h-4 w-4 text-purple-400" />
-              <span className="text-xs text-muted-foreground">Clientes c/ Apps</span>
+              <span className="text-xs text-muted-foreground">Clientes c/ Domínios</span>
             </div>
-            <p className="text-2xl font-bold text-purple-400">{totais.clientes_com_apps}</p>
+            <p className="text-2xl font-bold text-purple-400">{totais.clientes_com_dominios}</p>
           </CardContent>
         </Card>
 
@@ -146,11 +146,11 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
           {clientesOrdenados.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="p-4 rounded-full bg-muted/30 mb-4">
-                <Package className="h-8 w-8 text-muted-foreground" />
+                <Globe className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-medium mb-1">Nenhum custo cadastrado</h3>
               <p className="text-sm text-muted-foreground">
-                Adicione apps/custos nos clientes para ver o resumo aqui
+                Adicione domínios nos clientes para ver o resumo aqui
               </p>
             </div>
           ) : (
@@ -161,7 +161,7 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
                     <TableHead>Cliente</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Contrato</TableHead>
-                    <TableHead className="text-right">Custo Mensal</TableHead>
+                    <TableHead className="text-right">Custo Domínios</TableHead>
                     <TableHead className="text-right">Faturamento</TableHead>
                   </TableRow>
                 </TableHeader>

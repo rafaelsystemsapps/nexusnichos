@@ -397,12 +397,10 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
             )}
           </div>
 
-          {/* Apps & Custos */}
+          {/* Domínios */}
           <ClienteAppsSection
             clienteId={cliente.id}
             nichoId={nichoId}
-            valorContrato={cliente.valor_contrato}
-            modeloPagamento={cliente.modelo_pagamento}
           />
         </CardContent>
       </Card>

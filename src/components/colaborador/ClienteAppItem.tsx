@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Pencil, Trash2, RefreshCw, Layers, Brain } from "lucide-react";
+import { Pencil, Trash2, Globe, Brain } from "lucide-react";
 import { ClienteApp, useUpdateClienteApp, useDeleteClienteApp } from "@/hooks/queries/useClienteApps";
 import {
   AlertDialog,
@@ -48,7 +47,16 @@ export function ClienteAppItem({ app, onEdit, nichoId }: ClienteAppItemProps) {
     return `${valor}/mês`;
   };
 
-  const TipoIcon = app.tipo_custo === "recorrente" ? RefreshCw : Layers;
+  const formatarCustoMensal = () => {
+    if (app.periodicidade === "anual") {
+      const valorMensal = app.valor / 12;
+      return `(${valorMensal.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      })}/mês)`;
+    }
+    return null;
+  };
 
   return (
     <>
@@ -60,38 +68,24 @@ export function ClienteAppItem({ app, onEdit, nichoId }: ClienteAppItemProps) {
             : "bg-muted/10 border-border/20 opacity-60"
         )}
       >
-        {/* Ícone de Tipo */}
-        <div
-          className={cn(
-            "p-1.5 rounded-md",
-            app.tipo_custo === "recorrente"
-              ? "bg-blue-500/10 text-blue-400"
-              : "bg-amber-500/10 text-amber-400"
-          )}
-        >
-          <TipoIcon className="h-4 w-4" />
+        {/* Ícone de Domínio */}
+        <div className="p-1.5 rounded-md bg-cyan-500/10 text-cyan-400">
+          <Globe className="h-4 w-4" />
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={cn("text-sm font-medium truncate", !app.ativo && "line-through")}>
-              {app.nome_app}
-            </span>
-            {app.rateio === "compartilhado" && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-                Compartilhado
-              </Badge>
-            )}
-          </div>
-          {app.observacao && (
-            <p className="text-xs text-muted-foreground truncate">{app.observacao}</p>
-          )}
+          <span className={cn("text-sm font-medium truncate block", !app.ativo && "line-through")}>
+            {app.nome_app}
+          </span>
         </div>
 
         {/* Valor */}
-        <div className="text-sm font-medium text-right whitespace-nowrap">
-          {formatarValor()}
+        <div className="text-right whitespace-nowrap">
+          <div className="text-sm font-medium">{formatarValor()}</div>
+          {formatarCustoMensal() && (
+            <div className="text-xs text-muted-foreground">{formatarCustoMensal()}</div>
+          )}
         </div>
 
         {/* Toggle Ativo */}
@@ -136,7 +130,7 @@ export function ClienteAppItem({ app, onEdit, nichoId }: ClienteAppItemProps) {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover App</AlertDialogTitle>
+            <AlertDialogTitle>Remover Domínio</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja remover "{app.nome_app}"?
             </AlertDialogDescription>
