@@ -92,8 +92,8 @@ const getPaisFlag = (pais: string | null): string => {
   return found?.flag || "🌍";
 };
 
-// Status minimalista: ativa, risco, desativada
-type StatusConta = "ativa" | "risco" | "desativada";
+// Status minimalista: ativa, risco, desativada, banida
+type StatusConta = "ativa" | "risco" | "desativada" | "banida";
 
 const STATUS_CONFIG: Record<StatusConta, { label: string; className: string }> = {
   ativa: { 
@@ -108,6 +108,10 @@ const STATUS_CONFIG: Record<StatusConta, { label: string; className: string }> =
     label: "Desativada", 
     className: "bg-red-500/20 text-red-400 border-red-500/30" 
   },
+  banida: { 
+    label: "Banida", 
+    className: "bg-purple-900/30 text-purple-400 border-purple-500/30" 
+  },
 };
 
 const STATUS_FILTROS = [
@@ -115,6 +119,7 @@ const STATUS_FILTROS = [
   { value: "ativa", label: "Ativas" },
   { value: "risco", label: "Risco" },
   { value: "desativada", label: "Desativadas" },
+  { value: "banida", label: "Banidas" },
 ];
 
 // === SISTEMA DE AQUECIMENTO MANUAL ===
@@ -153,7 +158,7 @@ const mapAquecimentoFromDB = (status: string | null): StatusAquecimento => {
 const mapStatusFromDB = (status: string): StatusConta => {
   if (status === "ativa") return "ativa";
   if (status === "pausada" || status === "limitada") return "risco";
-  if (status === "banida") return "desativada";
+  if (status === "banida") return "banida"; // Banida agora é separada
   return "ativa";
 };
 
@@ -161,7 +166,8 @@ const mapStatusFromDB = (status: string): StatusConta => {
 const mapStatusToDB = (status: StatusConta): string => {
   if (status === "ativa") return "ativa";
   if (status === "risco") return "limitada"; // limitada representa risco no DB
-  if (status === "desativada") return "banida"; // banida representa desativada no DB
+  if (status === "desativada") return "pausada"; // pausada representa desativada voluntária no DB
+  if (status === "banida") return "banida"; // banida permanece banida
   return "ativa";
 };
 
@@ -866,6 +872,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                       <SelectItem value="ativa">Ativa</SelectItem>
                       <SelectItem value="risco">Risco</SelectItem>
                       <SelectItem value="desativada">Desativada</SelectItem>
+                      <SelectItem value="banida">💀 Banida</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1076,40 +1083,125 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         </div>
       </div>
 
-      {/* Lista com drag and drop */}
-      {contasFiltradas.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground text-sm">
-          {contas.length === 0 ? "Nenhuma conta cadastrada." : "Nenhuma conta encontrada com os filtros selecionados."}
-        </div>
-      ) : (
-        <DndContext 
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext 
-            items={contasFiltradas.map(c => c.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="border border-border/50 rounded-lg divide-y divide-border/50 bg-card/50">
-              {contasFiltradas.map((conta) => (
-                <SortableContaItem
-                  key={conta.id}
-                  conta={conta}
-                  onEdit={openEditDialog}
-                  onDelete={openDeleteDialog}
-                  onCredenciais={openCredenciaisModal}
-                  onToggleAquecimento={handleToggleAquecimento}
-                  hasCredenciais={hasCredenciais}
-                  getStatusDisplay={getStatusDisplay}
-                  getAquecimentoDisplay={getAquecimentoDisplay}
-                  ultimaTarefa={ultimasTarefas[conta.id] || null}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      )}
+      {/* Lista com drag and drop - Contas normais (não banidas) */}
+      {(() => {
+        const contasNormais = contasFiltradas.filter(c => mapStatusFromDB(c.status) !== "banida");
+        const contasBanidas = contasFiltradas.filter(c => mapStatusFromDB(c.status) === "banida");
+        
+        return (
+          <>
+            {contasNormais.length === 0 && contasBanidas.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground text-sm">
+                {contas.length === 0 ? "Nenhuma conta cadastrada." : "Nenhuma conta encontrada com os filtros selecionados."}
+              </div>
+            ) : (
+              <>
+                {/* Contas normais com drag and drop */}
+                {contasNormais.length > 0 && (
+                  <DndContext 
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext 
+                      items={contasNormais.map(c => c.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="border border-border/50 rounded-lg divide-y divide-border/50 bg-card/50">
+                        {contasNormais.map((conta) => (
+                          <SortableContaItem
+                            key={conta.id}
+                            conta={conta}
+                            onEdit={openEditDialog}
+                            onDelete={openDeleteDialog}
+                            onCredenciais={openCredenciaisModal}
+                            onToggleAquecimento={handleToggleAquecimento}
+                            hasCredenciais={hasCredenciais}
+                            getStatusDisplay={getStatusDisplay}
+                            getAquecimentoDisplay={getAquecimentoDisplay}
+                            ultimaTarefa={ultimasTarefas[conta.id] || null}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                )}
+
+                {/* Seção de Contas Banidas - Sem drag and drop */}
+                {contasBanidas.length > 0 && (
+                  <div className="mt-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-sm font-medium text-purple-400">💀 Contas Banidas</span>
+                      <span className="text-xs text-muted-foreground">({contasBanidas.length})</span>
+                    </div>
+                    <div className="border border-purple-500/20 rounded-lg divide-y divide-border/30 bg-purple-900/5 opacity-80">
+                      {contasBanidas.map((conta) => (
+                        <div 
+                          key={conta.id}
+                          className="px-4 py-3 flex items-start gap-3 hover:bg-muted/20 transition-colors"
+                        >
+                          {/* Placeholder no lugar do handle - sem drag */}
+                          <div className="pt-1 text-muted-foreground/30">
+                            <GripVertical className="h-4 w-4" />
+                          </div>
+
+                          {/* Icone da plataforma */}
+                          <div className="pt-0.5 text-muted-foreground/60">
+                            {plataformaIcons[conta.plataforma] || (
+                              <span className="text-xs font-medium capitalize">{conta.plataforma?.[0]}</span>
+                            )}
+                          </div>
+                          
+                          {/* Conteudo principal */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center flex-wrap gap-1.5">
+                              <span className="font-medium text-sm truncate max-w-[120px] shrink-0 text-muted-foreground">{conta.nome_conta}</span>
+                              {getStatusDisplay(conta.status)}
+                              <span className="text-sm opacity-60" title={PAISES.find(p => p.value === conta.pais)?.label || conta.pais}>
+                                {getPaisFlag(conta.pais)}
+                              </span>
+                            </div>
+                            
+                            {conta.proxima_acao && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                <span className="opacity-60">Motivo:</span> {conta.proxima_acao}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Acoes rapidas */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="bg-popover">
+                                <DropdownMenuItem onClick={() => openEditDialog(conta)}>
+                                  <Pencil className="h-3.5 w-3.5 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => openDeleteDialog(conta)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                  Remover
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        );
+      })()}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
