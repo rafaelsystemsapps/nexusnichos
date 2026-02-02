@@ -19,8 +19,8 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="h-24 rounded-lg skeleton-pulse bg-muted" />
           ))}
         </div>
@@ -51,14 +51,14 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
     }).format(value);
   };
 
-  // Calcular custo total (clientes + ferramentas)
-  const custoTotal = totais.custo_mensal_total + custoMensalFerramentas;
+  // Calcular custo total (apenas ferramentas de trabalho)
+  const custoTotal = custoMensalFerramentas;
   const margemAjustada = totais.margem_bruta_total - custoMensalFerramentas;
 
   return (
     <div className="space-y-6">
       {/* Cards de Resumo */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <Card className="border-blue-500/20 bg-blue-500/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -76,18 +76,6 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
               <span className="text-xs text-muted-foreground">Clientes c/ Apps</span>
             </div>
             <p className="text-2xl font-bold text-purple-400">{totais.clientes_com_apps}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-amber-500/20 bg-amber-500/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-4 w-4 text-amber-400" />
-              <span className="text-xs text-muted-foreground">Custo Clientes</span>
-            </div>
-            <p className="text-2xl font-bold text-amber-400">
-              {formatCurrency(totais.custo_mensal_total)}
-            </p>
           </CardContent>
         </Card>
 
