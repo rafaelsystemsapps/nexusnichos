@@ -3,7 +3,7 @@ import { useFerramentasTrabalho, calcularCustoMensalFerramentas } from "@/hooks/
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, TrendingDown, AlertTriangle, Package, Users, Wrench } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Package, Users, Wrench } from "lucide-react";
 import { FerramentaTrabalhoTable } from "./FerramentaTrabalhoTable";
 
 interface CustosAppsTabProps {
@@ -160,23 +160,16 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
                   <TableRow>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Apps</TableHead>
                     <TableHead className="text-right">Contrato</TableHead>
                     <TableHead className="text-right">Custo Mensal</TableHead>
-                    <TableHead className="text-right">Estrutural</TableHead>
-                    <TableHead className="text-right">Margem</TableHead>
+                    <TableHead className="text-right">Faturamento</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {clientesOrdenados.map((cliente) => (
                     <TableRow key={cliente.cliente_id}>
                       <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {cliente.margem_bruta < 0 && (
-                            <AlertTriangle className="h-4 w-4 text-red-400" />
-                          )}
-                          {cliente.cliente_nome}
-                        </div>
+                        {cliente.cliente_nome}
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -191,9 +184,6 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
                         >
                           {cliente.cliente_status}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="secondary">{cliente.apps.length}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         {cliente.modelo_pagamento === "porcentagem" ? (
@@ -216,25 +206,13 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
                           ? formatCurrency(cliente.custo_mensal)
                           : "-"}
                       </TableCell>
-                      <TableCell className="text-right text-orange-400">
-                        {cliente.custo_estrutural > 0
-                          ? formatCurrency(cliente.custo_estrutural)
-                          : "-"}
-                      </TableCell>
                       <TableCell className="text-right">
-                        {cliente.modelo_pagamento === "valor_fixo" ? (
-                          <span
-                            className={
-                              cliente.margem_bruta >= 0
-                                ? "text-emerald-400 font-medium"
-                                : "text-red-400 font-medium"
-                            }
-                          >
-                            {cliente.margem_bruta >= 0 ? "+" : ""}
-                            {formatCurrency(cliente.margem_bruta)}
+                        {cliente.modelo_pagamento === "valor_fixo" && cliente.valor_contrato ? (
+                          <span className="text-teal-400 font-medium">
+                            {formatCurrency(cliente.valor_contrato)}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">%</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                     </TableRow>
