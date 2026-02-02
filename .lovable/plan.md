@@ -1,54 +1,41 @@
 
 
-## Plano: Simplificar Seção de Apps para Domínios
+## Plano: Adicionar Botão para Novo Modelo de Custo
 
 ### O Que Será Feito
 
-Transformar a seção "Apps & Custos" do card de cliente em uma seção focada em **Domínios**, removendo campos desnecessários e mantendo a integração com o painel de Custos.
+Adicionar um botão "+" acima da seção "Domínios" no card de cliente, permitindo cadastrar outros tipos de custos além de domínios.
 
 ---
 
 ### Mudança Visual
 
-**Antes:**
-```text
-┌────────────────────────────────────────────┐
-│ Apps & Custos (2)                    [+]   │
-│ Mensal: R$ 150  │ Estrutural: R$ 0 │ Marg. │
-├────────────────────────────────────────────┤
-│ 🔁 Lovable Pro      R$ 120/mês   [🧠][✏️][🗑]│
-│    Compartilhado                           │
-│    Obs: Pago em dólar...                   │
-├────────────────────────────────────────────┤
-│ 🧱 API Setup        R$ 30        [✏️][🗑]  │
-└────────────────────────────────────────────┘
-```
-
 **Depois:**
 ```text
 ┌────────────────────────────────────────────┐
-│ Domínios (1)                         [+]   │
-│ Custo: R$ 50/mês                           │
+│ Custos do Cliente                    [+]   │ ← NOVO: botão para adicionar custo
 ├────────────────────────────────────────────┤
-│ 🌐 doguetto.com.br    R$ 600/ano  [🧠][✏️][🗑]│
-│                       (R$ 50/mês)          │
+│ 🌐 Domínios (1)                      [+]   │
+│    Custo: R$ 50/mês                        │
+│    ├ doguetto.com.br  R$ 600/ano          │
+├────────────────────────────────────────────┤
+│ 💳 Assinaturas (1)                   [+]   │ ← NOVO: nova categoria
+│    Custo: R$ 30/mês                        │
+│    ├ Hotmart PRO      R$ 30/mês           │
 └────────────────────────────────────────────┘
 ```
 
 ---
 
-### Campos do Formulário
+### Abordagem Técnica
 
-| Campo | Status |
-|-------|--------|
-| Nome do Domínio | ✅ Mantém (renomear de `nome_app`) |
-| Valor (R$) | ✅ Mantém |
-| Periodicidade | ✅ Mantém (mensal, anual, único) |
-| Mapa Mental URL | ✅ Mantém |
-| Ativo (toggle) | ✅ Mantém |
-| ~~Tipo de Custo~~ | ❌ Remove |
-| ~~Rateio~~ | ❌ Remove |
-| ~~Observação~~ | ❌ Remove |
+Adicionar um campo `categoria` na tabela `client_apps` para diferenciar tipos de custo:
+- **dominio** (atual)
+- **assinatura** (serviços recorrentes)
+- **licenca** (software)
+- **outro** (custos diversos)
+
+O botão principal abrirá um formulário onde o usuário escolhe a categoria antes de preencher os dados.
 
 ---
 
@@ -56,42 +43,47 @@ Transformar a seção "Apps & Custos" do card de cliente em uma seção focada e
 
 | Arquivo | Ação |
 |---------|------|
-| `src/components/colaborador/ClienteAppsSection.tsx` | Renomear para "Domínios", remover cálculos de estrutural/margem, simplificar resumo para "Custo: R$ X/mês" |
-| `src/components/colaborador/ClienteAppForm.tsx` | Remover campos tipo_custo, rateio, observacao; atualizar labels para "Domínio" |
-| `src/components/colaborador/ClienteAppItem.tsx` | Remover badge "Compartilhado", remover observação, trocar ícone para Globe (domínio) |
-| `src/hooks/queries/useClienteApps.ts` | Simplificar interface removendo campos desnecessários, manter cálculo mensal |
-| `src/hooks/queries/useAllClienteApps.ts` | Remover cálculo de estrutural, manter custo mensal para o painel |
-| `src/components/colaborador/CustosAppsTab.tsx` | Atualizar coluna "Total Apps" para "Total Domínios" |
+| `src/components/colaborador/ClienteCard.tsx` | Adicionar seção "Custos do Cliente" com botão "+" que abre o formulário com seletor de categoria |
+| `src/components/colaborador/ClienteAppsSection.tsx` | Renomear para `ClienteCustosSection.tsx`, suportar múltiplas categorias, agrupar por tipo |
+| `src/components/colaborador/ClienteAppForm.tsx` | Renomear para `ClienteCustoForm.tsx`, adicionar campo `categoria` com opções |
+| `src/components/colaborador/ClienteAppItem.tsx` | Renomear para `ClienteCustoItem.tsx`, exibir ícone baseado na categoria |
+| `src/hooks/queries/useClienteApps.ts` | Adicionar `categoria` na interface, renomear hooks |
+| **Banco de Dados** | Adicionar coluna `categoria` na tabela `client_apps` |
 
 ---
 
-### Banco de Dados
+### Alteração no Banco de Dados
 
-A tabela `client_apps` **não precisa de alteração**. Os campos `tipo_custo`, `rateio` e `observacao` continuarão existindo, mas:
-- Novos registros usarão valores default
-- O código simplesmente deixará de exibir/editar esses campos
+```sql
+ALTER TABLE client_apps 
+ADD COLUMN categoria TEXT NOT NULL DEFAULT 'dominio';
+```
+
+Valores possíveis:
+- `dominio` (padrão, para manter compatibilidade)
+- `assinatura`
+- `licenca`
+- `outro`
 
 ---
 
-### Integração com Painel de Custos
+### Ícones por Categoria
 
-O cálculo do custo mensal permanece igual:
-- Domínios ativos com periodicidade **mensal** → soma o valor
-- Domínios ativos com periodicidade **anual** → divide por 12
-- Domínios com periodicidade **único** → não entra no cálculo mensal
-
-O painel de Custos continuará mostrando:
-- Total de domínios cadastrados
-- Custo mensal por cliente
-- MRR vs Custo Operacional
+| Categoria | Ícone | Cor |
+|-----------|-------|-----|
+| dominio | Globe | cyan |
+| assinatura | CreditCard | purple |
+| licenca | Key | amber |
+| outro | Package | gray |
 
 ---
 
 ### Critérios de Aceite
 
-1. Seção renomeada de "Apps & Custos" para "Domínios"
-2. Formulário mostra apenas: nome, valor, periodicidade, mapa mental, ativo
-3. Item do domínio exibe apenas nome, valor e ações
-4. Custo mensal continua sendo calculado e exibido no painel de Custos
-5. Ícone atualizado de RefreshCw/Layers para Globe (domínio)
+1. Botão "+" visível acima/junto da seção de custos
+2. Formulário permite selecionar categoria do custo
+3. Custos agrupados por categoria na visualização
+4. Ícone diferente para cada tipo de categoria
+5. Custo mensal total calculado somando todas as categorias
+6. Dados existentes mantidos como "dominio"
 
