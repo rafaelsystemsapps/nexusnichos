@@ -127,7 +127,7 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-3">
               <Wallet className="h-5 w-5 text-yellow-400" />
-              <span className="text-sm font-medium text-yellow-300">Lucro</span>
+              <span className="text-sm font-medium text-yellow-300">Receita</span>
             </div>
             <p className="text-3xl font-bold text-yellow-400">
               {formatCurrency(lucro)}
