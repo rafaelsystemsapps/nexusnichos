@@ -51,9 +51,6 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
   const [addingTask, setAddingTask] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editingObs, setEditingObs] = useState(false);
-  const [obsText, setObsText] = useState(cliente.observacao_texto || "");
-  const [savingObs, setSavingObs] = useState(false);
 
   const deleteCliente = useDeleteCliente(nichoId);
 
@@ -98,23 +95,6 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
         onUpdate();
       },
     });
-  };
-
-  const handleSaveObs = async () => {
-    setSavingObs(true);
-    try {
-      const { error } = await supabase
-        .from("clientes")
-        .update({ observacao_texto: obsText })
-        .eq("id", cliente.id);
-      if (error) throw error;
-      setEditingObs(false);
-      onUpdate();
-    } catch (error: any) {
-      toast.error("Erro: " + error.message);
-    } finally {
-      setSavingObs(false);
-    }
   };
 
   const tarefasConcluidas = tarefas.filter(t => t.status === "feito").length;
@@ -349,51 +329,6 @@ export function ClienteCard({ cliente, onUpdate, nichoId, dragHandleProps }: Cli
             )}
             {tarefas.length >= 5 && (
               <p className="text-xs text-muted-foreground mt-2">Máximo de 5 tarefas recomendado</p>
-            )}
-          </div>
-
-          {/* Observações */}
-          <div className="pt-2 border-t border-border/30">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-muted-foreground">Observações</span>
-              {!editingObs && (
-                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setEditingObs(true)}>
-                  <Pencil className="h-3 w-3 mr-1" />
-                  Editar
-                </Button>
-              )}
-            </div>
-            {editingObs ? (
-              <div className="space-y-2">
-                <Textarea
-                  value={obsText}
-                  onChange={(e) => setObsText(e.target.value)}
-                  placeholder="Notas estratégicas..."
-                  rows={2}
-                  className="text-sm"
-                />
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setEditingObs(false);
-                      setObsText(cliente.observacao_texto || "");
-                    }}
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    Cancelar
-                  </Button>
-                  <Button size="sm" onClick={handleSaveObs} disabled={savingObs}>
-                    <Save className="h-3 w-3 mr-1" />
-                    Salvar
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {cliente.observacao_texto || "Nenhuma observação"}
-              </p>
             )}
           </div>
 
