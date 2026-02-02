@@ -1,29 +1,47 @@
 
+# Análise: Status do Dashboard e Aba Projeto
 
-## Plano: Adicionar Card de Lucro
+## O Que Encontrei
 
-Vou adicionar um quarto card que mostra especificamente o **Lucro** - que só aparece quando o valor é positivo. Quando não houver lucro (valor negativo ou zero), mostrará R$ 0,00.
+### 1. Módulo Dashboard do Colaborador
+O código atual **não possui** um toggle de "Dashboard" nas configurações do workspace. O `MODULOS_CONFIG` em `ConfiguracoesNichoTab.tsx` contém 15 módulos, mas **nenhum é chamado "Dashboard"**.
 
-### O que será feito:
+A imagem que você enviou mostra um toggle "Dashboard - Visão geral do workspace com foco do dia e alertas", mas esse módulo **não existe no código atual**. 
 
-1. **Adicionar novo card "Lucro"** ao lado dos 3 cards existentes:
-   - Cor: Verde/dourado para destacar que é o dinheiro que sobra de verdade
-   - Ícone: Wallet ou similar para representar "dinheiro no bolso"
-   - Lógica: Se `sobra > 0`, mostra o valor. Caso contrário, mostra `R$ 0,00`
-   - Label: "Lucro" com descrição "O que sobra pra você"
+Possíveis causas:
+- Cache do navegador com versão antiga
+- A imagem é de uma versão anterior do sistema
+- PWA com dados desatualizados
 
-2. **Ajustar o grid** de 3 para 4 colunas para acomodar o novo card
+### 2. Aba "Projeto" Existe e Funciona
+A aba **Projeto** está implementada e é a primeira aba fixa de cada workspace:
+- Rota: `/workspace/:nichoId` ou `/workspace/:nichoId/projeto`
+- Arquivo: `src/components/colaborador/ProjetoTab.tsx`
+- Navegação: Definida em `AppSidebar.tsx` linha 101
+- É uma aba **fixa** (não pode ser desativada)
 
-### Estrutura visual:
+### 3. Sobre "Regras Gerais para Todos os Workspaces"
+Atualmente, as configurações de módulos são **por workspace** (cada nicho tem suas próprias configurações). Para ter configurações globais seria necessário uma refatoração significativa.
 
-| Faturamento | Custos | Sobra/Falta | **Lucro** |
-|-------------|--------|-------------|-----------|
-| R$ X (verde) | R$ Y (vermelho) | R$ Z (azul/laranja) | R$ W ou R$ 0 (dourado) |
+---
 
-### Detalhes técnicos:
+## O Que Preciso Confirmar
 
-- Arquivo: `src/components/colaborador/CustosAppsTab.tsx`
-- Nova variável: `const lucro = sobra > 0 ? sobra : 0`
-- Grid atualizado: `md:grid-cols-4`
-- Novo card com estilo dourado/amarelo para destacar o lucro real
+1. **Você está vendo o toggle "Dashboard" na tela agora?** Se sim:
+   - Tente atualizar a página (F5 ou Ctrl+Shift+R)
+   - Limpe o cache do PWA/navegador
 
+2. **A aba "Projeto" não aparece na navegação?** Ela deveria ser a primeira aba em todos os workspaces.
+
+3. **Sobre as "regras gerais"**: Você quer que as configurações de módulos (quais estão ativados/desativados) sejam as mesmas para TODOS os nichos automaticamente? Ou quer um painel centralizado para configurar todos de uma vez?
+
+---
+
+## Próximos Passos Dependendo da Resposta
+
+| Se | Então |
+|---|---|
+| O toggle Dashboard sumiu após atualizar | Era cache, problema resolvido |
+| O toggle Dashboard ainda aparece | Preciso investigar mais a fundo |
+| A aba Projeto não aparece | Verificar se há algum erro no console |
+| Quer configurações globais | Criar novo fluxo de configuração centralizada |
