@@ -11,13 +11,11 @@ import {
   Pencil, 
   Trash2,
   ChevronDown,
-  ChevronUp,
-  BarChart3
+  ChevronUp
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AplicativoForm } from "./AplicativoForm";
-import { ResultadoAppForm } from "./ResultadoAppForm";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -44,13 +42,6 @@ interface Aplicativo {
   data_criacao: string | null;
   data_lancamento: string | null;
   clientes_count?: number;
-  resultados?: Array<{
-    id: string;
-    tipo: string;
-    valor: number | null;
-    data: string;
-    observacao: string | null;
-  }>;
 }
 
 interface AplicativoCardProps {
@@ -77,7 +68,6 @@ const tipoConfig: Record<string, string> = {
 export function AplicativoCard({ aplicativo, nichoId, onUpdate }: AplicativoCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [resultadoOpen, setResultadoOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -174,32 +164,10 @@ export function AplicativoCard({ aplicativo, nichoId, onUpdate }: AplicativoCard
                 </a>
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={() => setResultadoOpen(true)}>
-              <BarChart3 className="h-3 w-3 mr-1" />
-              Resultado
-            </Button>
           </div>
 
           {expanded && (
             <div className="pt-3 border-t space-y-3">
-              {aplicativo.resultados && aplicativo.resultados.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Resultados Recentes</h4>
-                  <div className="space-y-1">
-                    {aplicativo.resultados.slice(0, 5).map((r) => (
-                      <div key={r.id} className="flex items-center justify-between text-sm bg-muted/50 px-3 py-2 rounded">
-                        <span className="capitalize">{r.tipo}</span>
-                        <span className="font-medium">
-                          {r.valor !== null ? r.valor.toLocaleString("pt-BR") : "-"}
-                        </span>
-                        <span className="text-muted-foreground text-xs">
-                          {format(new Date(r.data), "dd/MM", { locale: ptBR })}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <div className="flex items-center gap-2 pt-2">
                 <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
@@ -239,14 +207,6 @@ export function AplicativoCard({ aplicativo, nichoId, onUpdate }: AplicativoCard
         onOpenChange={setEditOpen}
         nichoId={nichoId}
         aplicativo={aplicativo}
-        onSave={onUpdate}
-      />
-
-      <ResultadoAppForm
-        open={resultadoOpen}
-        onOpenChange={setResultadoOpen}
-        nichoId={nichoId}
-        appId={aplicativo.id}
         onSave={onUpdate}
       />
     </>

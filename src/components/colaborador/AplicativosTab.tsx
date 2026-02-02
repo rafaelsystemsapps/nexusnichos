@@ -26,13 +26,6 @@ interface Aplicativo {
   data_criacao: string | null;
   data_lancamento: string | null;
   clientes_count?: number;
-  resultados?: Array<{
-    id: string;
-    tipo: string;
-    valor: number | null;
-    data: string;
-    observacao: string | null;
-  }>;
 }
 
 interface Transacao {
@@ -71,15 +64,6 @@ export function AplicativosTab({ nichoId }: AplicativosTabProps) {
 
       if (clientesError) throw clientesError;
 
-      // Buscar resultados
-      const { data: resultados, error: resultadosError } = await supabase
-        .from("resultados_app")
-        .select("*")
-        .eq("nicho_id", nichoId)
-        .order("data", { ascending: false });
-
-      if (resultadosError) throw resultadosError;
-
       // Buscar transações vinculadas a apps
       const { data: transacoesData, error: transacoesError } = await supabase
         .from("transacoes_financeiras")
@@ -93,12 +77,10 @@ export function AplicativosTab({ nichoId }: AplicativosTabProps) {
       // Mapear dados
       const appsWithData = (apps || []).map((app) => {
         const clientesCount = (clientes || []).filter((c) => c.app_id === app.id).length;
-        const appResultados = (resultados || []).filter((r) => r.app_id === app.id);
         
         return {
           ...app,
           clientes_count: clientesCount,
-          resultados: appResultados,
         };
       });
 
