@@ -139,7 +139,7 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Custos por Cliente
+            Clientes e Custos
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -161,7 +161,7 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
                     <TableHead>Cliente</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Contrato</TableHead>
-                    <TableHead className="text-right">Custo Domínios</TableHead>
+                    <TableHead className="text-right">Custos</TableHead>
                     <TableHead className="text-right">Faturamento</TableHead>
                   </TableRow>
                 </TableHeader>
