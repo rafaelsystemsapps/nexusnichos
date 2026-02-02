@@ -31,7 +31,6 @@ const formSchema = z.object({
   nome_app: z.string().min(1, "Nome obrigatório").max(100),
   valor: z.coerce.number().min(0, "Valor inválido"),
   periodicidade: z.enum(["mensal", "anual", "unico"]),
-  mapa_mental_url: z.string().url("URL inválida").optional().or(z.literal("")),
   ativo: z.boolean(),
 });
 
@@ -62,7 +61,6 @@ export function ClienteAppForm({
       nome_app: app?.nome_app || "",
       valor: app?.valor || 0,
       periodicidade: app?.periodicidade || "anual",
-      mapa_mental_url: app?.mapa_mental_url || "",
       ativo: app?.ativo ?? true,
     },
   });
@@ -74,7 +72,6 @@ export function ClienteAppForm({
         nome_app: data.nome_app,
         valor: data.valor,
         periodicidade: data.periodicidade,
-        mapa_mental_url: data.mapa_mental_url || null,
         ativo: data.ativo,
       });
     } else {
@@ -82,12 +79,12 @@ export function ClienteAppForm({
         cliente_id: clienteId,
         nicho_id: nichoId,
         nome_app: data.nome_app,
-        tipo_custo: "recorrente", // Default value
+        tipo_custo: "recorrente",
         valor: data.valor,
         periodicidade: data.periodicidade,
-        rateio: "exclusivo", // Default value
-        mapa_mental_url: data.mapa_mental_url || null,
-        observacao: null, // Default value
+        rateio: "exclusivo",
+        mapa_mental_url: null,
+        observacao: null,
         ativo: data.ativo,
       });
     }
@@ -101,7 +98,6 @@ export function ClienteAppForm({
         nome_app: "",
         valor: 0,
         periodicidade: "anual",
-        mapa_mental_url: "",
         ativo: true,
       });
     }
@@ -169,23 +165,6 @@ export function ClienteAppForm({
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="mapa_mental_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mapa Mental URL (opcional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="https://tldraw.com/..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}
