@@ -3,7 +3,7 @@ import { useFerramentasTrabalho, calcularCustoMensalFerramentas } from "@/hooks/
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, TrendingDown, Globe, Users, Wrench } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Globe, Users, Wrench, Wallet } from "lucide-react";
 import { FerramentaTrabalhoTable } from "./FerramentaTrabalhoTable";
 
 interface CustosAppsTabProps {
@@ -63,11 +63,14 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
   
   // SOBRA: Receita - Custos
   const sobra = receita - custoTotal;
+  
+  // LUCRO: Só mostra quando positivo, senão zero
+  const lucro = sobra > 0 ? sobra : 0;
 
   return (
     <div className="space-y-6">
       {/* Cards de Resumo - Simplificado */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* RECEITA - O que entra */}
         <Card className="border-emerald-500/30 bg-emerald-500/10">
           <CardContent className="p-5">
@@ -114,7 +117,23 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
               {formatCurrency(Math.abs(sobra))}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {sobra >= 0 ? 'Lucro líquido mensal' : 'Prejuízo mensal'}
+              {sobra >= 0 ? 'Resultado mensal' : 'Prejuízo mensal'}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* LUCRO - O que sobra pra você */}
+        <Card className="border-yellow-500/30 bg-yellow-500/10">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Wallet className="h-5 w-5 text-yellow-400" />
+              <span className="text-sm font-medium text-yellow-300">Lucro</span>
+            </div>
+            <p className="text-3xl font-bold text-yellow-400">
+              {formatCurrency(lucro)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              O que sobra pra você
             </p>
           </CardContent>
         </Card>
