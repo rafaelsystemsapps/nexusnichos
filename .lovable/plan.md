@@ -1,89 +1,29 @@
 
 
-## Plano: Adicionar Botão para Novo Modelo de Custo
+## Plano: Adicionar Card de Lucro
 
-### O Que Será Feito
+Vou adicionar um quarto card que mostra especificamente o **Lucro** - que só aparece quando o valor é positivo. Quando não houver lucro (valor negativo ou zero), mostrará R$ 0,00.
 
-Adicionar um botão "+" acima da seção "Domínios" no card de cliente, permitindo cadastrar outros tipos de custos além de domínios.
+### O que será feito:
 
----
+1. **Adicionar novo card "Lucro"** ao lado dos 3 cards existentes:
+   - Cor: Verde/dourado para destacar que é o dinheiro que sobra de verdade
+   - Ícone: Wallet ou similar para representar "dinheiro no bolso"
+   - Lógica: Se `sobra > 0`, mostra o valor. Caso contrário, mostra `R$ 0,00`
+   - Label: "Lucro" com descrição "O que sobra pra você"
 
-### Mudança Visual
+2. **Ajustar o grid** de 3 para 4 colunas para acomodar o novo card
 
-**Depois:**
-```text
-┌────────────────────────────────────────────┐
-│ Custos do Cliente                    [+]   │ ← NOVO: botão para adicionar custo
-├────────────────────────────────────────────┤
-│ 🌐 Domínios (1)                      [+]   │
-│    Custo: R$ 50/mês                        │
-│    ├ doguetto.com.br  R$ 600/ano          │
-├────────────────────────────────────────────┤
-│ 💳 Assinaturas (1)                   [+]   │ ← NOVO: nova categoria
-│    Custo: R$ 30/mês                        │
-│    ├ Hotmart PRO      R$ 30/mês           │
-└────────────────────────────────────────────┘
-```
+### Estrutura visual:
 
----
+| Faturamento | Custos | Sobra/Falta | **Lucro** |
+|-------------|--------|-------------|-----------|
+| R$ X (verde) | R$ Y (vermelho) | R$ Z (azul/laranja) | R$ W ou R$ 0 (dourado) |
 
-### Abordagem Técnica
+### Detalhes técnicos:
 
-Adicionar um campo `categoria` na tabela `client_apps` para diferenciar tipos de custo:
-- **dominio** (atual)
-- **assinatura** (serviços recorrentes)
-- **licenca** (software)
-- **outro** (custos diversos)
-
-O botão principal abrirá um formulário onde o usuário escolhe a categoria antes de preencher os dados.
-
----
-
-### Modificações por Arquivo
-
-| Arquivo | Ação |
-|---------|------|
-| `src/components/colaborador/ClienteCard.tsx` | Adicionar seção "Custos do Cliente" com botão "+" que abre o formulário com seletor de categoria |
-| `src/components/colaborador/ClienteAppsSection.tsx` | Renomear para `ClienteCustosSection.tsx`, suportar múltiplas categorias, agrupar por tipo |
-| `src/components/colaborador/ClienteAppForm.tsx` | Renomear para `ClienteCustoForm.tsx`, adicionar campo `categoria` com opções |
-| `src/components/colaborador/ClienteAppItem.tsx` | Renomear para `ClienteCustoItem.tsx`, exibir ícone baseado na categoria |
-| `src/hooks/queries/useClienteApps.ts` | Adicionar `categoria` na interface, renomear hooks |
-| **Banco de Dados** | Adicionar coluna `categoria` na tabela `client_apps` |
-
----
-
-### Alteração no Banco de Dados
-
-```sql
-ALTER TABLE client_apps 
-ADD COLUMN categoria TEXT NOT NULL DEFAULT 'dominio';
-```
-
-Valores possíveis:
-- `dominio` (padrão, para manter compatibilidade)
-- `assinatura`
-- `licenca`
-- `outro`
-
----
-
-### Ícones por Categoria
-
-| Categoria | Ícone | Cor |
-|-----------|-------|-----|
-| dominio | Globe | cyan |
-| assinatura | CreditCard | purple |
-| licenca | Key | amber |
-| outro | Package | gray |
-
----
-
-### Critérios de Aceite
-
-1. Botão "+" visível acima/junto da seção de custos
-2. Formulário permite selecionar categoria do custo
-3. Custos agrupados por categoria na visualização
-4. Ícone diferente para cada tipo de categoria
-5. Custo mensal total calculado somando todas as categorias
-6. Dados existentes mantidos como "dominio"
+- Arquivo: `src/components/colaborador/CustosAppsTab.tsx`
+- Nova variável: `const lucro = sobra > 0 ? sobra : 0`
+- Grid atualizado: `md:grid-cols-4`
+- Novo card com estilo dourado/amarelo para destacar o lucro real
 
