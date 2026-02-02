@@ -299,11 +299,12 @@ export function LogisticaSemanalTab({ nichoId }: LogisticaSemanalTabProps) {
       if (tarefasError) throw tarefasError;
       setTarefas(tarefasData || []);
 
-      // Buscar contas para filtro
+      // Buscar contas para filtro (excluindo banidas)
       const { data: contasData } = await supabase
         .from("contas_redes_sociais")
         .select("id, nome_conta, plataforma")
         .eq("nicho_id", nichoId)
+        .neq("status", "banida")
         .order("nome_conta");
 
       setContas(contasData || []);
