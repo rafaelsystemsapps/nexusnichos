@@ -51,9 +51,16 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
     }).format(value);
   };
 
-  // Calcular custo total (apenas ferramentas de trabalho)
-  const custoTotal = custoMensalFerramentas;
-  const margemAjustada = totais.margem_bruta_total - custoMensalFerramentas;
+  // Calcular MRR (soma dos contratos mensais de clientes com valor fixo)
+  const mrr = clientes
+    .filter(c => c.modelo_pagamento === 'valor_fixo' && c.valor_contrato)
+    .reduce((acc, c) => acc + (c.valor_contrato || 0), 0);
+
+  // Custo operacional = ferramentas de trabalho
+  const custoOperacional = custoMensalFerramentas;
+  
+  // Margem = MRR - Custo Operacional
+  const margemReal = mrr - custoOperacional;
 
   return (
     <div className="space-y-6">
@@ -79,42 +86,42 @@ export function CustosAppsTab({ nichoId }: CustosAppsTabProps) {
           </CardContent>
         </Card>
 
+        <Card className="border-teal-500/20 bg-teal-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="h-4 w-4 text-teal-400" />
+              <span className="text-xs text-muted-foreground">MRR</span>
+            </div>
+            <p className="text-2xl font-bold text-teal-400">
+              {formatCurrency(mrr)}
+            </p>
+          </CardContent>
+        </Card>
+
         <Card className="border-orange-500/20 bg-orange-500/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <Wrench className="h-4 w-4 text-orange-400" />
-              <span className="text-xs text-muted-foreground">Ferramentas</span>
+              <span className="text-xs text-muted-foreground">Custo Operacional</span>
             </div>
             <p className="text-2xl font-bold text-orange-400">
-              {formatCurrency(custoMensalFerramentas)}
+              {formatCurrency(custoOperacional)}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-rose-500/20 bg-rose-500/5">
+        <Card className={`border-${margemReal >= 0 ? 'emerald' : 'red'}-500/20 bg-${margemReal >= 0 ? 'emerald' : 'red'}-500/5`}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-4 w-4 text-rose-400" />
-              <span className="text-xs text-muted-foreground">Custo Total</span>
-            </div>
-            <p className="text-2xl font-bold text-rose-400">
-              {formatCurrency(custoTotal)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className={`border-${margemAjustada >= 0 ? 'emerald' : 'red'}-500/20 bg-${margemAjustada >= 0 ? 'emerald' : 'red'}-500/5`}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              {margemAjustada >= 0 ? (
+              {margemReal >= 0 ? (
                 <TrendingUp className="h-4 w-4 text-emerald-400" />
               ) : (
                 <TrendingDown className="h-4 w-4 text-red-400" />
               )}
               <span className="text-xs text-muted-foreground">Margem Real</span>
             </div>
-            <p className={`text-2xl font-bold ${margemAjustada >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {formatCurrency(margemAjustada)}
+            <p className={`text-2xl font-bold ${margemReal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              {formatCurrency(margemReal)}
             </p>
           </CardContent>
         </Card>
