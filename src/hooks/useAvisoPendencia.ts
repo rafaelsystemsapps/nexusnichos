@@ -15,7 +15,7 @@ export function useAvisoPendencia({ nichoId, enabled }: UseAvisoPendenciaProps) 
     typeof Notification !== "undefined" ? Notification.permission : "denied"
   );
   const hasNotifiedToday = useRef(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Check if already notified today
   useEffect(() => {
