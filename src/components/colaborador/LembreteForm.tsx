@@ -47,8 +47,10 @@ export function LembreteForm({ open, onOpenChange, nichoId, onSuccess, defaultDa
       return;
     }
 
-    if (!user?.id) {
-      toast.error("Usuário não autenticado");
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData.user?.id;
+    if (!userId) {
+      toast.error("Sessão não inicializada");
       return;
     }
 
@@ -57,7 +59,7 @@ export function LembreteForm({ open, onOpenChange, nichoId, onSuccess, defaultDa
     try {
       const { error } = await supabase.from("lembretes_hoje").insert({
         nicho_id: nichoId,
-        user_id: user.id,
+        user_id: userId,
         descricao: descricao.trim(),
         prioridade,
         status: "pendente",
