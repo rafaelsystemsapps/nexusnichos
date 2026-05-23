@@ -1,25 +1,17 @@
 import { useMemo, memo } from "react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { usePerfilContext } from "@/contexts/PerfilContext";
 import { useIsIOSMobile } from "@/hooks/use-mobile";
 import {
   Settings,
-  LogOut,
   LayoutDashboard,
-  ChevronDown,
   UserCheck,
   Gem,
   Cog,
   ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { SeletorPerfil } from "./SeletorPerfil";
 
 interface NavItem {
   title: string;
@@ -68,15 +60,9 @@ const DEFAULT_ORDER = [
 
 function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, offerVaultHabilitado, appLabHabilitado, ordemAbas }: AppSidebarProps) {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { perfilAtivo, trocarPerfil } = usePerfilContext();
+  const { perfilAtivo } = usePerfilContext();
   const isAdmin = perfilAtivo?.tipo === "admin";
   const isIOSMobile = useIsIOSMobile();
-
-  const handleTrocarPerfil = () => {
-    trocarPerfil();
-    navigate("/");
-  };
 
   // Configuração simplificada — apenas 4 abas
   const abaConfig = useMemo(() => ({
@@ -116,31 +102,30 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
     return location.pathname.startsWith(href);
   };
 
-  // iOS Mobile Bottom Tab Bar
+  // iOS Mobile Bottom Tab Bar + topbar com seletor de perfil
   if (isIOSMobile) {
     return (
-      <nav className="ios-tab-bar flex items-center justify-around px-2">
-        {mobileNavItems.map((item) => (
-          <Link
-            key={item.href}
-            to={item.href}
-            className={cn(
-              "ios-tab-item",
-              isActive(item.href) && "active"
-            )}
-          >
-            <item.icon className="ios-tab-icon" />
-            <span className="ios-tab-label">{item.title}</span>
-          </Link>
-        ))}
-        <button
-          onClick={handleTrocarPerfil}
-          className="ios-tab-item"
-        >
-          <LogOut className="ios-tab-icon" />
-          <span className="ios-tab-label">Trocar</span>
-        </button>
-      </nav>
+      <>
+        <header className="fixed top-0 left-0 right-0 z-40 bg-black border-b border-border/30 h-12 flex items-center justify-between px-3">
+          <span className="text-sm font-bold text-foreground">Nexus</span>
+          <SeletorPerfil />
+        </header>
+        <nav className="ios-tab-bar flex items-center justify-around px-2">
+          {mobileNavItems.map((item) => (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={cn(
+                "ios-tab-item",
+                isActive(item.href) && "active"
+              )}
+            >
+              <item.icon className="ios-tab-icon" />
+              <span className="ios-tab-label">{item.title}</span>
+            </Link>
+          ))}
+        </nav>
+      </>
     );
   }
 
@@ -184,32 +169,8 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
           ))}
         </nav>
 
-        {/* Profile Menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-muted/50 transition-colors">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-                style={{ backgroundColor: perfilAtivo?.cor || '#6B7280' }}
-              >
-                {perfilAtivo?.emoji || "?"}
-              </div>
-              <span className="text-sm text-muted-foreground max-w-[100px] truncate">
-                {perfilAtivo?.nome || "Perfil"}
-              </span>
-              <ChevronDown className="h-3 w-3 text-muted-foreground" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem
-              onClick={handleTrocarPerfil}
-              className="text-destructive focus:text-destructive"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Trocar perfil
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Seletor de perfil */}
+        <SeletorPerfil />
       </div>
     </header>
   );

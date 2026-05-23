@@ -1,106 +1,70 @@
+# Plano — Nexus v2: Entrada direta + Seletor de perfil no header
+
 ## Objetivo
-
-Remover toda a tela de login/senha e o Supabase Auth do app. Substituir por uma tela de seleção de perfis (estilo clássico, anos 2010) salva em localStorage. Cada perfil abre direto seu workspace.
-
----
-
-## ⚠️ Aviso importante antes de prosseguir
-
-Hoje **todas as policies RLS** das tabelas (`nichos`, `transacoes_financeiras`, `contas_redes_sociais`, `pedidos`, `lembretes`, etc.) dependem de `auth.uid()` e da tabela `user_roles`. Se removermos o Supabase Auth, **nenhuma query do app vai funcionar** — todas retornarão vazio ou erro de permissão.
-
-Duas opções para resolver:
-
-- **(A) Recomendado:** manter um login "invisível" — o app faz `signInAnonymously` ou autentica num único usuário compartilhado no carregamento. O usuário nunca vê tela de login, mas o backend continua funcionando. Perfis em localStorage controlam só a UI (nome, emoji, cor, qual nicho abrir).
-- **(B) Quebrar tudo:** abrir as tabelas para `anon` (sem RLS). Isso expõe todos os dados financeiros, pedidos, contas etc. publicamente para qualquer pessoa com a URL pública. **Não recomendado.**
-
-**Vou seguir com a opção (A)** — visualmente é idêntico ao PRD (zero tela de login), mas o backend continua seguro. Se preferir (B), me avise antes de implementar.
+Abrir o app já em `/admin` sem nenhuma tela intermediária. Trocar de perfil pelo header (canto superior direito), com a lista vinda das tabelas `profiles` + `user_roles` + `user_nichos`. Manter o "login invisível" atual (signIn em background com o usuário compartilhado) para que as RLS continuem funcionando — usuário nunca vê senha.
 
 ---
 
-## Implementação
+## Comportamento
 
-### 1. Novo `PerfilContext` (`src/contexts/PerfilContext.tsx`)
-
-Substitui o `AuthContext`. Expõe:
-
-- `perfis`, `perfilAtivo`, `setPerfilAtivo`, `adicionarPerfil`, `trocarPerfil`
-- Persiste `perfis` em `localStorage["nexus_perfis"]` (seed com Admin e Matias se vazio)
-- Persiste `perfilAtivo` em `sessionStorage["nexus_perfil_ativo"]`
-- Internamente: ao montar, executa o login invisível compartilhado (opção A) — uma única vez. Expõe `ready` para o app aguardar.
-
-### 2. `src/pages/SelecaoPerfil.tsx` (novo, substitui `Auth.tsx`)
-
-- Fundo `#0a0a0a`, título "Nexus" centralizado
-- Grade de cards 120x140, border-radius 8px, cor de fundo do perfil, emoji grande no centro, nome embaixo, badge "Admin" (`#b45309`) quando aplicável
-- Card "+" tracejado (`2px dashed #444`) abre o modal de novo perfil
-- Clicar num perfil: `setPerfilAtivo(p)` e navega para `/admin` (admin) ou `/workspace/:nichoId` (colaborador). Se colaborador sem `nichoId`, mostra aviso inline.
-
-### 3. Modal "Novo Perfil"
-
-- Campos: Nome, grid de emojis (20 opções listadas no PRD), 8 cores, Tipo (Admin/Colaborador), `nichoId` opcional para colaborador
-- Botão "Criar" → `adicionarPerfil` (gera id via `crypto.randomUUID()`)
-- Também permite deletar perfil (long-press / botão "x" no hover) — útil para limpar
-
-### 4. `src/App.tsx`
-
-- Remove `AuthProvider`, `ProtectedRoute`, `HomePage` baseado em auth
-- Novo `PerfilProvider` envolvendo as rotas
-- Rotas:
-  - `/` → `SelecaoPerfil`
-  - `/admin/*` → `AdminDashboard` direto
-  - `/workspace/:nichoId/*` → `ColaboradorWorkspace` direto
-  - `/install`, `/lembrete-popup/:id`, `*` (NotFound) mantidos
-  - Remove `/auth`, `/no-role`, `/no-nicho`
-- Pequeno guard: se rota é `/admin` ou `/workspace/...` e não há `perfilAtivo` em sessionStorage → redireciona para `/`
-
-### 5. `src/components/layout/AppSidebar.tsx`
-
-- Troca `useAuth()` por `usePerfilContext()`
-- Mostra avatar (emoji + cor) e nome do perfil ativo
-- Botão "Sair" vira "Trocar perfil" → limpa `perfilAtivo` e navega para `/`
-- Role para mostrar/esconder itens de menu vem de `perfilAtivo.tipo`
-
-### 6. Componentes que usam `useAuth().user`
-
-`LembreteForm.tsx`, `ContasNichoTab.tsx`, `TransacaoForm.tsx`, `NichosTab.tsx`:
-
-- Trocar `const { user } = useAuth()` por `const { data: { user } } = await supabase.auth.getUser()` quando precisar do `user.id` em inserts. Como agora todos compartilham o mesmo usuário invisível, `user.id` continua disponível.
-- Onde só era usado para "está logado?", remover a checagem.
-
-### 7. `ColaboradorWorkspace.tsx` e `AdminDashboard.tsx`
-
-- Remove `useAuth()`
-- `ColaboradorWorkspace`: pega `nichoId` só de `useParams` — sem comparar com `userNichoId`
-- Onde houver UI dependente de role (ex.: botões só admin), usa `usePerfilContext().perfilAtivo.tipo`
-
-### 8. Arquivos a deletar
-
-- `src/contexts/AuthContext.tsx`
-- `src/pages/Auth.tsx`
-- `src/components/NoRoleAssigned.tsx`
-- `src/components/NoNichoAssigned.tsx`
-
-### 9. Edge functions / Supabase
-
-- Não mexer em policies RLS (continuam válidas via login invisível)
-- Não mexer em `admin-create-user`, `reset-password` etc. — ficam disponíveis mas não usados pela UI principal (Admin pode continuar usando se quiser gerenciar usuários reais no futuro)
+- `/` → `Navigate to="/admin" replace` (sem guard, sem loading visível além do bootstrap da sessão compartilhada).
+- Header (presente em admin e workspace): avatar + nome do perfil ativo + chevron. Clique abre dropdown com todos os perfis (admins primeiro). Selecionar um perfil:
+  - `admin` → navega para `/admin`
+  - `colaborador` com `nichoId` → navega para `/workspace/:nichoId`
+  - `colaborador` sem `nichoId` → toast de aviso, sem navegar.
+- Perfil ativo persistido em `localStorage["nexus_perfil_ativo"]`. Sem `sessionStorage`. Default na 1ª visita: primeiro admin retornado.
+- Nenhum `ProtectedRoute`, nenhuma checagem de auth na UI, nenhuma tela `/auth`, nenhum botão "Sair".
 
 ---
 
-## Estilo (resumo)
+## Arquivos a alterar
 
-- Fundo `#0a0a0a`, cards 120x140 `border-radius: 8px`
-- Badge Admin: `bg #b45309`, texto branco, 10px
-- Botão "+": `border: 2px dashed #444`, fundo transparente, hover `#1a1a1a`
-- Título "Nexus": bold, sem gradiente, fonte do sistema
+### Reescrever
+- `src/contexts/PerfilContext.tsx` — remove a lista local em `localStorage["nexus_perfis"]` e a lógica de adicionar/remover perfil. Agora:
+  - Faz `garantirSessao()` (signIn invisível com `rafael.workbiz@gmail.com` / `Admin2902`) no mount.
+  - Após a sessão estar pronta, busca perfis em paralelo:
+    - `profiles` → `id, nome, avatar_emoji, avatar_color`
+    - `user_roles` → `user_id, role`
+    - `user_nichos` → `user_id, nicho_id`
+  - Monta `Perfil[] = { id, nome, role, nichoId, emoji, cor }`, ordenando admins primeiro.
+  - Lê/grava perfil ativo em `localStorage["nexus_perfil_ativo"]`. Se nada salvo, escolhe o primeiro admin.
+  - Expõe: `{ perfis, perfilAtivo, setPerfilAtivo, loadingPerfis, ready }`.
+- `src/App.tsx` — remove `PerfilGuard` e `RootGate`. Mantém `PerfilProvider` (precisa estar lá para o header funcionar). Rotas:
+  - `/` → `<Navigate to="/admin" replace />`
+  - `/admin/*` → `AdminDashboard`
+  - `/workspace/:nichoId/*` → `ColaboradorWorkspace`
+  - `/install`, `/lembrete-popup/:id`, `*` → mesmos de hoje.
+
+### Criar
+- `src/components/layout/SeletorPerfil.tsx` — botão (avatar 32px com emoji ou inicial + nome + `chevron-down`) usando `DropdownMenu` do shadcn. Itens: avatar + nome + badge (`Admin` âmbar / `Workspace` azul). Item ativo destacado. Ao clicar, chama `setPerfilAtivo()` e `navigate()`.
+
+### Modificar
+- `src/components/layout/MainLayout.tsx` — adiciona `<SeletorPerfil />` no canto superior direito do `<header>`, tanto no layout iOS quanto desktop. Header passa a ser renderizado mesmo sem `title/subtitle` (uma barra fina) para garantir presença em todas as páginas.
+- `src/components/layout/AppSidebar.tsx` — remove qualquer referência a `signOut`, "Sair"/"Trocar perfil" e botão de logout. `isAdmin` continua vindo de `usePerfilContext().perfilAtivo?.role === "admin"`.
+- `src/pages/ColaboradorWorkspace.tsx` — garante que `nichoId` vem só de `useParams`, sem qualquer validação cruzada com auth.
+- `src/pages/SelecaoPerfil.tsx` — **deletar** (não é mais usado).
+- `src/components/LoadingScreen.tsx` — mantém, usado durante o boot do contexto se necessário.
+
+### Não tocar
+- `src/integrations/supabase/client.ts`, `types.ts`, `.env`
+- Edge functions, RLS, schema do banco
+- Hooks de query, componentes de tabs, formulários
 
 ---
 
-## Validação após build
+## Detalhes técnicos
 
-- `/` abre tela de perfis sem redirect
-- Clicar em Admin → `/admin` carrega
-- Clicar em Matias (sem nichoId) → mensagem pedindo configurar nichoId
-- Criar novo perfil persiste após reload
-- Botão "Trocar perfil" no sidebar volta para `/`
-- Queries de nichos/transações continuam retornando dados (confirma que o login invisível funcionou)
+- **Sessão compartilhada**: o PRD pede "nunca pedir senha". Resolvido pelo `garantirSessao()` em `PerfilContext` — o usuário compartilhado é admin no Supabase, então `profiles` + `user_roles` + `user_nichos` retornam todos os registros sob as policies existentes. Nenhuma RLS muda.
+- **Perfil ativo ≠ usuário autenticado**: a sessão Supabase é sempre o admin compartilhado. O "perfil" no header é apenas um indicador de UI + roteamento (admin vs workspace). Inserts continuam atribuídos ao usuário compartilhado via `auth.uid()`.
+- **Estilo do dropdown**: `bg-[#1a1a1a]`, `border-[#333]`, texto `text-white`, badge admin `bg-[#b45309]`, badge workspace `bg-[#1d4ed8]`. Transição só de `opacity`.
+- **Avatar fallback**: se `avatar_emoji` ausente, mostra inicial do nome em círculo com `avatar_color` (ou cinza neutro).
+
+---
+
+## Validação
+1. Abrir `/` → redireciona para `/admin` sem flicker de login.
+2. Header mostra avatar do primeiro admin.
+3. Dropdown lista todos os perfis com badges corretas.
+4. Selecionar colaborador com nicho → vai para `/workspace/:nichoId` e dados carregam.
+5. Recarregar → perfil ativo persiste.
+6. Nenhuma rota antiga (`/auth`, `/`) mostra tela de seleção/login.
