@@ -3,6 +3,7 @@ import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNicho, useInvalidateNicho } from "@/hooks/queries";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { PlanejamentoTab } from "@/components/colaborador/PlanejamentoTab";
 import { ProjetoTab } from "@/components/colaborador/ProjetoTab";
 import { ContasNichoTab } from "@/components/colaborador/ContasNichoTab";
 import { TimeNichoTab } from "@/components/colaborador/TimeNichoTab";
@@ -53,7 +54,7 @@ export default function ColaboradorWorkspace() {
   }
 
   const getPageTitle = () => {
-    if (!subPath || subPath === "" || subPath === "projeto") return "Projeto";
+    if (!subPath || subPath === "" || subPath === "projeto") return "Planejamento";
     if (subPath === "contas") return "Contas do Nicho";
     if (subPath === "logistica") return "Logistica Semanal";
     if (subPath === "time") return "Time";
@@ -72,9 +73,9 @@ export default function ColaboradorWorkspace() {
   };
 
   const renderContent = () => {
-    // Rota raiz agora mostra ProjetoTab (primeira aba fixa)
+    // Rota raiz → PlanejamentoTab (nova aba principal)
     if (!subPath || subPath === "" || subPath === "projeto") {
-      return <ProjetoTab nichoId={nichoId!} />;
+      return <PlanejamentoTab nichoId={nichoId!} />;
     }
     if (subPath === "contas" && nicho.contas_habilitado !== false) {
       return <ContasNichoTab nichoId={nichoId!} />;
@@ -88,31 +89,10 @@ export default function ColaboradorWorkspace() {
     if (subPath === "pedidos" && nicho.pedidos_habilitado) {
       return <PedidosTab nichoId={nichoId!} />;
     }
-    if (subPath === "offervault" && nicho.offer_vault_habilitado) {
+    if (subPath === "offervault") {
       return <OfferVaultTab nichoId={nichoId!} />;
     }
-    if (subPath === "applab" && nicho.applab_habilitado) {
-      return <AppLabTab nichoId={nichoId!} />;
-    }
-    if (subPath === "radar" && nicho.radar_habilitado) {
-      return <RadarOportunidadesTab nichoId={nichoId!} />;
-    }
-    if (subPath === "cemiterio" && nicho.cemiterio_habilitado) {
-      return <CemiterioTab nichoId={nichoId!} />;
-    }
-    if (subPath === "mapa-dependencia" && nicho.mapa_dependencia_habilitado) {
-      return <MapaDependencia nichoId={nichoId!} />;
-    }
-    if (subPath === "testes" && nicho.teste_rapido_habilitado) {
-      return <TesteRapidoTab nichoId={nichoId!} />;
-    }
-    if (subPath === "aprendizado" && nicho.logs_aprendizado_habilitado) {
-      return <LogsAprendizadoTab nichoId={nichoId!} />;
-    }
-    if (subPath === "lembretes" && nicho.lembretes_hoje_habilitado) {
-      return <LembretesHojeTab nichoId={nichoId!} />;
-    }
-    if (subPath === "clientes" && nicho.clientes_habilitado) {
+    if (subPath === "clientes") {
       return <ClientesTab nichoId={nichoId!} />;
     }
     if (subPath === "configuracoes") {
