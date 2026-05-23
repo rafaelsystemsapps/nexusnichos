@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -360,7 +360,7 @@ function SortableContaItem({
 }
 
 export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
-  const { user } = useAuth();
+  const [userId, setUserId] = useState<string | null>(null);
   const [contas, setContas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -543,7 +543,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
         data_criacao_conta: formData.data_criacao_conta || null,
         pais: formData.pais || 'BR',
         nicho_id: nichoId,
-        responsavel_id: user?.id || null,
+        responsavel_id: userId,
         ordem: editingConta ? editingConta.ordem : contas.length,
       };
 
