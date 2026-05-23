@@ -3,53 +3,34 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { PerfilProvider, usePerfilContext } from "@/contexts/PerfilContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
-import Auth from "./pages/Auth";
+import SelecaoPerfil from "./pages/SelecaoPerfil";
 import AdminDashboard from "./pages/AdminDashboard";
 import ColaboradorWorkspace from "./pages/ColaboradorWorkspace";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 import LoadingScreen from "./components/LoadingScreen";
-import NoRoleAssigned from "./components/NoRoleAssigned";
-import NoNichoAssigned from "./components/NoNichoAssigned";
 import { LembretePopup } from "./components/colaborador/LembretePopup";
 
-function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: "admin" | "colaborador" }) {
-  const { user, role, loading } = useAuth();
-
-  if (loading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/auth" replace />;
-  if (requiredRole && role !== requiredRole) return <Navigate to="/" replace />;
-
+function PerfilGuard({ children }: { children: React.ReactNode }) {
+  const { perfilAtivo, ready } = usePerfilContext();
+  if (!ready) return <LoadingScreen />;
+  if (!perfilAtivo) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
-function HomePage() {
-  const { user, role, nichoId, loading } = useAuth();
-
-  if (loading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/auth" replace />;
-  
-  if (role === "admin") {
-    return <Navigate to="/admin" replace />;
-  }
-  
-  if (role === "colaborador") {
-    if (nichoId) {
-      return <Navigate to={`/workspace/${nichoId}`} replace />;
-    }
-    return <Navigate to="/no-nicho" replace />;
-  }
-  
-  return <Navigate to="/no-role" replace />;
+function RootGate() {
+  const { ready } = usePerfilContext();
+  if (!ready) return <LoadingScreen />;
+  return <SelecaoPerfil />;
 }
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60, // 1 min default
-      gcTime: 1000 * 60 * 10, // 10 min
+      staleTime: 1000 * 60,
+      gcTime: 1000 * 60 * 10,
       refetchOnWindowFocus: false,
       retry: 1,
     },
@@ -63,33 +44,30 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
+        <PerfilProvider>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<RootGate />} />
             <Route path="/install" element={<Install />} />
             <Route path="/lembrete-popup/:id" element={<LembretePopup />} />
-            <Route path="/no-role" element={<NoRoleAssigned />} />
-            <Route path="/no-nicho" element={<NoNichoAssigned />} />
-            <Route 
-              path="/admin/*" 
+            <Route
+              path="/admin/*"
               element={
-                <ProtectedRoute requiredRole="admin">
+                <PerfilGuard>
                   <AdminDashboard />
-                </ProtectedRoute>
-              } 
+                </PerfilGuard>
+              }
             />
-            <Route 
-              path="/workspace/:nichoId/*" 
+            <Route
+              path="/workspace/:nichoId/*"
               element={
-                <ProtectedRoute requiredRole="colaborador">
+                <PerfilGuard>
                   <ColaboradorWorkspace />
-                </ProtectedRoute>
-              } 
+                </PerfilGuard>
+              }
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </AuthProvider>
+        </PerfilProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
