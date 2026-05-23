@@ -4,26 +4,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsIOSMobile } from "@/hooks/use-mobile";
 import { useProfile, useInvalidateProfile } from "@/hooks/queries";
 import {
-  FileText,
-  Share2,
-  Users,
   Settings,
   LogOut,
   LayoutDashboard,
-  CalendarCheck,
-  Package,
   ChevronDown,
-  Radio,
-  Archive,
-  Network,
-  FlaskConical,
-  Lightbulb,
-  Bell,
   UserCheck,
   Gem,
-  FlaskRound,
   Cog,
-  FolderKanban,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -58,6 +46,9 @@ interface AppSidebarProps {
   appLabHabilitado?: boolean;
   ordemAbas?: string[] | null;
 }
+
+// Abas fixas simplificadas
+const ABAS_SIMPLES = ["planejamento", "offervault", "clientes", "configuracoes"] as const;
 
 const DEFAULT_ORDER = [
   "projeto",
@@ -96,46 +87,29 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
       .slice(0, 2);
   };
 
-  // Configuração de todas as abas disponíveis - memoized
+  // Configuração simplificada — apenas 4 abas
   const abaConfig = useMemo(() => ({
-    projeto: { title: "Projeto", href: `/workspace/${nichoId}`, icon: FolderKanban, enabled: true },
-    contas: { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: Share2, enabled: contasHabilitado !== false },
-    logistica: { title: "Logística", href: `/workspace/${nichoId}/logistica`, icon: CalendarCheck, enabled: contasHabilitado === true },
-    time: { title: "Time", href: `/workspace/${nichoId}/time`, icon: Users, enabled: timeHabilitado !== false },
-    clientes: { title: "Clientes & Apps", href: `/workspace/${nichoId}/clientes`, icon: UserCheck, enabled: clientesHabilitado === true },
-    pedidos: { title: "Pedidos", href: `/workspace/${nichoId}/pedidos`, icon: Package, enabled: pedidosHabilitado === true },
-    offervault: { title: "OfferVault", href: `/workspace/${nichoId}/offervault`, icon: Gem, enabled: offerVaultHabilitado === true },
-    applab: { title: "AppLab", href: `/workspace/${nichoId}/applab`, icon: FlaskRound, enabled: appLabHabilitado === true },
-    radar: { title: "Radar", href: `/workspace/${nichoId}/radar`, icon: Radio, enabled: radarHabilitado === true },
-    cemiterio: { title: "Cemitério", href: `/workspace/${nichoId}/cemiterio`, icon: Archive, enabled: cemiterioHabilitado === true },
-    mapa: { title: "Mapa", href: `/workspace/${nichoId}/mapa-dependencia`, icon: Network, enabled: mapaDependenciaHabilitado === true },
-    testes: { title: "Testes", href: `/workspace/${nichoId}/testes`, icon: FlaskConical, enabled: testeRapidoHabilitado === true },
-    aprendizado: { title: "Aprendizado", href: `/workspace/${nichoId}/aprendizado`, icon: Lightbulb, enabled: logsAprendizadoHabilitado === true },
-    lembretes: { title: "Lembretes", href: `/workspace/${nichoId}/lembretes`, icon: Bell, enabled: lembretesHojeHabilitado === true },
-    configuracoes: { title: "Configurações", href: `/workspace/${nichoId}/configuracoes`, icon: Settings, enabled: true },
-  }), [nichoId, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, offerVaultHabilitado, appLabHabilitado]);
+    planejamento: { title: "Planejamento", href: `/workspace/${nichoId}`, icon: ClipboardList, enabled: true },
+    offervault: { title: "OfferVault", href: `/workspace/${nichoId}/offervault`, icon: Gem, enabled: true },
+    clientes: { title: "Clientes", href: `/workspace/${nichoId}/clientes`, icon: UserCheck, enabled: true },
+    configuracoes: { title: "Config", href: `/workspace/${nichoId}/configuracoes`, icon: Settings, enabled: true },
+  }), [nichoId]);
 
-  // Usa ordem customizada ou padrão - memoized
+  // Navega apenas pelas 4 abas fixas
   const navItems = useMemo(() => {
-    const order = ordemAbas || DEFAULT_ORDER;
-    const enabledIds = Object.keys(abaConfig).filter(id => abaConfig[id as keyof typeof abaConfig].enabled);
-    const missingEnabled = enabledIds.filter(id => !order.includes(id));
-    const finalOrder = [...order.filter(id => enabledIds.includes(id)), ...missingEnabled];
-    
-    const colaboradorNavItems: NavItem[] = finalOrder.map(id => ({
-      title: abaConfig[id as keyof typeof abaConfig].title,
-      href: abaConfig[id as keyof typeof abaConfig].href,
-      icon: abaConfig[id as keyof typeof abaConfig].icon,
+    if (isAdmin) {
+      return [
+        { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
+        { title: "Nichos", href: "/admin/nichos", icon: Settings },
+        { title: "Configurações", href: "/admin/configuracoes", icon: Cog },
+      ];
+    }
+    return ABAS_SIMPLES.map(id => ({
+      title: abaConfig[id].title,
+      href: abaConfig[id].href,
+      icon: abaConfig[id].icon,
     }));
-
-    return isAdmin
-      ? [
-          { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
-          { title: "Nichos", href: "/admin/nichos", icon: Settings },
-          { title: "Configurações", href: "/admin/configuracoes", icon: Cog },
-        ]
-      : colaboradorNavItems;
-  }, [abaConfig, ordemAbas, isAdmin]);
+  }, [abaConfig, isAdmin]);
 
   // Limita itens na tab bar mobile (máximo 5)
   const mobileNavItems = useMemo(() => navItems.slice(0, 5), [navItems]);
