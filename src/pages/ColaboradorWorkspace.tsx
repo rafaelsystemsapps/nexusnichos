@@ -1,43 +1,21 @@
-import { useEffect } from "react";
-import { useParams, Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useParams } from "react-router-dom";
 import { useNicho, useInvalidateNicho } from "@/hooks/queries";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { PlanejamentoTab } from "@/components/colaborador/PlanejamentoTab";
-import { ProjetoTab } from "@/components/colaborador/ProjetoTab";
+import { PlanejamentoTab } from "@/components/colaborador/planejamentotab";
 import { ContasNichoTab } from "@/components/colaborador/ContasNichoTab";
 import { TimeNichoTab } from "@/components/colaborador/TimeNichoTab";
 import { PedidosTab } from "@/components/colaborador/PedidosTab";
 import { ConfiguracoesNichoTab } from "@/components/colaborador/ConfiguracoesNichoTab";
 import { LogisticaSemanalTab } from "@/components/colaborador/LogisticaSemanalTab";
-import { RadarOportunidadesTab } from "@/components/colaborador/RadarOportunidadesTab";
-import { CemiterioTab } from "@/components/colaborador/CemiterioTab";
-import { MapaDependencia } from "@/components/colaborador/MapaDependencia";
-import { TesteRapidoTab } from "@/components/colaborador/TesteRapidoTab";
-import { LogsAprendizadoTab } from "@/components/colaborador/LogsAprendizadoTab";
-import { LembretesHojeTab } from "@/components/colaborador/LembretesHojeTab";
 import { ClientesTab } from "@/components/colaborador/ClientesTab";
 import { OfferVaultTab } from "@/components/colaborador/OfferVaultTab";
-import { AppLabTab } from "@/components/colaborador/AppLabTab";
-import { toast } from "sonner";
 import LoadingScreen from "@/components/LoadingScreen";
 
 export default function ColaboradorWorkspace() {
-  const { nichoId: userNichoId } = useAuth();
   const { nichoId, "*": subPath } = useParams<{ nichoId: string; "*": string }>();
-  
+
   const { data: nicho, isLoading: loading } = useNicho(nichoId);
   const invalidateNicho = useInvalidateNicho(nichoId);
-
-  useEffect(() => {
-    if (userNichoId && nichoId && userNichoId !== nichoId) {
-      toast.error("Você não tem acesso a este nicho");
-    }
-  }, [userNichoId, nichoId]);
-
-  if (userNichoId && nichoId && userNichoId !== nichoId) {
-    return <Navigate to={`/workspace/${userNichoId}`} replace />;
-  }
 
   if (loading) {
     return <LoadingScreen />;
