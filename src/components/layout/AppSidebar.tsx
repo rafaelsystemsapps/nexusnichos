@@ -1,8 +1,7 @@
-import { useState, useMemo, memo } from "react";
-import { useLocation, Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useMemo, memo } from "react";
+import { useLocation, Link, useNavigate } from "react-router-dom";
+import { usePerfilContext } from "@/contexts/PerfilContext";
 import { useIsIOSMobile } from "@/hooks/use-mobile";
-import { useProfile, useInvalidateProfile } from "@/hooks/queries";
 import {
   Settings,
   LogOut,
@@ -21,7 +20,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AvatarEditor } from "@/components/admin/AvatarEditor";
 
 interface NavItem {
   title: string;
@@ -70,21 +68,14 @@ const DEFAULT_ORDER = [
 
 function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, offerVaultHabilitado, appLabHabilitado, ordemAbas }: AppSidebarProps) {
   const location = useLocation();
-  const { user, role, signOut } = useAuth();
-  const isAdmin = role === "admin";
+  const navigate = useNavigate();
+  const { perfilAtivo, trocarPerfil } = usePerfilContext();
+  const isAdmin = perfilAtivo?.tipo === "admin";
   const isIOSMobile = useIsIOSMobile();
-  
-  const { data: profile } = useProfile(user?.id);
-  const invalidateProfile = useInvalidateProfile(user?.id);
-  const [avatarEditorOpen, setAvatarEditorOpen] = useState(false);
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  const handleTrocarPerfil = () => {
+    trocarPerfil();
+    navigate("/");
   };
 
   // Configuração simplificada — apenas 4 abas
@@ -143,11 +134,11 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
           </Link>
         ))}
         <button
-          onClick={signOut}
+          onClick={handleTrocarPerfil}
           className="ios-tab-item"
         >
           <LogOut className="ios-tab-icon" />
-          <span className="ios-tab-label">Sair</span>
+          <span className="ios-tab-label">Trocar</span>
         </button>
       </nav>
     );
@@ -197,51 +188,28 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-muted/50 transition-colors">
-              {/* Avatar */}
-              <div 
+              <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-                style={{ backgroundColor: profile?.avatar_color || '#6B7280' }}
+                style={{ backgroundColor: perfilAtivo?.cor || '#6B7280' }}
               >
-                {profile?.avatar_emoji || (
-                  <span className="text-white font-medium text-xs">
-                    {profile?.nome ? getInitials(profile.nome) : "?"}
-                  </span>
-                )}
+                {perfilAtivo?.emoji || "?"}
               </div>
               <span className="text-sm text-muted-foreground max-w-[100px] truncate">
-                {profile?.nome || "Usuário"}
+                {perfilAtivo?.nome || "Perfil"}
               </span>
               <ChevronDown className="h-3 w-3 text-muted-foreground" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => setAvatarEditorOpen(true)}>
-              <Settings className="h-4 w-4 mr-2" />
-              Editar Perfil
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={signOut}
+            <DropdownMenuItem
+              onClick={handleTrocarPerfil}
               className="text-destructive focus:text-destructive"
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Sair
+              Trocar perfil
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        {/* Avatar Editor Modal */}
-        {user && profile && (
-          <AvatarEditor
-            open={avatarEditorOpen}
-            onOpenChange={setAvatarEditorOpen}
-            userId={user.id}
-            userName={profile.nome}
-            currentEmoji={profile.avatar_emoji}
-            currentColor={profile.avatar_color}
-            onSave={invalidateProfile}
-          />
-        )}
       </div>
     </header>
   );

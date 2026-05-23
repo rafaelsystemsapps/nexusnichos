@@ -5,7 +5,7 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,7 +77,7 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
   const [selectedMembro, setSelectedMembro] = useState<string>("");
   const [selectedProduto, setSelectedProduto] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const { user } = useAuth();
+  
 
   const {
     register,
@@ -139,8 +139,10 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
   };
 
   const onSubmit = async (data: TransacaoFormData) => {
-    if (!user) {
-      toast.error("Você precisa estar logado");
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData.user?.id;
+    if (!userId) {
+      toast.error("Sessão não inicializada");
       return;
     }
 
@@ -148,7 +150,7 @@ export function TransacaoForm({ nichoId, onSuccess }: TransacaoFormProps) {
     try {
       const { error } = await supabase.from("transacoes_financeiras").insert({
         nicho_id: nichoId,
-        user_id: user.id,
+        user_id: userId,
         produto_nome: data.produto_nome,
         preco_custo: data.preco_custo,
         preco_venda: data.preco_venda,

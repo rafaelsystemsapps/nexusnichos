@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarDays, MapPin } from "lucide-react";
@@ -20,7 +20,6 @@ interface LembreteFormProps {
 }
 
 export function LembreteForm({ open, onOpenChange, nichoId, onSuccess, defaultDate = "hoje" }: LembreteFormProps) {
-  const { user } = useAuth();
   const [descricao, setDescricao] = useState("");
   const [prioridade, setPrioridade] = useState<"alta" | "media" | "baixa">("media");
   const [dataLembrete, setDataLembrete] = useState<"hoje" | "amanha">(defaultDate);
@@ -48,8 +47,10 @@ export function LembreteForm({ open, onOpenChange, nichoId, onSuccess, defaultDa
       return;
     }
 
-    if (!user?.id) {
-      toast.error("Usuário não autenticado");
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData.user?.id;
+    if (!userId) {
+      toast.error("Sessão não inicializada");
       return;
     }
 
@@ -58,7 +59,7 @@ export function LembreteForm({ open, onOpenChange, nichoId, onSuccess, defaultDa
     try {
       const { error } = await supabase.from("lembretes_hoje").insert({
         nicho_id: nichoId,
-        user_id: user.id,
+        user_id: userId,
         descricao: descricao.trim(),
         prioridade,
         status: "pendente",
