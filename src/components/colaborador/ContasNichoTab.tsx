@@ -391,6 +391,10 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
   const [credenciaisModalOpen, setCredenciaisModalOpen] = useState(false);
   const [contaCredenciais, setContaCredenciais] = useState<any>(null);
 
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
+
   // Estado para última tarefa por conta
   const [ultimasTarefas, setUltimasTarefas] = useState<Record<string, string>>({});
 
