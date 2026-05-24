@@ -250,3 +250,67 @@ export function useAutoFailPastPendings(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId, tasks, days]);
 }
+
+export type OperationalStatus = "pending" | "completed" | "neutral";
+
+/**
+ * Derives today's operational status per account in a niche.
+ * One batched query for active tasks + today's task_days.
+ */
+export function useAccountsOperationalStatus(nichoId: string | undefined) {
+  return useQuery({
+    queryKey: ["accounts_op_status", nichoId, currentWeekRef(), todayWeekday()],
+    enabled: !!nichoId,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const weekRef = currentWeekRef();
+      const today = todayWeekday();
+
+      const { data: tasks, error: tErr } = await (supabase as any)
+        .from("account_tasks")
+        .select("id, account_id, is_active")
+        .eq("nicho_id", nichoId)
+        .eq("is_active", true);
+      if (tErr) throw tErr;
+
+      const taskList = (tasks || []) as { id: string; account_id: string }[];
+      const map = new Map<string, OperationalStatus>();
+      if (taskList.length === 0) return map;
+
+      const taskIds = taskList.map((t) => t.id);
+      const { data: days, error: dErr } = await (supabase as any)
+        .from("account_task_days")
+        .select("task_id, account_id, status")
+        .eq("week_reference", weekRef)
+        .eq("weekday", today)
+        .in("task_id", taskIds);
+      if (dErr) throw dErr;
+
+      const dayList = (days || []) as { task_id: string; account_id: string; status: DayStatus }[];
+
+      const byAccount = new Map<string, string[]>();
+      for (const t of taskList) {
+        const arr = byAccount.get(t.account_id) || [];
+        arr.push(t.id);
+        byAccount.set(t.account_id, arr);
+      }
+
+      for (const [accountId, tIds] of byAccount.entries()) {
+        let hasPending = false;
+        let allSuccess = true;
+        for (const tid of tIds) {
+          const day = dayList.find((d) => d.task_id === tid && d.account_id === accountId);
+          const status = day?.status ?? "pending";
+          if (status === "pending") hasPending = true;
+          if (status !== "success") allSuccess = false;
+        }
+        if (hasPending) map.set(accountId, "pending");
+        else if (allSuccess) map.set(accountId, "completed");
+        else map.set(accountId, "neutral");
+      }
+
+      return map;
+    },
+  });
+}
+
