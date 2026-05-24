@@ -9,7 +9,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ColaboradorWorkspace from "./pages/ColaboradorWorkspace";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
-import { LembretePopup } from "./components/colaborador/LembretePopup";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,7 +32,6 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Navigate to="/admin" replace />} />
             <Route path="/install" element={<Install />} />
-            <Route path="/lembrete-popup/:id" element={<LembretePopup />} />
             <Route path="/admin/*" element={<AdminDashboard />} />
             <Route path="/workspace/:nichoId/*" element={<ColaboradorWorkspace />} />
             <Route path="*" element={<NotFound />} />

@@ -9,22 +9,9 @@ export interface MainLayoutProps {
   nichoNome?: string;
   title?: string;
   subtitle?: string;
-  contasHabilitado?: boolean;
-  pedidosHabilitado?: boolean;
-  radarHabilitado?: boolean;
-  cemiterioHabilitado?: boolean;
-  mapaDependenciaHabilitado?: boolean;
-  testeRapidoHabilitado?: boolean;
-  logsAprendizadoHabilitado?: boolean;
-  lembretesHojeHabilitado?: boolean;
-  timeHabilitado?: boolean;
-  clientesHabilitado?: boolean;
-  offerVaultHabilitado?: boolean;
-  appLabHabilitado?: boolean;
-  ordemAbas?: string[] | null;
 }
 
-export function MainLayout({ children, nichoId, nichoNome, title, subtitle, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, offerVaultHabilitado, appLabHabilitado, ordemAbas }: MainLayoutProps) {
+export function MainLayout({ children, nichoId, nichoNome, title, subtitle }: MainLayoutProps) {
   const isIOSMobile = useIsIOSMobile();
 
   return (
@@ -32,8 +19,8 @@ export function MainLayout({ children, nichoId, nichoNome, title, subtitle, cont
       "min-h-screen bg-background",
       isIOSMobile && "ios-safe-area"
     )}>
-      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} contasHabilitado={contasHabilitado} pedidosHabilitado={pedidosHabilitado} radarHabilitado={radarHabilitado} cemiterioHabilitado={cemiterioHabilitado} mapaDependenciaHabilitado={mapaDependenciaHabilitado} testeRapidoHabilitado={testeRapidoHabilitado} logsAprendizadoHabilitado={logsAprendizadoHabilitado} lembretesHojeHabilitado={lembretesHojeHabilitado} timeHabilitado={timeHabilitado} clientesHabilitado={clientesHabilitado} offerVaultHabilitado={offerVaultHabilitado} appLabHabilitado={appLabHabilitado} ordemAbas={ordemAbas} />
-      
+      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} />
+
       <main className={cn(
         "min-h-screen",
         isIOSMobile ? "pt-4 pb-24" : "pt-14"
@@ -41,8 +28,8 @@ export function MainLayout({ children, nichoId, nichoNome, title, subtitle, cont
         {(title || subtitle) && (
           <header className={cn(
             "border-b border-border/30 bg-surface/50 backdrop-blur-sm z-30",
-            isIOSMobile 
-              ? "px-4 py-3" 
+            isIOSMobile
+              ? "px-4 py-3"
               : "sticky top-14 px-8 py-6"
           )}>
             {title && (
@@ -63,7 +50,7 @@ export function MainLayout({ children, nichoId, nichoNome, title, subtitle, cont
             )}
           </header>
         )}
-        
+
         <div className={cn(
           isIOSMobile ? "p-4" : "p-8"
         )}>

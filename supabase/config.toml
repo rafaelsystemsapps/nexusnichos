@@ -1,8 +1,5 @@
 project_id = "clappwxzitxbctgzenag"
 
-[functions.weekly-logistics-cron]
-verify_jwt = false
-
 [functions.create-user]
 verify_jwt = false
 

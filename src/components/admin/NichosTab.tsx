@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, DollarSign, User, Users, Mail, Lock, UserX, Radar, Archive, AlertTriangle, Network, FlaskConical, Lightbulb, Package, ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, User, Mail, Lock, UserX, ChevronLeft, ChevronRight, Copy, FlaskRound, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 
 interface NichoWithUser {
@@ -17,15 +17,8 @@ interface NichoWithUser {
   nome: string;
   descricao: string | null;
   observacoes: string | null;
-  financeiro_habilitado: boolean;
-  pedidos_habilitado: boolean;
-  radar_habilitado: boolean;
-  cemiterio_habilitado: boolean;
   contas_habilitado: boolean;
-  alertas_habilitado: boolean;
-  mapa_dependencia_habilitado: boolean;
-  teste_rapido_habilitado: boolean;
-  logs_aprendizado_habilitado: boolean;
+  applab_habilitado: boolean;
   created_at: string | null;
   updated_at: string | null;
   usuario?: {
@@ -51,16 +44,8 @@ export function NichosTab() {
     nome: "",
     descricao: "",
     observacoes: "",
-    financeiro_habilitado: false,
-    pedidos_habilitado: false,
-    radar_habilitado: false,
-    cemiterio_habilitado: false,
     contas_habilitado: true,
-    alertas_habilitado: false,
-    mapa_dependencia_habilitado: false,
-    teste_rapido_habilitado: false,
-    logs_aprendizado_habilitado: false,
-    time_habilitado: true,
+    applab_habilitado: false,
     usuario_nome: "",
     usuario_email: "",
     usuario_senha: "",
@@ -72,7 +57,6 @@ export function NichosTab() {
 
   const fetchNichos = async () => {
     try {
-      // Buscar nichos
       const { data: nichosData, error: nichosError } = await supabase
         .from("nichos")
         .select("*")
@@ -80,29 +64,33 @@ export function NichosTab() {
 
       if (nichosError) throw nichosError;
 
-      // Buscar relações user_nichos com profiles
       const { data: userNichosData, error: userNichosError } = await supabase
         .from("user_nichos")
         .select("nicho_id, user_id");
 
       if (userNichosError) throw userNichosError;
 
-      // Buscar profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("id, nome, email");
 
       if (profilesError) throw profilesError;
 
-      // Combinar dados
-      const nichosWithUsers: NichoWithUser[] = (nichosData || []).map((nicho) => {
+      const nichosWithUsers: NichoWithUser[] = (nichosData || []).map((nicho: any) => {
         const userNicho = userNichosData?.find((un) => un.nicho_id === nicho.id);
         const profile = userNicho
           ? profilesData?.find((p) => p.id === userNicho.user_id)
           : null;
 
         return {
-          ...nicho,
+          id: nicho.id,
+          nome: nicho.nome,
+          descricao: nicho.descricao,
+          observacoes: nicho.observacoes,
+          contas_habilitado: nicho.contas_habilitado ?? true,
+          applab_habilitado: nicho.applab_habilitado ?? false,
+          created_at: nicho.created_at,
+          updated_at: nicho.updated_at,
           usuario: profile
             ? { id: profile.id, nome: profile.nome, email: profile.email }
             : null,
@@ -123,30 +111,20 @@ export function NichosTab() {
 
     try {
       if (editingNicho) {
-        // Apenas atualiza o nicho (não cria usuário ao editar)
         const { error } = await supabase
           .from("nichos")
           .update({
             nome: formData.nome,
             descricao: formData.descricao,
             observacoes: formData.observacoes,
-            financeiro_habilitado: formData.financeiro_habilitado,
-            pedidos_habilitado: formData.pedidos_habilitado,
-            radar_habilitado: formData.radar_habilitado,
-            cemiterio_habilitado: formData.cemiterio_habilitado,
             contas_habilitado: formData.contas_habilitado,
-            alertas_habilitado: formData.alertas_habilitado,
-            mapa_dependencia_habilitado: formData.mapa_dependencia_habilitado,
-            teste_rapido_habilitado: formData.teste_rapido_habilitado,
-            logs_aprendizado_habilitado: formData.logs_aprendizado_habilitado,
-            time_habilitado: formData.time_habilitado,
+            applab_habilitado: formData.applab_habilitado,
           })
           .eq("id", editingNicho.id);
 
         if (error) throw error;
         toast.success("Nicho atualizado!");
       } else {
-        // Validar campos do usuário
         if (!formData.usuario_nome || !formData.usuario_email || !formData.usuario_senha) {
           toast.error("Preencha todos os campos do usuário da workspace");
           setIsSubmitting(false);
@@ -159,30 +137,20 @@ export function NichosTab() {
           return;
         }
 
-        // 1. Criar o nicho primeiro
         const { data: nichoData, error: nichoError } = await supabase
           .from("nichos")
           .insert({
             nome: formData.nome,
             descricao: formData.descricao,
             observacoes: formData.observacoes,
-            financeiro_habilitado: formData.financeiro_habilitado,
-            pedidos_habilitado: formData.pedidos_habilitado,
-            radar_habilitado: formData.radar_habilitado,
-            cemiterio_habilitado: formData.cemiterio_habilitado,
             contas_habilitado: formData.contas_habilitado,
-            alertas_habilitado: formData.alertas_habilitado,
-            mapa_dependencia_habilitado: formData.mapa_dependencia_habilitado,
-            teste_rapido_habilitado: formData.teste_rapido_habilitado,
-            logs_aprendizado_habilitado: formData.logs_aprendizado_habilitado,
-            time_habilitado: formData.time_habilitado,
+            applab_habilitado: formData.applab_habilitado,
           })
           .select()
           .single();
 
         if (nichoError) throw nichoError;
 
-        // 2. Criar o usuário vinculado ao nicho
         const { data: userData, error: userError } = await supabase.functions.invoke("create-user", {
           body: {
             email: formData.usuario_email,
@@ -194,13 +162,12 @@ export function NichosTab() {
         });
 
         if (userError || userData?.error) {
-          // Rollback: deletar o nicho criado
           await supabase.from("nichos").delete().eq("id", nichoData.id);
           throw new Error(userData?.error || userError?.message || "Erro ao criar usuário");
         }
 
         toast.success(
-          `Nicho "${formData.nome}" criado com sucesso!\n\nCredenciais de acesso:\nEmail: ${formData.usuario_email}\nSenha: ${formData.usuario_senha}`,
+          `Nicho "${formData.nome}" criado com sucesso!\n\nEmail: ${formData.usuario_email}\nSenha: ${formData.usuario_senha}`,
           { duration: 10000 }
         );
       }
@@ -218,7 +185,6 @@ export function NichosTab() {
 
   const handleChangePassword = async () => {
     if (!editingNicho?.usuario || !newPassword) return;
-    
     if (newPassword.length < 6) {
       toast.error("A senha deve ter pelo menos 6 caracteres");
       return;
@@ -228,13 +194,8 @@ export function NichosTab() {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("reset-password", {
-        body: { 
-          user_id: editingNicho.usuario.id,
-          new_password: newPassword 
-        },
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
+        body: { user_id: editingNicho.usuario.id, new_password: newPassword },
+        headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
       });
 
       if (error || data?.error) {
@@ -255,7 +216,6 @@ export function NichosTab() {
 
     try {
       const { error } = await supabase.from("nichos").delete().eq("id", id);
-
       if (error) throw error;
       toast.success("Nicho deletado!");
       fetchNichos();
@@ -272,9 +232,7 @@ export function NichosTab() {
       const { data: sessionData } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("delete-user", {
         body: { user_id: userToDelete.id },
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
       });
 
       if (error || data?.error) {
@@ -302,20 +260,14 @@ export function NichosTab() {
 
   const handleCopyCredentials = async (nicho: NichoWithUser) => {
     if (!nicho.usuario) return;
-    
     setIsCopyingCredentials(nicho.id);
     const newPass = generatePassword();
-    
+
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("reset-password", {
-        body: { 
-          user_id: nicho.usuario.id,
-          new_password: newPass 
-        },
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
+        body: { user_id: nicho.usuario.id, new_password: newPass },
+        headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
       });
 
       if (error || data?.error) {
@@ -324,7 +276,6 @@ export function NichosTab() {
 
       const credentials = `Email: ${nicho.usuario.email}\nSenha: ${newPass}`;
       await navigator.clipboard.writeText(credentials);
-      
       toast.success("Credenciais copiadas! Nova senha gerada.", { duration: 5000 });
     } catch (error: any) {
       toast.error("Erro ao copiar credenciais: " + error.message);
@@ -338,16 +289,8 @@ export function NichosTab() {
       nome: "",
       descricao: "",
       observacoes: "",
-      financeiro_habilitado: false,
-      pedidos_habilitado: false,
-      radar_habilitado: false,
-      cemiterio_habilitado: false,
       contas_habilitado: true,
-      alertas_habilitado: false,
-      mapa_dependencia_habilitado: false,
-      teste_rapido_habilitado: false,
-      logs_aprendizado_habilitado: false,
-      time_habilitado: true,
+      applab_habilitado: false,
       usuario_nome: "",
       usuario_email: "",
       usuario_senha: "",
@@ -357,19 +300,18 @@ export function NichosTab() {
     setNewPassword("");
   };
 
-  // 3 etapas ao criar, 3 etapas ao editar (se tiver usuário), 2 etapas se não tiver
   const getTotalSteps = () => {
-    if (!editingNicho) return 3; // Criando: Nome, Módulos, Usuário
-    if (editingNicho.usuario) return 3; // Editando com usuário: Nome, Módulos, Senha
-    return 2; // Editando sem usuário: Nome, Módulos
+    if (!editingNicho) return 3;
+    if (editingNicho.usuario) return 3;
+    return 2;
   };
 
   const canProceed = () => {
     if (currentStep === 1) return formData.nome.trim() !== "";
     if (currentStep === 2) return true;
-    if (currentStep === 3) {
-      return formData.usuario_nome.trim() !== "" && 
-             formData.usuario_email.trim() !== "" && 
+    if (currentStep === 3 && !editingNicho) {
+      return formData.usuario_nome.trim() !== "" &&
+             formData.usuario_email.trim() !== "" &&
              formData.usuario_senha.length >= 6;
     }
     return true;
@@ -382,33 +324,27 @@ export function NichosTab() {
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
-  const openEditDialog = (nicho: any) => {
+  const openEditDialog = (nicho: NichoWithUser) => {
     setEditingNicho(nicho);
     setFormData({
       nome: nicho.nome,
       descricao: nicho.descricao || "",
       observacoes: nicho.observacoes || "",
-      financeiro_habilitado: nicho.financeiro_habilitado || false,
-      pedidos_habilitado: nicho.pedidos_habilitado || false,
-      radar_habilitado: nicho.radar_habilitado || false,
-      cemiterio_habilitado: nicho.cemiterio_habilitado || false,
       contas_habilitado: nicho.contas_habilitado !== false,
-      alertas_habilitado: nicho.alertas_habilitado || false,
-      mapa_dependencia_habilitado: nicho.mapa_dependencia_habilitado || false,
-      teste_rapido_habilitado: nicho.teste_rapido_habilitado || false,
-      logs_aprendizado_habilitado: nicho.logs_aprendizado_habilitado || false,
-      time_habilitado: nicho.time_habilitado !== false,
+      applab_habilitado: nicho.applab_habilitado || false,
       usuario_nome: "",
       usuario_email: "",
       usuario_senha: "",
     });
     setDialogOpen(true);
   };
+
+  if (loading) {
+    return <p className="text-muted-foreground">Carregando nichos...</p>;
+  }
 
   return (
     <div className="space-y-6">
@@ -428,7 +364,6 @@ export function NichosTab() {
               </DialogTitle>
             </DialogHeader>
 
-            {/* Progress indicator */}
             <div className="flex gap-2 mb-4">
               {Array.from({ length: getTotalSteps() }).map((_, i) => (
                 <div
@@ -441,7 +376,6 @@ export function NichosTab() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Etapa 1: Nome do Nicho */}
               {currentStep === 1 && (
                 <div className="space-y-4">
                   <div className="text-center mb-6">
@@ -458,20 +392,32 @@ export function NichosTab() {
                       required
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="descricao">Descrição</Label>
+                    <Textarea
+                      id="descricao"
+                      value={formData.descricao}
+                      onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                      placeholder="Descreva brevemente o nicho"
+                      rows={3}
+                    />
+                  </div>
                 </div>
               )}
 
-              {/* Etapa 2: Módulos */}
               {currentStep === 2 && (
                 <div className="space-y-4">
                   <div className="text-center mb-4">
                     <h3 className="text-lg font-semibold">Módulos</h3>
                     <p className="text-sm text-muted-foreground">Ative os recursos do nicho</p>
                   </div>
-                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
                       <div className="space-y-0.5">
-                        <Label htmlFor="contas" className="text-sm">Controle de Contas</Label>
+                        <Label htmlFor="contas" className="text-sm flex items-center gap-2">
+                          <UserCheck className="h-3 w-3" />
+                          Controle de Contas
+                        </Label>
                         <p className="text-xs text-muted-foreground">Gerenciamento de redes sociais</p>
                       </div>
                       <Switch
@@ -480,157 +426,33 @@ export function NichosTab() {
                         onCheckedChange={(checked) => setFormData({ ...formData, contas_habilitado: checked })}
                       />
                     </div>
-
                     <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
                       <div className="space-y-0.5">
-                        <Label htmlFor="financeiro" className="text-sm flex items-center gap-2">
-                          <DollarSign className="h-3 w-3" />
-                          Módulo Financeiro
+                        <Label htmlFor="applab" className="text-sm flex items-center gap-2">
+                          <FlaskRound className="h-3 w-3" />
+                          AppLab
                         </Label>
-                        <p className="text-xs text-muted-foreground">Transações e faturamento</p>
+                        <p className="text-xs text-muted-foreground">Laboratório operacional de apps</p>
                       </div>
                       <Switch
-                        id="financeiro"
-                        checked={formData.financeiro_habilitado}
-                        onCheckedChange={(checked) => setFormData({ ...formData, financeiro_habilitado: checked })}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="pedidos" className="text-sm flex items-center gap-2">
-                          <Package className="h-3 w-3" />
-                          Pedidos
-                        </Label>
-                        <p className="text-xs text-muted-foreground">Gestão de pedidos</p>
-                      </div>
-                      <Switch
-                        id="pedidos"
-                        checked={formData.pedidos_habilitado}
-                        onCheckedChange={(checked) => setFormData({ ...formData, pedidos_habilitado: checked })}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="radar" className="text-sm flex items-center gap-2">
-                          <Radar className="h-3 w-3" />
-                          Radar de Oportunidades
-                        </Label>
-                        <p className="text-xs text-muted-foreground">Monitoramento de tendências</p>
-                      </div>
-                      <Switch
-                        id="radar"
-                        checked={formData.radar_habilitado}
-                        onCheckedChange={(checked) => setFormData({ ...formData, radar_habilitado: checked })}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="cemiterio" className="text-sm flex items-center gap-2">
-                          <Archive className="h-3 w-3" />
-                          Cemitério
-                        </Label>
-                        <p className="text-xs text-muted-foreground">Arquivo de ativos encerrados</p>
-                      </div>
-                      <Switch
-                        id="cemiterio"
-                        checked={formData.cemiterio_habilitado}
-                        onCheckedChange={(checked) => setFormData({ ...formData, cemiterio_habilitado: checked })}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-3">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="alertas" className="text-sm flex items-center gap-2">
-                          <AlertTriangle className="h-3 w-3 text-destructive" />
-                          Alertas de Risco
-                        </Label>
-                        <p className="text-xs text-muted-foreground">Sinalização de riscos</p>
-                      </div>
-                      <Switch
-                        id="alertas"
-                        checked={formData.alertas_habilitado}
-                        onCheckedChange={(checked) => setFormData({ ...formData, alertas_habilitado: checked })}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="mapa_dependencia" className="text-sm flex items-center gap-2">
-                          <Network className="h-3 w-3" />
-                          Mapa de Dependência
-                        </Label>
-                        <p className="text-xs text-muted-foreground">Concentração e fragilidades</p>
-                      </div>
-                      <Switch
-                        id="mapa_dependencia"
-                        checked={formData.mapa_dependencia_habilitado}
-                        onCheckedChange={(checked) => setFormData({ ...formData, mapa_dependencia_habilitado: checked })}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="teste_rapido" className="text-sm flex items-center gap-2">
-                          <FlaskConical className="h-3 w-3" />
-                          Teste Rápido
-                        </Label>
-                        <p className="text-xs text-muted-foreground">Experimentação controlada</p>
-                      </div>
-                      <Switch
-                        id="teste_rapido"
-                        checked={formData.teste_rapido_habilitado}
-                        onCheckedChange={(checked) => setFormData({ ...formData, teste_rapido_habilitado: checked })}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="logs_aprendizado" className="text-sm flex items-center gap-2">
-                          <Lightbulb className="h-3 w-3" />
-                          Logs de Aprendizado
-                        </Label>
-                        <p className="text-xs text-muted-foreground">Captura de aprendizado diário</p>
-                      </div>
-                      <Switch
-                        id="logs_aprendizado"
-                        checked={formData.logs_aprendizado_habilitado}
-                        onCheckedChange={(checked) => setFormData({ ...formData, logs_aprendizado_habilitado: checked })}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="time" className="text-sm flex items-center gap-2">
-                          <Users className="h-3 w-3" />
-                          Time
-                        </Label>
-                        <p className="text-xs text-muted-foreground">Membros organizacionais</p>
-                      </div>
-                      <Switch
-                        id="time"
-                        checked={formData.time_habilitado}
-                        onCheckedChange={(checked) => setFormData({ ...formData, time_habilitado: checked })}
+                        id="applab"
+                        checked={formData.applab_habilitado}
+                        onCheckedChange={(checked) => setFormData({ ...formData, applab_habilitado: checked })}
                       />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Etapa 3: Usuário (apenas ao criar) */}
               {currentStep === 3 && !editingNicho && (
                 <div className="space-y-4">
                   <div className="text-center mb-4">
                     <h3 className="text-lg font-semibold">Usuário da Workspace</h3>
                     <p className="text-sm text-muted-foreground">Crie as credenciais de acesso</p>
                   </div>
-
                   <div>
                     <Label htmlFor="usuario_nome" className="flex items-center gap-2">
-                      <User className="w-3 h-3" />
-                      Nome do Usuário *
+                      <User className="w-3 h-3" /> Nome do Usuário *
                     </Label>
                     <Input
                       id="usuario_nome"
@@ -639,11 +461,9 @@ export function NichosTab() {
                       placeholder="Nome completo"
                     />
                   </div>
-
                   <div>
                     <Label htmlFor="usuario_email" className="flex items-center gap-2">
-                      <Mail className="w-3 h-3" />
-                      Email de Acesso *
+                      <Mail className="w-3 h-3" /> Email de Acesso *
                     </Label>
                     <Input
                       id="usuario_email"
@@ -653,11 +473,9 @@ export function NichosTab() {
                       placeholder="email@exemplo.com"
                     />
                   </div>
-
                   <div>
                     <Label htmlFor="usuario_senha" className="flex items-center gap-2">
-                      <Lock className="w-3 h-3" />
-                      Senha de Acesso *
+                      <Lock className="w-3 h-3" /> Senha de Acesso *
                     </Label>
                     <Input
                       id="usuario_senha"
@@ -671,14 +489,12 @@ export function NichosTab() {
                 </div>
               )}
 
-              {/* Etapa 3: Alterar Senha (apenas ao editar com usuário) */}
               {currentStep === 3 && editingNicho && editingNicho.usuario && (
                 <div className="space-y-4">
                   <div className="text-center mb-4">
                     <h3 className="text-lg font-semibold">Gerenciar Usuário</h3>
                     <p className="text-sm text-muted-foreground">Altere a senha do usuário vinculado</p>
                   </div>
-
                   <div className="bg-muted/50 rounded-lg p-4 space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium">
                       <User className="h-4 w-4 text-primary" />
@@ -690,13 +506,10 @@ export function NichosTab() {
                       {editingNicho.usuario.email}
                     </p>
                   </div>
-
                   <Separator />
-
                   <div className="space-y-3">
                     <Label htmlFor="nova_senha" className="flex items-center gap-2">
-                      <Lock className="w-3 h-3" />
-                      Nova Senha
+                      <Lock className="w-3 h-3" /> Nova Senha
                     </Label>
                     <Input
                       id="nova_senha"
@@ -706,9 +519,9 @@ export function NichosTab() {
                       placeholder="Mínimo 6 caracteres"
                       minLength={6}
                     />
-                    <Button 
-                      type="button" 
-                      variant="secondary" 
+                    <Button
+                      type="button"
+                      variant="secondary"
                       className="w-full"
                       onClick={handleChangePassword}
                       disabled={isChangingPassword || newPassword.length < 6}
@@ -719,24 +532,20 @@ export function NichosTab() {
                 </div>
               )}
 
-              {/* Navegação */}
               <div className="flex gap-2 pt-2">
                 {currentStep > 1 && (
                   <Button type="button" variant="outline" onClick={handleBack} className="flex-1">
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Voltar
+                    <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
                   </Button>
                 )}
-                
                 {currentStep < getTotalSteps() ? (
-                  <Button 
-                    type="button" 
-                    onClick={handleNext} 
+                  <Button
+                    type="button"
+                    onClick={handleNext}
                     className="flex-1"
                     disabled={!canProceed()}
                   >
-                    Próximo
-                    <ChevronRight className="w-4 h-4 ml-1" />
+                    Próximo <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
                 ) : (
                   <Button type="submit" className="flex-1" disabled={isSubmitting || !canProceed()}>
@@ -786,33 +595,20 @@ export function NichosTab() {
                     <p className="text-sm text-muted-foreground leading-relaxed">{nicho.descricao}</p>
                   )}
                   <div className="flex flex-wrap gap-2">
-                    {nicho.financeiro_habilitado && (
-                      <div className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full">
-                        <DollarSign className="h-3 w-3" />
-                        <span>Financeiro</span>
+                    {nicho.contas_habilitado && (
+                      <div className="flex items-center gap-1 text-xs text-blue-400 bg-blue-500/10 px-2 py-1 rounded-full">
+                        <UserCheck className="h-3 w-3" />
+                        <span>Contas</span>
                       </div>
                     )}
-                    {nicho.radar_habilitado && (
-                      <div className="flex items-center gap-1 text-xs text-orange-500 bg-orange-500/10 px-2 py-1 rounded-full">
-                        <Radar className="h-3 w-3" />
-                        <span>Radar</span>
-                      </div>
-                    )}
-                    {nicho.cemiterio_habilitado && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                        <Archive className="h-3 w-3" />
-                        <span>Cemitério</span>
-                      </div>
-                    )}
-                    {nicho.alertas_habilitado && (
-                      <div className="flex items-center gap-1 text-xs text-destructive bg-destructive/10 px-2 py-1 rounded-full">
-                        <AlertTriangle className="h-3 w-3" />
-                        <span>Alertas</span>
+                    {nicho.applab_habilitado && (
+                      <div className="flex items-center gap-1 text-xs text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded-full">
+                        <FlaskRound className="h-3 w-3" />
+                        <span>AppLab</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Usuário vinculado */}
                   <Separator />
                   {nicho.usuario ? (
                     <div className="space-y-2">
@@ -836,7 +632,6 @@ export function NichosTab() {
                   )}
                 </div>
 
-                {/* Botões sempre na parte inferior */}
                 {nicho.usuario && (
                   <div className="mt-4 pt-4 border-t border-border/30 space-y-2">
                     <Button
@@ -852,14 +647,8 @@ export function NichosTab() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
-                      onClick={() =>
-                        setUserToDelete({
-                          id: nicho.usuario!.id,
-                          nome: nicho.usuario!.nome,
-                          nichoNome: nicho.nome,
-                        })
-                      }
+                      className="w-full text-destructive hover:bg-destructive/10"
+                      onClick={() => setUserToDelete({ id: nicho.usuario!.id, nome: nicho.usuario!.nome, nichoNome: nicho.nome })}
                     >
                       <UserX className="h-4 w-4 mr-2" />
                       Excluir Usuário
@@ -872,41 +661,14 @@ export function NichosTab() {
         )}
       </div>
 
-      {/* Dialog de confirmação para excluir usuário */}
-      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
-        <AlertDialogContent className="max-w-md">
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <UserX className="h-5 w-5" />
-              Excluir Usuário e Workspace
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-4 text-left">
-                <p>
-                  Tem certeza que deseja excluir o usuário <strong className="text-foreground">{userToDelete?.nome}</strong> do
-                  nicho <strong className="text-foreground">{userToDelete?.nichoNome}</strong>?
-                </p>
-                
-                <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 space-y-2">
-                  <p className="text-sm font-medium text-destructive">⚠️ Esta ação irá excluir permanentemente:</p>
-                  <ul className="text-xs space-y-1 text-muted-foreground list-disc list-inside">
-                    <li>Todos os pedidos do workspace</li>
-                    <li>Todos os produtos cadastrados</li>
-                    <li>Todas as transações financeiras</li>
-                    <li>Todos os conteúdos e subtarefas</li>
-                    <li>Todas as contas de redes sociais</li>
-                    <li>Todos os membros do time</li>
-                    <li>Toda a biblioteca do nicho</li>
-                    <li>Templates e logística semanal</li>
-                    <li>O próprio nicho/workspace</li>
-                    <li>A conta do usuário (email/senha)</li>
-                  </ul>
-                </div>
-
-                <p className="text-xs text-destructive font-medium">
-                  ❌ Esta ação NÃO pode ser desfeita!
-                </p>
-              </div>
+            <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{userToDelete?.nome}</strong> do nicho <strong>{userToDelete?.nichoNome}</strong>?
+              <br />
+              Esta ação removerá completamente o usuário do sistema e não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -916,7 +678,7 @@ export function NichosTab() {
               disabled={isDeletingUser}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeletingUser ? "Excluindo tudo..." : "Confirmar Exclusão Total"}
+              {isDeletingUser ? "Excluindo..." : "Excluir Usuário"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

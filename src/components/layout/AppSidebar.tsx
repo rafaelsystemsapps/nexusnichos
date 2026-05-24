@@ -7,72 +7,23 @@ import {
   LayoutDashboard,
   Cog,
   ClipboardList,
-  Wallet,
   AtSign,
+  FlaskRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SeletorPerfil } from "./SeletorPerfil";
 
-interface NavItem {
-  title: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
 interface AppSidebarProps {
   nichoId?: string;
   nichoNome?: string;
-  contasHabilitado?: boolean;
-  pedidosHabilitado?: boolean;
-  radarHabilitado?: boolean;
-  cemiterioHabilitado?: boolean;
-  mapaDependenciaHabilitado?: boolean;
-  testeRapidoHabilitado?: boolean;
-  logsAprendizadoHabilitado?: boolean;
-  lembretesHojeHabilitado?: boolean;
-  timeHabilitado?: boolean;
-  clientesHabilitado?: boolean;
-  offerVaultHabilitado?: boolean;
-  appLabHabilitado?: boolean;
-  ordemAbas?: string[] | null;
 }
 
-// Abas fixas simplificadas
-const ABAS_SIMPLES = ["contas", "financeiro", "planejamento", "configuracoes"] as const;
-
-const DEFAULT_ORDER = [
-  "projeto",
-  "contas",
-  "logistica",
-  "time",
-  "clientes",
-  "pedidos",
-  "offervault",
-  "applab",
-  "radar",
-  "cemiterio",
-  "mapa",
-  "testes",
-  "aprendizado",
-  "lembretes",
-  "configuracoes",
-];
-
-function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabilitado, radarHabilitado, cemiterioHabilitado, mapaDependenciaHabilitado, testeRapidoHabilitado, logsAprendizadoHabilitado, lembretesHojeHabilitado, timeHabilitado, clientesHabilitado, offerVaultHabilitado, appLabHabilitado, ordemAbas }: AppSidebarProps) {
+function AppSidebarComponent({ nichoId, nichoNome }: AppSidebarProps) {
   const location = useLocation();
   const { perfilAtivo } = usePerfilContext();
   const isAdmin = perfilAtivo?.tipo === "admin";
   const isIOSMobile = useIsIOSMobile();
 
-  // Configuração simplificada — 4 abas core
-  const abaConfig = useMemo(() => ({
-    contas: { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: AtSign, enabled: true },
-    financeiro: { title: "Financeiro", href: `/workspace/${nichoId}/financeiro`, icon: Wallet, enabled: true },
-    planejamento: { title: "Planejamento", href: `/workspace/${nichoId}`, icon: ClipboardList, enabled: true },
-    configuracoes: { title: "Config", href: `/workspace/${nichoId}/configuracoes`, icon: Settings, enabled: true },
-  }), [nichoId]);
-
-  // Navega apenas pelas 4 abas fixas
   const navItems = useMemo(() => {
     if (isAdmin) {
       return [
@@ -81,28 +32,26 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
         { title: "Configurações", href: "/admin/configuracoes", icon: Cog },
       ];
     }
-    return ABAS_SIMPLES.map(id => ({
-      title: abaConfig[id].title,
-      href: abaConfig[id].href,
-      icon: abaConfig[id].icon,
-    }));
-  }, [abaConfig, isAdmin]);
+    return [
+      { title: "Planejamento", href: `/workspace/${nichoId}`, icon: ClipboardList },
+      { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: AtSign },
+      { title: "AppLab", href: `/workspace/${nichoId}/applab`, icon: FlaskRound },
+      { title: "Config", href: `/workspace/${nichoId}/configuracoes`, icon: Settings },
+    ];
+  }, [isAdmin, nichoId]);
 
-  // Limita itens na tab bar mobile (máximo 5)
   const mobileNavItems = useMemo(() => navItems.slice(0, 5), [navItems]);
 
   const isActive = (href: string) => {
     if (href === "/admin") {
       return location.pathname === href;
     }
-    // Planejamento só ativa na rota raiz do workspace
     if (href.match(/^\/workspace\/[^/]+$/)) {
       return location.pathname === href || location.pathname === href + "/projeto";
     }
     return location.pathname.startsWith(href);
   };
 
-  // iOS Mobile Bottom Tab Bar + topbar com seletor de perfil
   if (isIOSMobile) {
     return (
       <>
@@ -129,11 +78,9 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
     );
   }
 
-  // Desktop Header Navigation
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-black border-b border-border/30">
       <div className="flex items-center justify-between px-6 h-14">
-        {/* Logo */}
         <div className="flex items-center gap-3">
           <span className="text-lg font-bold text-foreground">Nexus Nichos</span>
           {nichoNome && (
@@ -150,7 +97,6 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
           )}
         </div>
 
-        {/* Navigation */}
         <nav className="flex items-center gap-1">
           {navItems.map((item) => (
             <Link
@@ -169,7 +115,6 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
           ))}
         </nav>
 
-        {/* Seletor de perfil */}
         <SeletorPerfil />
       </div>
     </header>
