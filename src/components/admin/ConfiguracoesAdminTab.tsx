@@ -20,18 +20,11 @@ const detectOS = (): OS => {
 export function ConfiguracoesAdminTab() {
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState<string[]>([detectOS()]);
-  const { needRefresh, isChecking, updateServiceWorker, checkForUpdates } = useServiceWorker();
+  const { isChecking, checkForUpdates } = useServiceWorker();
 
   const handleCheckUpdates = async () => {
     await checkForUpdates();
-    if (!needRefresh) {
-      toast.success("App está atualizado!");
-    }
-  };
-
-  const handleUpdate = async () => {
-    await updateServiceWorker();
-    toast.success("Atualizando o app...");
+    toast.success("Verificação concluída. Atualizações são aplicadas automaticamente.");
   };
 
   const copyToClipboard = async (text: string, id: string) => {
