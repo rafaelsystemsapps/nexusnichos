@@ -2,7 +2,8 @@ import { useParams } from "react-router-dom";
 import { useNicho, useInvalidateNicho } from "@/hooks/queries";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { PlanejamentoTab } from "@/components/colaborador/planejamentotab";
-import { ContasNichoTab } from "@/components/colaborador/ContasNichoTab";
+import { AccountsGrid } from "@/components/colaborador/accounts/AccountsGrid";
+import { AccountWorkspace } from "@/components/colaborador/accounts/AccountWorkspace";
 import { AppLabTab } from "@/components/colaborador/AppLabTab";
 import { ConfiguracoesNichoTab } from "@/components/colaborador/ConfiguracoesNichoTab";
 import LoadingScreen from "@/components/LoadingScreen";
@@ -27,25 +28,24 @@ export default function ColaboradorWorkspace() {
     );
   }
 
+  const path = subPath ?? "";
+  const accountMatch = path.match(/^contas\/([^/]+)$/);
+
   const getPageTitle = () => {
-    if (!subPath || subPath === "" || subPath === "projeto") return "Planejamento";
-    if (subPath === "contas") return "Contas";
-    if (subPath === "applab") return "AppLab";
-    if (subPath === "configuracoes") return "Configurações";
+    if (!path || path === "projeto") return "Planejamento";
+    if (path === "contas") return "Contas";
+    if (accountMatch) return "Conta";
+    if (path === "applab") return "AppLab";
+    if (path === "configuracoes") return "Configurações";
     return "Workspace";
   };
 
   const renderContent = () => {
-    if (!subPath || subPath === "" || subPath === "projeto") {
-      return <PlanejamentoTab nichoId={nichoId!} />;
-    }
-    if (subPath === "contas") {
-      return <ContasNichoTab nichoId={nichoId!} />;
-    }
-    if (subPath === "applab") {
-      return <AppLabTab nichoId={nichoId!} />;
-    }
-    if (subPath === "configuracoes") {
+    if (!path || path === "projeto") return <PlanejamentoTab nichoId={nichoId!} />;
+    if (path === "contas") return <AccountsGrid nichoId={nichoId!} />;
+    if (accountMatch) return <AccountWorkspace nichoId={nichoId!} accountId={accountMatch[1]} />;
+    if (path === "applab") return <AppLabTab nichoId={nichoId!} />;
+    if (path === "configuracoes") {
       return (
         <ConfiguracoesNichoTab
           nichoId={nichoId!}
