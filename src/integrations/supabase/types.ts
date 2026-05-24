@@ -14,6 +14,91 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_logs: {
+        Row: {
+          account_id: string
+          action_type: string
+          created_at: string
+          description: string | null
+          id: string
+          nicho_id: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          action_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          nicho_id: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          action_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          nicho_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_logs_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "contas_redes_sociais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      account_routine_items: {
+        Row: {
+          account_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          nicho_id: string
+          order: number
+          recurring: boolean
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          nicho_id: string
+          order?: number
+          recurring?: boolean
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          nicho_id?: string
+          order?: number
+          recurring?: boolean
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_routine_items_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "contas_redes_sociais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       applab_account_links: {
         Row: {
           app_id: string
@@ -127,8 +212,10 @@ export type Database = {
           aquecimento_ativo: boolean | null
           aquecimento_inicio: string | null
           aquecimento_meta_dias: number | null
+          banned_at: string | null
           created_at: string | null
           data_criacao_conta: string | null
+          disabled_at: string | null
           gmail_email: string | null
           gmail_senha: string | null
           id: string
@@ -152,13 +239,16 @@ export type Database = {
           updated_at: string | null
           url_conta: string | null
           url_site: string | null
+          username: string | null
         }
         Insert: {
           aquecimento_ativo?: boolean | null
           aquecimento_inicio?: string | null
           aquecimento_meta_dias?: number | null
+          banned_at?: string | null
           created_at?: string | null
           data_criacao_conta?: string | null
+          disabled_at?: string | null
           gmail_email?: string | null
           gmail_senha?: string | null
           id?: string
@@ -182,13 +272,16 @@ export type Database = {
           updated_at?: string | null
           url_conta?: string | null
           url_site?: string | null
+          username?: string | null
         }
         Update: {
           aquecimento_ativo?: boolean | null
           aquecimento_inicio?: string | null
           aquecimento_meta_dias?: number | null
+          banned_at?: string | null
           created_at?: string | null
           data_criacao_conta?: string | null
+          disabled_at?: string | null
           gmail_email?: string | null
           gmail_senha?: string | null
           id?: string
@@ -212,6 +305,7 @@ export type Database = {
           updated_at?: string | null
           url_conta?: string | null
           url_site?: string | null
+          username?: string | null
         }
         Relationships: [
           {
