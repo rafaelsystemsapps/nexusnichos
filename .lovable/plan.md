@@ -1,105 +1,147 @@
+## NEXUS v0.0.6 — Weekly Operational Tracker Rebuild
 
-# NEXUS v0.0.5 — Accounts & Operational Routine Rebuild
+### 1. Card de conta — País visível
 
-Reconstrução profunda do módulo Contas: cada conta vira uma "subpasta" navegável dentro do workspace, com dashboard próprio, checklist diário e log rápido de atividades. Remove a lógica antiga de quente/fria e simplifica status para Ativa / Desabilitada / Banida.
+`AccountFolderCard.tsx`: ao lado do badge de status, renderizar badge de país.
+- Usar mapa `PAISES` (já existente em `AccountFormDialog`) movido para `src/lib/paises.ts` para reuso.
+- Mostrar bandeira emoji + sigla (ex.: `🇧🇷 BR`). Fallback: texto puro do código.
 
-## 1. Banco de dados (migração Supabase)
+### 2. Banco — novas tabelas (migration)
 
-### Refatorar `contas_redes_sociais`
-- Manter a tabela e linhas existentes (compatibilidade).
-- Status: continuar usando o enum atual, mas a UI passa a expor só `ativa`, `desabilitada` (mapeada para `pausada`) e `banida`. Adicionar colunas:
-  - `disabled_at timestamptz null`
-  - `banned_at timestamptz null`
-- Remover do uso (UI) — não dropar colunas para não quebrar histórico: `status_aquecimento`, `aquecimento_ativo`, `aquecimento_meta_dias`, `aquecimento_inicio`, `media_videos`, `ultima_acao`, `proxima_acao`. Ficam dormentes no schema.
-- Garantir `username` (novo) e `password` (reutilizar `senha_acesso`). Adicionar coluna `username text null` (campo @ separado de `nome_conta`).
+Remover dependência do checklist antigo (mantém `account_routine_items` no banco por enquanto para não perder dados, mas UI deixa de usar; pode ser removido depois).
 
-### Novas tabelas
+Novas tabelas:
 
-`account_routine_items` (checklist por conta, persistente)
-- `id uuid pk`, `account_id uuid` (→ `contas_redes_sociais.id`), `nicho_id uuid`, `title text`, `status text default 'pendente'` (`pendente`/`concluida`), `completed_at timestamptz null`, `order int default 0`, `created_at`, `updated_at`.
-- Reset diário **opcional via UI**: campo `recurring bool default true`. Job client-side ao abrir a conta reseta `status='pendente'` e `completed_at=null` em itens recorrentes cujo `completed_at::date < today`.
+`account_tasks`
+- `id`, `account_id`, `nicho_id`, `user_id`
+- `task_name text not null`
+- `is_active boolean default true`
+- `created_at`, `updated_at`
 
-`account_logs` (registro rápido de atividade)
-- `id uuid pk`, `account_id uuid`, `nicho_id uuid`, `user_id uuid`, `action_type text` (free-text com sugestões: `video_postado`, `login`, `bio`, `campanha`, `stories`, `anuncio`, `outro`), `description text null`, `created_at timestamptz default now()`.
-- Index `(account_id, created_at desc)`.
+`account_task_days`
+- `id`, `task_id` (fk lógico), `account_id`, `nicho_id`
+- `week_reference date` (segunda-feira ISO da semana)
+- `weekday smallint` (0=Seg ... 6=Dom)
+- `status text` check in (`pending`,`success`,`failed`) default `pending`
+- `completed_at timestamptz`
+- unique (`task_id`, `week_reference`, `weekday`)
 
-### RLS (idêntico ao padrão do projeto)
-- SELECT/INSERT/UPDATE/DELETE: `has_role(auth.uid(),'admin') OR nicho_id = get_user_nicho(auth.uid())`.
-- `account_logs` INSERT exige `user_id = auth.uid()`.
-- Triggers `update_updated_at_column` onde aplicável.
+RLS (mesmo padrão das outras tabelas):
+- SELECT/UPDATE/DELETE: `has_role(admin) OR nicho_id = get_user_nicho(uid)`
+- INSERT: idem + para `account_tasks` exigir `user_id = auth.uid()`
 
-## 2. Rotas
+Índices: `(account_id)`, `(task_id, week_reference)`.
 
-Adicionar sub-rota navegável (sem virar slug profundo — usa o id da conta):
-- `/workspace/:nichoId/contas` — grid de folder cards (lista).
-- `/workspace/:nichoId/contas/:accountId` — workspace interno da conta (dashboard + rotina + log + histórico).
+### 3. Lógica de viradas e reset semanal
 
-Atualizar `ColaboradorWorkspace.tsx` para reconhecer `subPath` começando com `contas/<id>` e renderizar `<AccountWorkspace />`.
+Sem cron — feito client-side ao abrir a rotina:
+- **Início de semana** = segunda-feira local (helper `weekStart(date)`).
+- Ao carregar `useAccountTasks(accountId)`, garantir que existam linhas em `account_task_days` para a semana corrente (lazy upsert: cria as 7 linhas `pending` quando faltam ao marcar/visualizar). Estratégia: gerar dias on-demand no clique; para a grid, calcular do array recebido e tratar ausentes como `pending`.
+- **Virada diária (cinza→vermelho)**: ao montar e em `setInterval` (a cada 60s e quando o dia muda), para cada dia da semana corrente **anterior a hoje** cujo status seja `pending`, fazer UPDATE em lote para `failed`. Não tocar dias futuros nem dias já `success`/`failed`.
+- **Reset semanal**: nada a apagar. Nova semana = novo `week_reference`; histórico anterior permanece intacto.
 
-## 3. Componentes (novos)
+### 4. UI — Weekly Operational Tracker (substitui `AccountRoutineChecklist`)
 
-`src/components/colaborador/accounts/`
-- `AccountsGrid.tsx` — substitui `ContasNichoTab` legado. Barra com busca por @username + filtros (Status, Plataforma, País). Grid responsivo de `AccountFolderCard`.
-- `AccountFolderCard.tsx` — visual de pasta (ícone `Folder` lucide), `@username` em destaque, `nome_conta` abaixo, badge de plataforma + status. Click → navega para `/workspace/:nichoId/contas/:id`.
-- `AccountFormDialog.tsx` — criar/editar conta. Campos: nome, @username, plataforma, senha (com toggle eye), país, data de criação, status. Workspace vinculado automaticamente via `nichoId` do contexto.
-- `AccountWorkspace.tsx` — página interna da conta. Header com voltar + @username + plataforma + status. Seções: `AccountInfoPanel`, `AccountRoutineChecklist`, `AccountQuickLog`, `AccountTimeline`.
-- `AccountInfoPanel.tsx` — plataforma, status, país, data criação, @username, senha com `PasswordField` (toggle eye, oculta por padrão). Quick actions: editar, desabilitar, marcar banida, copiar @.
-- `AccountRoutineChecklist.tsx` — lista de itens (checkbox), botão "+ item", presets rápidos (postar story, subir vídeo, responder DMs, revisar bio, revisar campanha, revisar perfil, aquecer conta, validar login). Reset diário para itens `recurring`.
-- `AccountQuickLog.tsx` — botão "+ Registrar atividade" abre dialog: tipo (select com presets), descrição curta opcional, salva `account_logs`.
-- `AccountTimeline.tsx` — histórico cronológico: entries de `account_logs`, itens de checklist concluídos, mudanças de status (derivadas de `disabled_at`/`banned_at`/`created_at`).
-- `PasswordField.tsx` (compartilhado) — input com toggle de visibilidade.
+Novo componente `WeeklyOperationalTracker.tsx` em `src/components/colaborador/accounts/tracker/`:
 
-## 4. Hooks de query
+Layout:
+```
+[Header: "Rotina Operacional"  + Filtros + Busca + (+ Adicionar Tarefa)]
 
-`src/hooks/queries/useAccounts.ts`
-- `useAccounts(nichoId, filters)` — lista com filtros e busca.
-- `useAccount(accountId)` — detalhe.
-- `useCreateAccount`, `useUpdateAccount`, `useDeleteAccount`, `useSetAccountStatus` (escreve `disabled_at`/`banned_at`).
-
-`src/hooks/queries/useAccountRoutine.ts`
-- `useRoutineItems(accountId)` com reset diário client-side de itens recurring antes de retornar.
-- `useCreateRoutineItem`, `useToggleRoutineItem`, `useDeleteRoutineItem`.
-
-`src/hooks/queries/useAccountLogs.ts`
-- `useAccountLogs(accountId, limit)`, `useCreateAccountLog`.
-
-Exportar em `src/hooks/queries/index.ts`.
-
-## 5. Limpeza (remover do módulo, manter colunas no DB)
-
-- Deletar `ContasNichoTab.tsx` antigo após migração para `AccountsGrid`.
-- Remover do UI: aquecimento (fria/quente), `media_videos`, `ultima_acao`, `proxima_acao`, ordenação drag-and-drop (substituída por busca/filtros), Gmail/telefone/PIN/URL embutidos (mover para campos opcionais "Observações" se necessário — fora do escopo dessa versão).
-- Limpar imports órfãos, tipos não usados, `STATUS_AQUECIMENTO`, etc.
-- Remover `ContasTab` admin se referenciar campos descontinuados (verificar primeiro).
-
-## 6. Versão & cache
-
-- Bump `APP_VERSION` em `src/main.tsx` para `"0.0.5"`.
-- Adicionar limpeza de chaves `nexus:contas:*` no boot.
-
-## 7. Proteções
-
-Não alterar: auth, Supabase client, PerfilContext, sidebar, tema, planner v0.0.4, AppLab, Configurações, MainLayout, edge functions, rotas raiz/admin.
-
-## Diagrama de navegação
-
-```text
-Workspace
-  └─ Contas (grid)
-       ├─ + Nova Conta (dialog)
-       └─ 📁 @username (folder card) ──► AccountWorkspace
-                                          ├─ Info + senha (toggle)
-                                          ├─ Checklist Operacional
-                                          ├─ Quick Log
-                                          └─ Timeline
+Tarefa                           Seg  Ter  Qua  Qui  Sex  Sáb  Dom
+─────────────────────────────────────────────────────────────────
+Postar 3 vídeos                   ●    ●    ○    ○    ○    ○    ○
+Revisar anúncios                  ●    ✕    ○    ○    ○    ○    ○
+[+ Adicionar tarefa]
 ```
 
-## Ordem de execução
+Bolinhas:
+- cinza (`bg-muted`) = pending (clicável → success)
+- verde (`bg-emerald-500`) = success (clicável → pending para correção)
+- vermelho (`bg-red-500`) = failed (clicável → success se quiser corrigir)
+- Dia atual destacado com ring sutil; dias futuros desabilitados (não clicáveis).
 
-1. Migração Supabase (`account_routine_items`, `account_logs`, colunas novas em `contas_redes_sociais`).
-2. Hooks (`useAccounts`, `useAccountRoutine`, `useAccountLogs`).
-3. Componentes `accounts/*` + `PasswordField`.
-4. Rota `/contas/:accountId` em `ColaboradorWorkspace`.
-5. Substituir `ContasNichoTab` por `AccountsGrid` no entry point.
-6. Bump APP_VERSION para 0.0.5 + invalidação de cache.
-7. QA: criar conta, abrir folder, checklist, log, timeline, filtros, busca, toggle senha, status transitions.
+Sub-componentes:
+- `TrackerHeader.tsx` — busca + filtros (ativas/inativas/concluídas semana/falhadas/todas) + botão `+ Adicionar Tarefa`.
+- `TaskRow.tsx` — nome editável (popover), botão pause/ativar, deletar, 7 `DayDot`.
+- `DayDot.tsx` — bolinha de status.
+- `AddTaskInline.tsx` — input rápido com presets ("Postar 3 vídeos", "Revisar anúncios", "Responder comentários", "Subir stories", "Revisar DMs").
+
+### 5. Mini dashboard inferior
+
+`TrackerStats.tsx` abaixo da grid, 3 micro cards:
+- **Hoje**: concluídas / pendentes / falhas
+- **Semana**: total verdes, total vermelhos, taxa execução %, streak atual, melhor streak
+- **Performance**: % consistência (success / total marcáveis até hoje), % falha, % execução
+
+Cálculo client-side a partir dos dados já carregados (sem nova tabela `metrics`). Streak = dias consecutivos com ≥1 success (calculado nas últimas N semanas).
+
+### 6. Histórico semanal (somente leitura)
+
+Aba/seção `TrackerHistory.tsx` (collapse "Semanas anteriores"):
+- Lista as últimas 8 semanas (`week_reference` distintos), com: período, total verdes, vermelhos, taxa.
+- Expandindo mostra grid read-only da semana.
+
+### 7. Hooks
+
+Novo `src/hooks/queries/useAccountTasks.ts`:
+- `useAccountTasks(accountId)` → tarefas + dias da semana corrente.
+- `useCreateTask`, `useUpdateTask`, `useToggleTaskActive`, `useDeleteTask`.
+- `useSetDayStatus(task_id, week_reference, weekday, status)` — upsert.
+- `useAutoFailPastPendings(accountId)` — executa o varredura cinza→vermelho.
+- `useTaskHistory(accountId, weeks=8)`.
+- `useTrackerStats(accountId)` — derivado em memória.
+
+Exportar em `src/hooks/queries/index.ts`. Remover exports do checklist antigo (`useRoutineItems` etc.) **após** removida a UI.
+
+### 8. Integração no `AccountWorkspace`
+
+- Substituir `<AccountRoutineChecklist />` por `<WeeklyOperationalTracker accountId nichoId />`.
+- Manter `AccountQuickLog` + `AccountTimeline` intactos.
+- Layout: tracker ocupa coluna principal (full width em mobile, 2/3 em desktop), Log+Timeline ao lado.
+
+### 9. Limpeza
+
+Após nova UI funcionando:
+- Deletar `AccountRoutineChecklist.tsx`.
+- Remover `useRoutineItems`/mutations correlatas do `useAccountRoutine.ts` e do barrel `index.ts`.
+- Manter tabela `account_routine_items` no banco por segurança (não dropar para evitar perda).
+
+### 10. Versão e cache
+
+`src/main.tsx`:
+- `APP_VERSION = "0.0.6"`
+- Adicionar limpeza de chaves legadas `nexus_routine_*` no boot sweep (defensivo).
+
+### 11. Proteções
+
+Não alterar: auth, Supabase client/types (auto), planner v0.0.4, AppLab, sidebar/MainLayout, edge functions, rotas raiz/admin, tema, navegação de pastas de contas, AccountQuickLog/Timeline.
+
+### Arquivos
+
+**Criados**
+- `supabase/migrations/<ts>_nexus_v006_tracker.sql`
+- `src/lib/paises.ts`
+- `src/hooks/queries/useAccountTasks.ts`
+- `src/components/colaborador/accounts/tracker/WeeklyOperationalTracker.tsx`
+- `src/components/colaborador/accounts/tracker/TrackerHeader.tsx`
+- `src/components/colaborador/accounts/tracker/TaskRow.tsx`
+- `src/components/colaborador/accounts/tracker/DayDot.tsx`
+- `src/components/colaborador/accounts/tracker/AddTaskInline.tsx`
+- `src/components/colaborador/accounts/tracker/TrackerStats.tsx`
+- `src/components/colaborador/accounts/tracker/TrackerHistory.tsx`
+
+**Editados**
+- `src/components/colaborador/accounts/AccountFolderCard.tsx` (badge país)
+- `src/components/colaborador/accounts/AccountFormDialog.tsx` (importar PAISES de `src/lib/paises.ts`)
+- `src/components/colaborador/accounts/AccountWorkspace.tsx` (trocar checklist)
+- `src/hooks/queries/index.ts`
+- `src/main.tsx` (versão + sweep)
+
+**Deletados (após validação)**
+- `src/components/colaborador/accounts/AccountRoutineChecklist.tsx`
+- (parcial) limpeza em `src/hooks/queries/useAccountRoutine.ts`
+
+### Resultado esperado
+
+Tracker semanal estilo Notion por conta, com viradas automáticas cinza→vermelho ao fim do dia, histórico preservado por `week_reference`, mini analytics leves, badge de país em cada folder.
