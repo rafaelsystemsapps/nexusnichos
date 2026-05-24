@@ -119,7 +119,10 @@ export function useCreateTask() {
       });
       if (error) throw error;
     },
-    onSuccess: (_, v) => qc.invalidateQueries({ queryKey: ["account_tasks", v.account_id] }),
+    onSuccess: (_, v) => {
+      qc.invalidateQueries({ queryKey: ["account_tasks", v.account_id] });
+      qc.invalidateQueries({ queryKey: ["accounts_op_status"] });
+    },
   });
 }
 
@@ -133,7 +136,10 @@ export function useUpdateTask() {
       const { error } = await (supabase as any).from("account_tasks").update(patch).eq("id", input.id);
       if (error) throw error;
     },
-    onSuccess: (_, v) => qc.invalidateQueries({ queryKey: ["account_tasks", v.account_id] }),
+    onSuccess: (_, v) => {
+      qc.invalidateQueries({ queryKey: ["account_tasks", v.account_id] });
+      qc.invalidateQueries({ queryKey: ["accounts_op_status"] });
+    },
   });
 }
 
@@ -149,6 +155,7 @@ export function useDeleteTask() {
       qc.invalidateQueries({ queryKey: ["account_tasks", v.account_id] });
       qc.invalidateQueries({ queryKey: ["account_task_days", v.account_id] });
       qc.invalidateQueries({ queryKey: ["account_task_days_all", v.account_id] });
+      qc.invalidateQueries({ queryKey: ["accounts_op_status"] });
     },
   });
 }
@@ -190,6 +197,7 @@ export function useSetDayStatus() {
     onSuccess: (_, v) => {
       qc.invalidateQueries({ queryKey: ["account_task_days", v.account_id, v.week_reference] });
       qc.invalidateQueries({ queryKey: ["account_task_days_all", v.account_id] });
+      qc.invalidateQueries({ queryKey: ["accounts_op_status"] });
     },
   });
 }
