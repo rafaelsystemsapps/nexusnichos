@@ -141,32 +141,14 @@ Categories=Office;`;
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Status */}
-          <div className={`flex items-center gap-3 p-4 rounded-lg border ${
-            needRefresh 
-              ? "bg-amber-500/10 border-amber-500/30" 
-              : "bg-emerald-500/10 border-emerald-500/30"
-          }`}>
-            {needRefresh ? (
-              <>
-                <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
-                <div>
-                  <p className="font-medium text-foreground">Nova versão disponível!</p>
-                  <p className="text-sm text-muted-foreground">
-                    Clique em "Atualizar Agora" para aplicar as mudanças.
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
-                <div>
-                  <p className="font-medium text-foreground">App atualizado</p>
-                  <p className="text-sm text-muted-foreground">
-                    Você está usando a versão mais recente.
-                  </p>
-                </div>
-              </>
-            )}
+          <div className="flex items-center gap-3 p-4 rounded-lg border bg-emerald-500/10 border-emerald-500/30">
+            <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
+            <div>
+              <p className="font-medium text-foreground">Atualização automática ativa</p>
+              <p className="text-sm text-muted-foreground">
+                Novas versões são aplicadas automaticamente ao abrir o app.
+              </p>
+            </div>
           </div>
 
           {/* Botões */}
@@ -180,13 +162,6 @@ Categories=Office;`;
               <RefreshCw className={`h-4 w-4 ${isChecking ? "animate-spin" : ""}`} />
               {isChecking ? "Verificando..." : "Verificar Atualizações"}
             </Button>
-            
-            {needRefresh && (
-              <Button onClick={handleUpdate} className="gap-2">
-                <Download className="h-4 w-4" />
-                Atualizar Agora
-              </Button>
-            )}
           </div>
 
           {/* Dica */}
