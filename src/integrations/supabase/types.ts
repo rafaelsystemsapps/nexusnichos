@@ -259,6 +259,57 @@ export type Database = {
         }
         Relationships: []
       }
+      planner_notes: {
+        Row: {
+          archived: boolean
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_day: string
+          horario: string | null
+          id: string
+          is_recovered: boolean
+          nicho_id: string
+          recovered_from: string | null
+          status: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_day?: string
+          horario?: string | null
+          id?: string
+          is_recovered?: boolean
+          nicho_id: string
+          recovered_from?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived?: boolean
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_day?: string
+          horario?: string | null
+          id?: string
+          is_recovered?: boolean
+          nicho_id?: string
+          recovered_from?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_color: string | null

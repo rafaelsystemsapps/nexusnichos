@@ -4,7 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 
 // ----- Boot version check: invalidate legacy local state on version bump -----
-const APP_VERSION = "0.0.3";
+const APP_VERSION = "0.0.4";
 const VERSION_KEY = "nexus_app_version";
 
 try {
@@ -18,11 +18,16 @@ try {
       if (key.startsWith("sb-") || key.startsWith("supabase.") || key === VERSION_KEY) {
         continue;
       }
-      // Drop legacy Nexus UI/state caches
+      // Drop legacy Nexus UI/state caches (incluindo planner legado em localStorage)
       if (
         key === "nexus_perfil_ativo" ||
         key.startsWith("nexus:") ||
-        key.startsWith("nexus_planejamento_")
+        key.startsWith("nexus_planejamento_") ||
+        key.startsWith("nexus_tarefas_") ||
+        key.startsWith("nexus_ideias_") ||
+        key.startsWith("nexus_meta_videos_") ||
+        key.startsWith("nexus_videos_hoje_") ||
+        key.startsWith("nexus_data_hoje_")
       ) {
         keysToRemove.push(key);
       }
