@@ -2,48 +2,55 @@ import { useEffect, useState, useCallback } from "react";
 import { registerSW } from "virtual:pwa-register";
 
 interface UseServiceWorkerReturn {
-  needRefresh: boolean;
   offlineReady: boolean;
   isChecking: boolean;
-  updateServiceWorker: () => Promise<void>;
   checkForUpdates: () => Promise<void>;
-  close: () => void;
+}
+
+function shouldSkipRegistration(): boolean {
+  if (typeof window === "undefined") return true;
+  const inIframe = (() => {
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
+    }
+  })();
+  const host = window.location.hostname;
+  const isPreviewHost =
+    host.includes("id-preview--") || host.includes("lovableproject.com");
+  return inIframe || isPreviewHost;
 }
 
 export function useServiceWorker(): UseServiceWorkerReturn {
-  const [needRefresh, setNeedRefresh] = useState(false);
   const [offlineReady, setOfflineReady] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
-  const [updateSW, setUpdateSW] = useState<(() => Promise<void>) | null>(null);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    const updateServiceWorker = registerSW({
-      onNeedRefresh() {
-        setNeedRefresh(true);
-      },
+    if (shouldSkipRegistration()) {
+      // Clean up any stale SW from previous registrations in preview/iframe
+      navigator.serviceWorker?.getRegistrations().then((regs) => {
+        regs.forEach((r) => r.unregister());
+      });
+      return;
+    }
+
+    registerSW({
+      immediate: true,
       onOfflineReady() {
         setOfflineReady(true);
       },
-      onRegisteredSW(swUrl, reg) {
+      onRegisteredSW(_swUrl, reg) {
         if (reg) {
           setRegistration(reg);
-          // Check for updates every hour
           setInterval(() => {
             reg.update();
           }, 60 * 60 * 1000);
         }
       },
     });
-
-    setUpdateSW(() => updateServiceWorker);
   }, []);
-
-  const handleUpdate = useCallback(async () => {
-    if (updateSW) {
-      await updateSW();
-    }
-  }, [updateSW]);
 
   const checkForUpdates = useCallback(async () => {
     if (registration) {
@@ -56,17 +63,5 @@ export function useServiceWorker(): UseServiceWorkerReturn {
     }
   }, [registration]);
 
-  const close = useCallback(() => {
-    setNeedRefresh(false);
-    setOfflineReady(false);
-  }, []);
-
-  return {
-    needRefresh,
-    offlineReady,
-    isChecking,
-    updateServiceWorker: handleUpdate,
-    checkForUpdates,
-    close,
-  };
+  return { offlineReady, isChecking, checkForUpdates };
 }

@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PerfilProvider } from "@/contexts/PerfilContext";
-import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
+
 import AdminDashboard from "./pages/AdminDashboard";
 import ColaboradorWorkspace from "./pages/ColaboradorWorkspace";
 import Install from "./pages/Install";
@@ -24,7 +24,7 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <UpdatePrompt />
+      
       <Toaster />
       <Sonner />
       <BrowserRouter>
