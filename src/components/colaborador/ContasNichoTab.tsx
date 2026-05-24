@@ -181,7 +181,7 @@ interface SortableContaItemProps {
   hasCredenciais: (conta: any) => boolean;
   getStatusDisplay: (status: string) => React.ReactNode;
   getAquecimentoDisplay: (status: string | null) => React.ReactNode;
-  ultimaTarefa: string | null;
+  
 }
 
 function SortableContaItem({ 
@@ -193,7 +193,6 @@ function SortableContaItem({
   hasCredenciais, 
   getStatusDisplay, 
   getAquecimentoDisplay,
-  ultimaTarefa 
 }: SortableContaItemProps) {
   const {
     attributes,
@@ -249,13 +248,6 @@ function SortableContaItem({
           </span>
         </div>
 
-        {/* Última tarefa concluída - integração com logística */}
-        {ultimaTarefa && (
-          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-            <Clock className="h-3 w-3 opacity-60" />
-            <span>Última tarefa: {formatDistanceToNow(new Date(ultimaTarefa), { addSuffix: true, locale: ptBR })}</span>
-          </p>
-        )}
 
         {/* Telefone para WhatsApp/Telegram */}
         {(conta.plataforma === "whatsapp" || conta.plataforma === "telegram") && conta.telefone && (
@@ -395,9 +387,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
-  // Estado para última tarefa por conta
-  const [ultimasTarefas, setUltimasTarefas] = useState<Record<string, string>>({});
-
   // Filtros
   const [filtroStatus, setFiltroStatus] = useState<string>("todas");
   const [filtroPlataforma, setFiltroPlataforma] = useState<string>("todas");
@@ -415,70 +404,7 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
 
   useEffect(() => {
     fetchContas();
-    fetchUltimasTarefas();
   }, [nichoId]);
-
-  const fetchContas = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("contas_redes_sociais")
-        .select("*")
-        .eq("nicho_id", nichoId)
-        .order("ordem", { ascending: true });
-
-      if (error) throw error;
-      setContas(data || []);
-    } catch (error: any) {
-      toast.error("Erro ao carregar contas");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Buscar última tarefa concluída por conta (via templates de logística)
-  const fetchUltimasTarefas = async () => {
-    try {
-      // 1. Buscar templates que têm conta_id associado
-      const { data: templatesComConta, error: templatesError } = await supabase
-        .from("tarefa_templates")
-        .select("id, conta_id")
-        .eq("nicho_id", nichoId)
-        .not("conta_id", "is", null);
-
-      if (templatesError) throw templatesError;
-      if (!templatesComConta?.length) return;
-
-      // Agrupar templates por conta_id
-      const templatePorConta: Record<string, string[]> = {};
-      templatesComConta.forEach(t => {
-        if (t.conta_id) {
-          if (!templatePorConta[t.conta_id]) templatePorConta[t.conta_id] = [];
-          templatePorConta[t.conta_id].push(t.id);
-        }
-      });
-
-      const ultimasMap: Record<string, string> = {};
-      
-      // Para cada conta, buscar a última tarefa concluída
-      for (const [contaId, templateIds] of Object.entries(templatePorConta)) {
-        const { data } = await supabase
-          .from("tarefa_diaria")
-          .select("updated_at")
-          .in("template_id", templateIds)
-          .eq("status", "concluida")
-          .order("updated_at", { ascending: false })
-          .limit(1);
-        
-        if (data?.[0]) {
-          ultimasMap[contaId] = data[0].updated_at;
-        }
-      }
-      
-      setUltimasTarefas(ultimasMap);
-    } catch (error) {
-      console.error("Erro ao buscar últimas tarefas:", error);
-    }
-  };
 
   // Filtrar contas
   const contasFiltradas = useMemo(() => {
