@@ -5,10 +5,10 @@ import { useIsIOSMobile } from "@/hooks/use-mobile";
 import {
   Settings,
   LayoutDashboard,
-  UserCheck,
-  Gem,
   Cog,
   ClipboardList,
+  Wallet,
+  AtSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SeletorPerfil } from "./SeletorPerfil";
@@ -38,7 +38,7 @@ interface AppSidebarProps {
 }
 
 // Abas fixas simplificadas
-const ABAS_SIMPLES = ["planejamento", "offervault", "clientes", "configuracoes"] as const;
+const ABAS_SIMPLES = ["contas", "financeiro", "planejamento", "configuracoes"] as const;
 
 const DEFAULT_ORDER = [
   "projeto",
@@ -64,11 +64,11 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
   const isAdmin = perfilAtivo?.tipo === "admin";
   const isIOSMobile = useIsIOSMobile();
 
-  // Configuração simplificada — apenas 4 abas
+  // Configuração simplificada — 4 abas core
   const abaConfig = useMemo(() => ({
+    contas: { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: AtSign, enabled: true },
+    financeiro: { title: "Financeiro", href: `/workspace/${nichoId}/financeiro`, icon: Wallet, enabled: true },
     planejamento: { title: "Planejamento", href: `/workspace/${nichoId}`, icon: ClipboardList, enabled: true },
-    offervault: { title: "OfferVault", href: `/workspace/${nichoId}/offervault`, icon: Gem, enabled: true },
-    clientes: { title: "Clientes", href: `/workspace/${nichoId}/clientes`, icon: UserCheck, enabled: true },
     configuracoes: { title: "Config", href: `/workspace/${nichoId}/configuracoes`, icon: Settings, enabled: true },
   }), [nichoId]);
 
@@ -95,7 +95,7 @@ function AppSidebarComponent({ nichoId, nichoNome, contasHabilitado, pedidosHabi
     if (href === "/admin") {
       return location.pathname === href;
     }
-    // Para a aba "Projeto", só ativa se for exatamente a rota raiz do workspace
+    // Planejamento só ativa na rota raiz do workspace
     if (href.match(/^\/workspace\/[^/]+$/)) {
       return location.pathname === href || location.pathname === href + "/projeto";
     }
