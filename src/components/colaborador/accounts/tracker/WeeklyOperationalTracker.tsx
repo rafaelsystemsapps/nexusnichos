@@ -8,6 +8,9 @@ import { TaskRow } from "./TaskRow";
 import { AddTaskInline } from "./AddTaskInline";
 import { TrackerStats } from "./TrackerStats";
 import { TrackerHistory } from "./TrackerHistory";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -52,11 +55,20 @@ export function WeeklyOperationalTracker({ accountId, nichoId }: Props) {
   }, [tasks, weekDays, filter, search]);
 
   return (
-    <div className="space-y-4 p-4 rounded-lg border border-border/40 bg-card/30">
+    <div className="space-y-5 p-5 md:p-6 rounded-lg border border-border/40 bg-card/30">
+      {/* Micro briefing */}
+      <div className="space-y-1">
+        <p className="text-xs font-medium text-foreground/80">Como funciona</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Adicione tarefas recorrentes e marque sua execução durante a semana.
+          Pendências ajudam a visualizar o que ainda precisa ser feito por conta.
+        </p>
+      </div>
+
       <TrackerHeader filter={filter} onFilter={setFilter} search={search} onSearch={setSearch} />
 
       <div>
-        <div className="grid grid-cols-[1fr_repeat(7,minmax(32px,1fr))_auto] gap-2 px-2 pb-1 border-b border-border/30 text-[11px] uppercase tracking-wide text-muted-foreground">
+        <div className="grid grid-cols-[1fr_repeat(7,minmax(36px,1fr))_auto] gap-2 px-2 pb-1 border-b border-border/30 text-[11px] uppercase tracking-wide text-muted-foreground">
           <span>Tarefa</span>
           {WEEKDAY_LABELS.map((l, i) => (
             <span key={l} className={cn("text-center", i === today && "text-primary font-medium")}>{l}</span>
@@ -83,7 +95,27 @@ export function WeeklyOperationalTracker({ accountId, nichoId }: Props) {
       </div>
 
       <TrackerStats tasks={tasks} weekDays={weekDays} allDays={allDays} />
-      <TrackerHistory tasks={tasks} allDays={allDays} />
+
+      {tasks.length > 0 && (
+        <div className="flex justify-end pt-1">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">
+                <History className="h-3.5 w-3.5 mr-1.5" /> Ver histórico
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Histórico de execução</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4">
+                <TrackerHistory tasks={tasks} allDays={allDays} />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      )}
     </div>
   );
 }
+

@@ -7,7 +7,6 @@ import { PasswordField } from "@/components/shared/PasswordField";
 import { AccountFormDialog, PAISES, PLATAFORMAS } from "./AccountFormDialog";
 import { WeeklyOperationalTracker } from "./tracker/WeeklyOperationalTracker";
 import { AccountQuickLog } from "./AccountQuickLog";
-import { AccountTimeline } from "./AccountTimeline";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -122,13 +121,12 @@ export function AccountWorkspace({ nichoId, accountId }: Props) {
       </div>
 
       {/* Tracker + Log */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
+        <div className="xl:col-span-3">
           <WeeklyOperationalTracker accountId={accountId} nichoId={nichoId} />
         </div>
-        <div className="space-y-3">
+        <div className="xl:col-span-1">
           <AccountQuickLog accountId={accountId} nichoId={nichoId} />
-          <AccountTimeline accountId={accountId} />
         </div>
       </div>
 

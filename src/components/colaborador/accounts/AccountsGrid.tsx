@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAccounts, statusFromDB } from "@/hooks/queries";
+import { useAccountsOperationalStatus } from "@/hooks/queries/useAccountTasks";
 import { AccountFolderCard } from "./AccountFolderCard";
 import { AccountFormDialog, PLATAFORMAS, PAISES } from "./AccountFormDialog";
 
@@ -13,6 +14,7 @@ interface Props {
 
 export function AccountsGrid({ nichoId }: Props) {
   const { data: accounts = [], isLoading } = useAccounts(nichoId);
+  const { data: opStatus } = useAccountsOperationalStatus(nichoId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todas");
@@ -85,7 +87,7 @@ export function AccountsGrid({ nichoId }: Props) {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {filtered.map((a) => (
-            <AccountFolderCard key={a.id} account={a} nichoId={nichoId} />
+            <AccountFolderCard key={a.id} account={a} nichoId={nichoId} operationalStatus={opStatus?.get(a.id) ?? "neutral"} />
           ))}
         </div>
       )}
