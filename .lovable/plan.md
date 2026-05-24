@@ -1,70 +1,143 @@
-# Plano — Nexus v2: Entrada direta + Seletor de perfil no header
 
-## Objetivo
-Abrir o app já em `/admin` sem nenhuma tela intermediária. Trocar de perfil pelo header (canto superior direito), com a lista vinda das tabelas `profiles` + `user_roles` + `user_nichos`. Manter o "login invisível" atual (signIn em background com o usuário compartilhado) para que as RLS continuem funcionando — usuário nunca vê senha.
+# NEXUS v0.0.2 — Patch de Simplificação Estrutural
 
----
-
-## Comportamento
-
-- `/` → `Navigate to="/admin" replace` (sem guard, sem loading visível além do bootstrap da sessão compartilhada).
-- Header (presente em admin e workspace): avatar + nome do perfil ativo + chevron. Clique abre dropdown com todos os perfis (admins primeiro). Selecionar um perfil:
-  - `admin` → navega para `/admin`
-  - `colaborador` com `nichoId` → navega para `/workspace/:nichoId`
-  - `colaborador` sem `nichoId` → toast de aviso, sem navegar.
-- Perfil ativo persistido em `localStorage["nexus_perfil_ativo"]`. Sem `sessionStorage`. Default na 1ª visita: primeiro admin retornado.
-- Nenhum `ProtectedRoute`, nenhuma checagem de auth na UI, nenhuma tela `/auth`, nenhum botão "Sair".
+## Decisões confirmadas
+- **PP Library = AppLab** → preservar intacto (vira a 4ª aba do workspace).
+- **Remover Financeiro** completamente (apesar de ser uma aba atual).
+- **Abas finais do workspace:** Planejamento, Contas, AppLab, Configurações.
+- **Banco:** DROP estrutural completo (perda permanente de dados).
 
 ---
 
-## Arquivos a alterar
+## 1. Módulos removidos (frontend + DB)
 
-### Reescrever
-- `src/contexts/PerfilContext.tsx` — remove a lista local em `localStorage["nexus_perfis"]` e a lógica de adicionar/remover perfil. Agora:
-  - Faz `garantirSessao()` (signIn invisível com `rafael.workbiz@gmail.com` / `Admin2902`) no mount.
-  - Após a sessão estar pronta, busca perfis em paralelo:
-    - `profiles` → `id, nome, avatar_emoji, avatar_color`
-    - `user_roles` → `user_id, role`
-    - `user_nichos` → `user_id, nicho_id`
-  - Monta `Perfil[] = { id, nome, role, nichoId, emoji, cor }`, ordenando admins primeiro.
-  - Lê/grava perfil ativo em `localStorage["nexus_perfil_ativo"]`. Se nada salvo, escolhe o primeiro admin.
-  - Expõe: `{ perfis, perfilAtivo, setPerfilAtivo, loadingPerfis, ready }`.
-- `src/App.tsx` — remove `PerfilGuard` e `RootGate`. Mantém `PerfilProvider` (precisa estar lá para o header funcionar). Rotas:
-  - `/` → `<Navigate to="/admin" replace />`
-  - `/admin/*` → `AdminDashboard`
-  - `/workspace/:nichoId/*` → `ColaboradorWorkspace`
-  - `/install`, `/lembrete-popup/:id`, `*` → mesmos de hoje.
+| Módulo | Componentes principais | Tabelas DB |
+|---|---|---|
+| Financeiro | `FinanceiroTab`, `FinanceiroResumoCards`, `TransacaoForm`, `TransacoesTable`, `LucroPorMembroTable`, `CustosAppsTab`, `FerramentaTrabalhoForm/Table`, `ClienteCustoForm/Item/Section`, `ProdutoForm`, `ProdutosList` | `transacoes_financeiras`, `ferramentas_trabalho`, `client_apps`, `produtos`, `resultados_app` |
+| Pedidos | `PedidosTab`, `PedidoForm`, `PedidosTable`, `PedidosResumoCards` | `pedidos` |
+| Gestão de Time | `TimeNichoTab` | `membros_time` |
+| Radar Oportunidades | `RadarOportunidadesTab`, `RadarItemCard/Form` | `radar_oportunidades` |
+| Offer Vault | `OfferVaultTab`, `OfferCard/Form` | `offer_vault` |
+| Alertas de Risco | hook `useAvisoPendencia` + flag `alertas_habilitado` | — |
+| Mapa de Dependência | `MapaDependencia` | — |
+| Teste Rápido | `TesteRapidoTab`, `TesteRapidoForm` | — |
+| Logs de Aprendizado | `LogsAprendizadoTab`, `LogAprendizadoForm` | `logs_aprendizado` |
+| Lembrete de Hoje | `LembretesHojeTab`, `LembreteForm/Item/Popup` | `lembretes_hoje` |
+| Cemitério | `CemiterioTab`, `CemiterioItemCard/Form` | `cemiterio` |
+| Clientes (não citado, fora do escopo "manter") | `ClientesTab`, `ClienteCard/Form`, `TarefaClienteItem`, `ProspectsTab`, `ProspectCard/Form`, `ProjetoTab` | `clientes`, `cliente_templates`, `tarefas_cliente`, `prospects` |
+| Conteúdo / Logística | `LogisticaSemanalTab`, `TemplateForm` | `conteudos`, `conteudo_bruto`, `subtarefas_conteudo`, `semana_logistica`, `tarefa_diaria`, `tarefa_templates`, `biblioteca_nicho` |
+| Aplicativos legado | `AplicativoCard/Form/Tab`, `AppsDashboard` | `aplicativos` |
 
-### Criar
-- `src/components/layout/SeletorPerfil.tsx` — botão (avatar 32px com emoji ou inicial + nome + `chevron-down`) usando `DropdownMenu` do shadcn. Itens: avatar + nome + badge (`Admin` âmbar / `Workspace` azul). Item ativo destacado. Ao clicar, chama `setPerfilAtivo()` e `navigate()`.
-
-### Modificar
-- `src/components/layout/MainLayout.tsx` — adiciona `<SeletorPerfil />` no canto superior direito do `<header>`, tanto no layout iOS quanto desktop. Header passa a ser renderizado mesmo sem `title/subtitle` (uma barra fina) para garantir presença em todas as páginas.
-- `src/components/layout/AppSidebar.tsx` — remove qualquer referência a `signOut`, "Sair"/"Trocar perfil" e botão de logout. `isAdmin` continua vindo de `usePerfilContext().perfilAtivo?.role === "admin"`.
-- `src/pages/ColaboradorWorkspace.tsx` — garante que `nichoId` vem só de `useParams`, sem qualquer validação cruzada com auth.
-- `src/pages/SelecaoPerfil.tsx` — **deletar** (não é mais usado).
-- `src/components/LoadingScreen.tsx` — mantém, usado durante o boot do contexto se necessário.
-
-### Não tocar
-- `src/integrations/supabase/client.ts`, `types.ts`, `.env`
-- Edge functions, RLS, schema do banco
-- Hooks de query, componentes de tabs, formulários
+**Preservados (intactos):**
+- AppLab: `AppLabTab`, `AppLabCard/Form`, `AppLabLinksManager` + tabelas `applab_apps`, `applab_account_links`
+- Planejamento: `planejamentotab.tsx` (localStorage, sem DB)
+- Contas: `ContasNichoTab` + `contas_redes_sociais`
+- Configurações: `ConfiguracoesNichoTab` (após limpeza dos toggles obsoletos)
+- Infra: auth, `profiles`, `user_roles`, `user_nichos`, `nichos`, PWA, layout, tema, edge functions de admin
 
 ---
 
-## Detalhes técnicos
+## 2. Execução — Frontend
 
-- **Sessão compartilhada**: o PRD pede "nunca pedir senha". Resolvido pelo `garantirSessao()` em `PerfilContext` — o usuário compartilhado é admin no Supabase, então `profiles` + `user_roles` + `user_nichos` retornam todos os registros sob as policies existentes. Nenhuma RLS muda.
-- **Perfil ativo ≠ usuário autenticado**: a sessão Supabase é sempre o admin compartilhado. O "perfil" no header é apenas um indicador de UI + roteamento (admin vs workspace). Inserts continuam atribuídos ao usuário compartilhado via `auth.uid()`.
-- **Estilo do dropdown**: `bg-[#1a1a1a]`, `border-[#333]`, texto `text-white`, badge admin `bg-[#b45309]`, badge workspace `bg-[#1d4ed8]`. Transição só de `opacity`.
-- **Avatar fallback**: se `avatar_emoji` ausente, mostra inicial do nome em círculo com `avatar_color` (ou cinza neutro).
+**Rotas (`ColaboradorWorkspace.tsx`):**
+```
+/workspace/:id          → PlanejamentoTab
+/workspace/:id/contas   → ContasNichoTab
+/workspace/:id/applab   → AppLabTab  (NOVO)
+/workspace/:id/configuracoes → ConfiguracoesNichoTab
+```
+Remover rota `/financeiro`. Remover `/lembrete-popup/:id` do `App.tsx`.
+
+**Sidebar (`AppSidebar.tsx`):**
+- `ABAS_SIMPLES = ["contas", "planejamento", "applab", "configuracoes"]`
+- Remover ícone `Wallet`/aba financeiro do `abaConfig`
+- Limpar props não usadas (`pedidosHabilitado`, `radarHabilitado`, `cemiterioHabilitado`, etc.)
+
+**Configurações (`ConfiguracoesNichoTab.tsx`):**
+- Remover do `MODULOS_CONFIG`: financeiro, pedidos, radar, cemiterio, time, mapa_dependencia, teste_rapido, logs_aprendizado, alertas, clientes, apps, offer_vault, lembretes_hoje
+- Manter: contas, applab
+- Remover `OrdemAbasEditor` (abas agora fixas)
+
+**Arquivos a deletar:** todos os componentes listados na tabela acima + hooks `useClientes`, `useProspects`, `useClienteApps`, `useAllClienteApps`, `useFerramentasTrabalho`, `useOfferVault`, `useAvisoPendencia`. Atualizar `src/hooks/queries/index.ts`.
+
+**`MainLayout`:** remover injeção de `<LembretePopup>` global se existir.
+
+**`App.tsx`:** remover imports de `LembretePopup` e rota associada.
 
 ---
 
-## Validação
-1. Abrir `/` → redireciona para `/admin` sem flicker de login.
-2. Header mostra avatar do primeiro admin.
-3. Dropdown lista todos os perfis com badges corretas.
-4. Selecionar colaborador com nicho → vai para `/workspace/:nichoId` e dados carregam.
-5. Recarregar → perfil ativo persiste.
-6. Nenhuma rota antiga (`/auth`, `/`) mostra tela de seleção/login.
+## 3. Execução — Banco (migration única)
+
+```sql
+-- Drop tabelas dos módulos removidos
+DROP TABLE IF EXISTS public.transacoes_financeiras CASCADE;
+DROP TABLE IF EXISTS public.ferramentas_trabalho CASCADE;
+DROP TABLE IF EXISTS public.client_apps CASCADE;
+DROP TABLE IF EXISTS public.produtos CASCADE;
+DROP TABLE IF EXISTS public.resultados_app CASCADE;
+DROP TABLE IF EXISTS public.pedidos CASCADE;
+DROP TABLE IF EXISTS public.membros_time CASCADE;
+DROP TABLE IF EXISTS public.radar_oportunidades CASCADE;
+DROP TABLE IF EXISTS public.offer_vault CASCADE;
+DROP TABLE IF EXISTS public.logs_aprendizado CASCADE;
+DROP TABLE IF EXISTS public.lembretes_hoje CASCADE;
+DROP TABLE IF EXISTS public.cemiterio CASCADE;
+DROP TABLE IF EXISTS public.tarefas_cliente CASCADE;
+DROP TABLE IF EXISTS public.cliente_templates CASCADE;
+DROP TABLE IF EXISTS public.clientes CASCADE;
+DROP TABLE IF EXISTS public.prospects CASCADE;
+DROP TABLE IF EXISTS public.subtarefas_conteudo CASCADE;
+DROP TABLE IF EXISTS public.conteudo_bruto CASCADE;
+DROP TABLE IF EXISTS public.conteudos CASCADE;
+DROP TABLE IF EXISTS public.tarefa_diaria CASCADE;
+DROP TABLE IF EXISTS public.semana_logistica CASCADE;
+DROP TABLE IF EXISTS public.tarefa_templates CASCADE;
+DROP TABLE IF EXISTS public.biblioteca_nicho CASCADE;
+DROP TABLE IF EXISTS public.aplicativos CASCADE;
+
+-- Drop functions órfãs
+DROP FUNCTION IF EXISTS public.marcar_tarefas_nao_concluidas() CASCADE;
+DROP FUNCTION IF EXISTS public.encerrar_lembretes_dia() CASCADE;
+DROP FUNCTION IF EXISTS public.reset_tarefas_cliente_semanal() CASCADE;
+
+-- Drop colunas obsoletas em nichos
+ALTER TABLE public.nichos
+  DROP COLUMN IF EXISTS financeiro_habilitado,
+  DROP COLUMN IF EXISTS pedidos_habilitado,
+  DROP COLUMN IF EXISTS radar_habilitado,
+  DROP COLUMN IF EXISTS cemiterio_habilitado,
+  DROP COLUMN IF EXISTS time_habilitado,
+  DROP COLUMN IF EXISTS mapa_dependencia_habilitado,
+  DROP COLUMN IF EXISTS teste_rapido_habilitado,
+  DROP COLUMN IF EXISTS logs_aprendizado_habilitado,
+  DROP COLUMN IF EXISTS alertas_habilitado,
+  DROP COLUMN IF EXISTS lembretes_hoje_habilitado,
+  DROP COLUMN IF EXISTS clientes_habilitado,
+  DROP COLUMN IF EXISTS apps_habilitado,
+  DROP COLUMN IF EXISTS offer_vault_habilitado,
+  DROP COLUMN IF EXISTS ordem_abas,
+  DROP COLUMN IF EXISTS foco_do_dia;
+
+-- Edge function weekly-logistics-cron será deletada via tool
+```
+
+Edge function `weekly-logistics-cron` removida (depende de tarefa_diaria).
+
+---
+
+## 4. Pós-remoção
+- Limpar imports quebrados em `index.ts`, `App.tsx`, `ColaboradorWorkspace.tsx`, `AppSidebar.tsx`, `MainLayout.tsx`
+- Regenerar tipos Supabase será automático após migration
+- Verificar build TS para warnings
+
+## 5. Memória
+Atualizar `mem://index.md` removendo referências a módulos extintos e listando-os como permanentemente removidos.
+
+---
+
+## Riscos
+- **Perda total de dados** em todas as tabelas dropadas. Sem rollback.
+- AppLab depende apenas de `contas_redes_sociais` (via `applab_account_links.conta_id`) — preservado.
+- Edge functions `create-user`, `list-profiles`, `reset-password`, `delete-user` intactas.
+
+Pronto para implementar quando aprovar.
