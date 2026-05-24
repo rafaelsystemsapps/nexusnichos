@@ -402,9 +402,27 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
     })
   );
 
+  const fetchContas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("contas_redes_sociais")
+        .select("*")
+        .eq("nicho_id", nichoId)
+        .order("ordem", { ascending: true });
+
+      if (error) throw error;
+      setContas(data || []);
+    } catch (error: any) {
+      toast.error("Erro ao carregar contas");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchContas();
   }, [nichoId]);
+
 
   // Filtrar contas
   const contasFiltradas = useMemo(() => {
