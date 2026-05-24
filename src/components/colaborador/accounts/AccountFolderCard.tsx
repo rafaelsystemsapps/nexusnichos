@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Folder } from "lucide-react";
 import { AccountRow, statusFromDB } from "@/hooks/queries";
+import type { OperationalStatus } from "@/hooks/queries/useAccountTasks";
 import { paisInfo } from "@/lib/paises";
 import { cn } from "@/lib/utils";
 
@@ -10,19 +11,31 @@ const STATUS_STYLE: Record<string, string> = {
   banida: "bg-red-500/15 text-red-400 border-red-500/30",
 };
 
+const OP_BORDER: Record<OperationalStatus, string> = {
+  pending: "border-yellow-500/60 hover:border-yellow-400",
+  completed: "border-emerald-500/60 hover:border-emerald-400",
+  neutral: "border-border/40 hover:border-primary/40",
+};
+
 interface Props {
   account: AccountRow;
   nichoId: string;
+  operationalStatus?: OperationalStatus;
 }
 
-export function AccountFolderCard({ account, nichoId }: Props) {
+export function AccountFolderCard({ account, nichoId, operationalStatus = "neutral" }: Props) {
   const status = statusFromDB(account.status);
   const at = account.username ? `@${account.username}` : account.nome_conta;
   const pais = paisInfo(account.pais);
+  const isInactive = status !== "ativa";
   return (
     <Link
       to={`/workspace/${nichoId}/contas/${account.id}`}
-      className="group relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border border-border/40 bg-card/50 hover:bg-card hover:border-primary/40 transition-all"
+      className={cn(
+        "group relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border bg-card/50 hover:bg-card transition-all",
+        OP_BORDER[operationalStatus],
+        isInactive && "opacity-60",
+      )}
     >
       <Folder className="h-12 w-12 text-primary/70 group-hover:text-primary transition-colors" strokeWidth={1.5} />
       <div className="text-center min-w-0 w-full">

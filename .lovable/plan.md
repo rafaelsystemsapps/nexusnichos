@@ -1,147 +1,85 @@
-## NEXUS v0.0.6 — Weekly Operational Tracker Rebuild
+## NEXUS v0.0.6.3 — Operational Signal Layer + Folder Status UX
 
-### 1. Card de conta — País visível
+Refinamento visual do módulo Contas. Sem rebuild, sem migrations, sem novas tabelas.
 
-`AccountFolderCard.tsx`: ao lado do badge de status, renderizar badge de país.
-- Usar mapa `PAISES` (já existente em `AccountFormDialog`) movido para `src/lib/paises.ts` para reuso.
-- Mostrar bandeira emoji + sigla (ex.: `🇧🇷 BR`). Fallback: texto puro do código.
+---
 
-### 2. Banco — novas tabelas (migration)
+### 1. Folder Signal System (tela de Contas)
 
-Remover dependência do checklist antigo (mantém `account_routine_items` no banco por enquanto para não perder dados, mas UI deixa de usar; pode ser removido depois).
+Cada `AccountFolderCard` passa a refletir o status operacional do dia atual via cor de borda.
 
-Novas tabelas:
+**Estados derivados (por conta, no dia de hoje):**
+- `pending` → ao menos 1 task ativa com `account_task_days.status = 'pending'` hoje → **borda amarela**
+- `completed` → todas as tasks ativas do dia com `status = 'success'` → **borda verde**
+- `neutral` → nenhuma task ativa vinculada → **borda padrão**
 
-`account_tasks`
-- `id`, `account_id`, `nicho_id`, `user_id`
-- `task_name text not null`
-- `is_active boolean default true`
-- `created_at`, `updated_at`
+**Conta inativa/banida:** mesma cor + `opacity-60`, mantém clicável.
 
-`account_task_days`
-- `id`, `task_id` (fk lógico), `account_id`, `nicho_id`
-- `week_reference date` (segunda-feira ISO da semana)
-- `weekday smallint` (0=Seg ... 6=Dom)
-- `status text` check in (`pending`,`success`,`failed`) default `pending`
-- `completed_at timestamptz`
-- unique (`task_id`, `week_reference`, `weekday`)
+**Onde calcular:**
+- Novo hook leve `useAccountsOperationalStatus(nichoId)` em `src/hooks/queries/useAccountTasks.ts`.
+- Uma única query batched: busca `account_tasks` ativas do nicho + `account_task_days` da `week_reference` atual no `weekday` de hoje.
+- Reduz em memória para `Map<accountId, 'pending' | 'completed' | 'neutral'>`.
+- Cache React Query, invalidado pelas mutations já existentes (toggle de day status, create/delete task).
 
-RLS (mesmo padrão das outras tabelas):
-- SELECT/UPDATE/DELETE: `has_role(admin) OR nicho_id = get_user_nicho(uid)`
-- INSERT: idem + para `account_tasks` exigir `user_id = auth.uid()`
+**Aplicação em `AccountFolderCard.tsx`:**
+- Recebe prop `operationalStatus`.
+- Classes condicionais via `cn()` na borda:
+  - pending → `border-yellow-500/60 hover:border-yellow-400`
+  - completed → `border-emerald-500/60 hover:border-emerald-400`
+  - neutral → mantém atual
+- Opacidade: `status !== 'ativa' && 'opacity-60'`.
 
-Índices: `(account_id)`, `(task_id, week_reference)`.
+**`AccountsGrid.tsx`:** chama o hook e passa o status para cada card.
 
-### 3. Lógica de viradas e reset semanal
+---
 
-Sem cron — feito client-side ao abrir a rotina:
-- **Início de semana** = segunda-feira local (helper `weekStart(date)`).
-- Ao carregar `useAccountTasks(accountId)`, garantir que existam linhas em `account_task_days` para a semana corrente (lazy upsert: cria as 7 linhas `pending` quando faltam ao marcar/visualizar). Estratégia: gerar dias on-demand no clique; para a grid, calcular do array recebido e tratar ausentes como `pending`.
-- **Virada diária (cinza→vermelho)**: ao montar e em `setInterval` (a cada 60s e quando o dia muda), para cada dia da semana corrente **anterior a hoje** cujo status seja `pending`, fazer UPDATE em lote para `failed`. Não tocar dias futuros nem dias já `success`/`failed`.
-- **Reset semanal**: nada a apagar. Nova semana = novo `week_reference`; histórico anterior permanece intacto.
+### 2. Workspace da conta — limpeza e respiro
 
-### 4. UI — Weekly Operational Tracker (substitui `AccountRoutineChecklist`)
+**`AccountWorkspace.tsx`:**
 
-Novo componente `WeeklyOperationalTracker.tsx` em `src/components/colaborador/accounts/tracker/`:
+- **Remover** o `<AccountTimeline />` da coluna lateral (histórico vazio = ruído). O componente fica no repo mas sem uso; pode ser reintegrado depois.
+- **Reorganizar grid:** trocar `lg:grid-cols-3` (2+1) por layout que dá mais espaço à rotina:
+  - Tracker em largura cheia (`col-span-full`) ou `lg:grid-cols-4` com tracker em 3 e QuickLog em 1.
+  - QuickLog vai para baixo (ou lateral menor), priorizando a Rotina.
+- Resultado: caixa de Rotina Operacional visualmente maior, mais respiro.
 
-Layout:
+---
+
+### 3. Micro briefing na Rotina Operacional
+
+Em `WeeklyOperationalTracker.tsx`, adicionar no topo (acima do `TrackerHeader`):
+
 ```
-[Header: "Rotina Operacional"  + Filtros + Busca + (+ Adicionar Tarefa)]
-
-Tarefa                           Seg  Ter  Qua  Qui  Sex  Sáb  Dom
-─────────────────────────────────────────────────────────────────
-Postar 3 vídeos                   ●    ●    ○    ○    ○    ○    ○
-Revisar anúncios                  ●    ✕    ○    ○    ○    ○    ○
-[+ Adicionar tarefa]
+Como funciona
+Adicione tarefas recorrentes e marque sua execução durante a semana.
+Pendências ajudam a visualizar o que ainda precisa ser feito por conta.
 ```
 
-Bolinhas:
-- cinza (`bg-muted`) = pending (clicável → success)
-- verde (`bg-emerald-500`) = success (clicável → pending para correção)
-- vermelho (`bg-red-500`) = failed (clicável → success se quiser corrigir)
-- Dia atual destacado com ring sutil; dias futuros desabilitados (não clicáveis).
+Estilo: `text-xs text-muted-foreground`, título em `font-medium text-foreground/80`. Subtle, não compete com as tasks.
 
-Sub-componentes:
-- `TrackerHeader.tsx` — busca + filtros (ativas/inativas/concluídas semana/falhadas/todas) + botão `+ Adicionar Tarefa`.
-- `TaskRow.tsx` — nome editável (popover), botão pause/ativar, deletar, 7 `DayDot`.
-- `DayDot.tsx` — bolinha de status.
-- `AddTaskInline.tsx` — input rápido com presets ("Postar 3 vídeos", "Revisar anúncios", "Responder comentários", "Subir stories", "Revisar DMs").
+---
 
-### 5. Mini dashboard inferior
+### 4. Reduzir peso do histórico dentro da rotina
 
-`TrackerStats.tsx` abaixo da grid, 3 micro cards:
-- **Hoje**: concluídas / pendentes / falhas
-- **Semana**: total verdes, total vermelhos, taxa execução %, streak atual, melhor streak
-- **Performance**: % consistência (success / total marcáveis até hoje), % falha, % execução
+- O `TrackerHistory` (últimas 8 semanas) deixa de ser renderizado inline no tracker principal.
+- Substituir por um botão discreto `Ver histórico` que abre um `<Sheet>` ou `<Dialog>` sob demanda.
+- Histórico continua salvo no banco (sem mudança de dados).
 
-Cálculo client-side a partir dos dados já carregados (sem nova tabela `metrics`). Streak = dias consecutivos com ≥1 success (calculado nas últimas N semanas).
+---
 
-### 6. Histórico semanal (somente leitura)
+### Arquivos a editar
 
-Aba/seção `TrackerHistory.tsx` (collapse "Semanas anteriores"):
-- Lista as últimas 8 semanas (`week_reference` distintos), com: período, total verdes, vermelhos, taxa.
-- Expandindo mostra grid read-only da semana.
+- `src/hooks/queries/useAccountTasks.ts` — novo `useAccountsOperationalStatus(nichoId)`.
+- `src/hooks/queries/index.ts` — export do novo hook.
+- `src/components/colaborador/accounts/AccountsGrid.tsx` — consumir hook, passar status.
+- `src/components/colaborador/accounts/AccountFolderCard.tsx` — borda condicional + opacidade.
+- `src/components/colaborador/accounts/AccountWorkspace.tsx` — remover Timeline, reorganizar grid.
+- `src/components/colaborador/accounts/tracker/WeeklyOperationalTracker.tsx` — micro briefing + histórico em sheet.
 
-### 7. Hooks
+### Protegido (não tocar)
 
-Novo `src/hooks/queries/useAccountTasks.ts`:
-- `useAccountTasks(accountId)` → tarefas + dias da semana corrente.
-- `useCreateTask`, `useUpdateTask`, `useToggleTaskActive`, `useDeleteTask`.
-- `useSetDayStatus(task_id, week_reference, weekday, status)` — upsert.
-- `useAutoFailPastPendings(accountId)` — executa o varredura cinza→vermelho.
-- `useTaskHistory(accountId, weeks=8)`.
-- `useTrackerStats(accountId)` — derivado em memória.
+Auth, Supabase, planner, AppLab, sidebar, tema, edge functions, schema, RLS, login email, username/senha, navegação de pastas, lógica do tracker semanal (apenas reposicionamento do histórico).
 
-Exportar em `src/hooks/queries/index.ts`. Remover exports do checklist antigo (`useRoutineItems` etc.) **após** removida a UI.
+### Versão
 
-### 8. Integração no `AccountWorkspace`
-
-- Substituir `<AccountRoutineChecklist />` por `<WeeklyOperationalTracker accountId nichoId />`.
-- Manter `AccountQuickLog` + `AccountTimeline` intactos.
-- Layout: tracker ocupa coluna principal (full width em mobile, 2/3 em desktop), Log+Timeline ao lado.
-
-### 9. Limpeza
-
-Após nova UI funcionando:
-- Deletar `AccountRoutineChecklist.tsx`.
-- Remover `useRoutineItems`/mutations correlatas do `useAccountRoutine.ts` e do barrel `index.ts`.
-- Manter tabela `account_routine_items` no banco por segurança (não dropar para evitar perda).
-
-### 10. Versão e cache
-
-`src/main.tsx`:
-- `APP_VERSION = "0.0.6"`
-- Adicionar limpeza de chaves legadas `nexus_routine_*` no boot sweep (defensivo).
-
-### 11. Proteções
-
-Não alterar: auth, Supabase client/types (auto), planner v0.0.4, AppLab, sidebar/MainLayout, edge functions, rotas raiz/admin, tema, navegação de pastas de contas, AccountQuickLog/Timeline.
-
-### Arquivos
-
-**Criados**
-- `supabase/migrations/<ts>_nexus_v006_tracker.sql`
-- `src/lib/paises.ts`
-- `src/hooks/queries/useAccountTasks.ts`
-- `src/components/colaborador/accounts/tracker/WeeklyOperationalTracker.tsx`
-- `src/components/colaborador/accounts/tracker/TrackerHeader.tsx`
-- `src/components/colaborador/accounts/tracker/TaskRow.tsx`
-- `src/components/colaborador/accounts/tracker/DayDot.tsx`
-- `src/components/colaborador/accounts/tracker/AddTaskInline.tsx`
-- `src/components/colaborador/accounts/tracker/TrackerStats.tsx`
-- `src/components/colaborador/accounts/tracker/TrackerHistory.tsx`
-
-**Editados**
-- `src/components/colaborador/accounts/AccountFolderCard.tsx` (badge país)
-- `src/components/colaborador/accounts/AccountFormDialog.tsx` (importar PAISES de `src/lib/paises.ts`)
-- `src/components/colaborador/accounts/AccountWorkspace.tsx` (trocar checklist)
-- `src/hooks/queries/index.ts`
-- `src/main.tsx` (versão + sweep)
-
-**Deletados (após validação)**
-- `src/components/colaborador/accounts/AccountRoutineChecklist.tsx`
-- (parcial) limpeza em `src/hooks/queries/useAccountRoutine.ts`
-
-### Resultado esperado
-
-Tracker semanal estilo Notion por conta, com viradas automáticas cinza→vermelho ao fim do dia, histórico preservado por `week_reference`, mini analytics leves, badge de país em cada folder.
+`APP_VERSION = "0.0.6.3"` em `src/main.tsx`.
