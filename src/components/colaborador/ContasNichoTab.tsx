@@ -1067,7 +1067,6 @@ export function ContasNichoTab({ nichoId }: ContasNichoTabProps) {
                             hasCredenciais={hasCredenciais}
                             getStatusDisplay={getStatusDisplay}
                             getAquecimentoDisplay={getAquecimentoDisplay}
-                            ultimaTarefa={ultimasTarefas[conta.id] || null}
                           />
                         ))}
                       </div>
