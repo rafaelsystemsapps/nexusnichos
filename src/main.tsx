@@ -4,7 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 
 // ----- Boot version check: invalidate legacy local state on version bump -----
-const APP_VERSION = "0.0.5";
+const APP_VERSION = "0.0.6";
 const VERSION_KEY = "nexus_app_version";
 
 try {
@@ -27,7 +27,8 @@ try {
         key.startsWith("nexus_ideias_") ||
         key.startsWith("nexus_meta_videos_") ||
         key.startsWith("nexus_videos_hoje_") ||
-        key.startsWith("nexus_data_hoje_")
+        key.startsWith("nexus_data_hoje_") ||
+        key.startsWith("nexus_routine_")
       ) {
         keysToRemove.push(key);
       }

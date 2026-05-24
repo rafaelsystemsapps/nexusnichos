@@ -99,6 +99,78 @@ export type Database = {
           },
         ]
       }
+      account_task_days: {
+        Row: {
+          account_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          nicho_id: string
+          status: string
+          task_id: string
+          updated_at: string
+          week_reference: string
+          weekday: number
+        }
+        Insert: {
+          account_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          nicho_id: string
+          status?: string
+          task_id: string
+          updated_at?: string
+          week_reference: string
+          weekday: number
+        }
+        Update: {
+          account_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          nicho_id?: string
+          status?: string
+          task_id?: string
+          updated_at?: string
+          week_reference?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
+      account_tasks: {
+        Row: {
+          account_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          nicho_id: string
+          task_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          nicho_id: string
+          task_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          nicho_id?: string
+          task_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       applab_account_links: {
         Row: {
           app_id: string

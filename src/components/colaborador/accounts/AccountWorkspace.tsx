@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAccount, useDeleteAccount, useSetAccountStatus, statusFromDB, AccountStatus } from "@/hooks/queries";
 import { PasswordField } from "@/components/shared/PasswordField";
 import { AccountFormDialog, PAISES, PLATAFORMAS } from "./AccountFormDialog";
-import { AccountRoutineChecklist } from "./AccountRoutineChecklist";
+import { WeeklyOperationalTracker } from "./tracker/WeeklyOperationalTracker";
 import { AccountQuickLog } from "./AccountQuickLog";
 import { AccountTimeline } from "./AccountTimeline";
 import { toast } from "sonner";
@@ -121,9 +121,11 @@ export function AccountWorkspace({ nichoId, accountId }: Props) {
         </div>
       </div>
 
-      {/* Routine + Log */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AccountRoutineChecklist accountId={accountId} nichoId={nichoId} />
+      {/* Tracker + Log */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2">
+          <WeeklyOperationalTracker accountId={accountId} nichoId={nichoId} />
+        </div>
         <div className="space-y-3">
           <AccountQuickLog accountId={accountId} nichoId={nichoId} />
           <AccountTimeline accountId={accountId} />
