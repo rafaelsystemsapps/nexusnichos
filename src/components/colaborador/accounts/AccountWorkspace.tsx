@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Copy, Pencil, Trash2, Power, Ban, CheckCircle2, Mail, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAccount, useDeleteAccount, useSetAccountStatus, statusFromDB, AccountStatus } from "@/hooks/queries";
 import { PasswordField } from "@/components/shared/PasswordField";
 import { AccountFormDialog, PAISES, PLATAFORMAS } from "./AccountFormDialog";
