@@ -28,6 +28,9 @@ export interface AccountRow {
   disabled_at: string | null;
   banned_at: string | null;
   created_at: string;
+  gmail_email: string | null;
+  gmail_senha: string | null;
+  login_email: string | null;
 }
 
 export function useAccounts(nichoId: string | undefined) {
@@ -71,6 +74,8 @@ interface AccountInput {
   pais?: string | null;
   data_criacao_conta?: string | null;
   status: AccountStatus;
+  gmail_email?: string | null;
+  gmail_senha?: string | null;
 }
 
 export function useCreateAccount() {
