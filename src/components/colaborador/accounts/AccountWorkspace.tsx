@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Copy, Pencil, Trash2, Power, Ban, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Copy, Pencil, Trash2, Power, Ban, CheckCircle2, Mail, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAccount, useDeleteAccount, useSetAccountStatus, statusFromDB, AccountStatus } from "@/hooks/queries";
 import { PasswordField } from "@/components/shared/PasswordField";
@@ -106,6 +106,39 @@ export function AccountWorkspace({ nichoId, accountId }: Props) {
         <div className="md:col-span-2">
           <div className="text-muted-foreground text-xs mb-1">Senha</div>
           <PasswordField value={account.senha_acesso} readOnly allowCopy />
+        </div>
+        <div className="md:col-span-2 pt-3 mt-1 border-t border-border/30">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Mail className="h-3.5 w-3.5" /> Gmail Vinculado
+            </div>
+            {!account.gmail_email && (
+              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditOpen(true)}>
+                <Plus className="h-3 w-3 mr-1" /> Adicionar Gmail
+              </Button>
+            )}
+          </div>
+          {account.gmail_email ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Input value={account.gmail_email} readOnly className="text-sm" />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(account.gmail_email!);
+                    toast.success("Gmail copiado");
+                  }}
+                  title="Copiar"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <PasswordField value={account.gmail_senha} readOnly allowCopy />
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">Sem Gmail vinculado</p>
+          )}
         </div>
         <div className="md:col-span-2 flex flex-wrap gap-2 pt-2 border-t border-border/30">
           <Button size="sm" variant={status === "ativa" ? "default" : "outline"} onClick={() => setStatus("ativa")}>
