@@ -171,6 +171,101 @@ export type Database = {
         }
         Relationships: []
       }
+      app_lab_billing: {
+        Row: {
+          billing_status: string | null
+          client_id: string
+          created_at: string
+          due_date: string | null
+          id: string
+          monthly_value: number | null
+          next_payment: string | null
+          nicho_id: string
+          plan: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_status?: string | null
+          client_id: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          monthly_value?: number | null
+          next_payment?: string | null
+          nicho_id: string
+          plan?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_status?: string | null
+          client_id?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          monthly_value?: number | null
+          next_payment?: string | null
+          nicho_id?: string
+          plan?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_lab_billing_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "app_lab_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_lab_clients: {
+        Row: {
+          app_type: string
+          country: string | null
+          created_at: string
+          description: string | null
+          id: string
+          login_email: string | null
+          name: string
+          nicho_id: string
+          notes: string | null
+          password: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_type: string
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          login_email?: string | null
+          name: string
+          nicho_id: string
+          notes?: string | null
+          password?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_type?: string
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          login_email?: string | null
+          name?: string
+          nicho_id?: string
+          notes?: string | null
+          password?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       applab_account_links: {
         Row: {
           app_id: string
