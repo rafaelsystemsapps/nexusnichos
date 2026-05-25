@@ -16,9 +16,10 @@ import { SeletorPerfil } from "./SeletorPerfil";
 interface AppSidebarProps {
   nichoId?: string;
   nichoNome?: string;
+  nicho?: { contas_habilitado?: boolean; applab_habilitado?: boolean } | null;
 }
 
-function AppSidebarComponent({ nichoId, nichoNome }: AppSidebarProps) {
+function AppSidebarComponent({ nichoId, nichoNome, nicho }: AppSidebarProps) {
   const location = useLocation();
   const { perfilAtivo } = usePerfilContext();
   const isAdmin = perfilAtivo?.tipo === "admin";
@@ -32,13 +33,14 @@ function AppSidebarComponent({ nichoId, nichoNome }: AppSidebarProps) {
         { title: "Configurações", href: "/admin/configuracoes", icon: Cog },
       ];
     }
-    return [
+    const items: { title: string; href: string; icon: typeof Settings }[] = [
       { title: "Planejamento", href: `/workspace/${nichoId}`, icon: ClipboardList },
-      { title: "Contas", href: `/workspace/${nichoId}/contas`, icon: AtSign },
-      { title: "AppLab", href: `/workspace/${nichoId}/applab`, icon: FlaskRound },
-      { title: "Config", href: `/workspace/${nichoId}/configuracoes`, icon: Settings },
     ];
-  }, [isAdmin, nichoId]);
+    if (nicho?.contas_habilitado) items.push({ title: "Contas", href: `/workspace/${nichoId}/contas`, icon: AtSign });
+    if (nicho?.applab_habilitado) items.push({ title: "AppLab", href: `/workspace/${nichoId}/applab`, icon: FlaskRound });
+    items.push({ title: "Config", href: `/workspace/${nichoId}/configuracoes`, icon: Settings });
+    return items;
+  }, [isAdmin, nichoId, nicho?.contas_habilitado, nicho?.applab_habilitado]);
 
   const mobileNavItems = useMemo(() => navItems.slice(0, 5), [navItems]);
 

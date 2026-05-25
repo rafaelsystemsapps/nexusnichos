@@ -1,32 +1,33 @@
-## NEXUS v0.0.6.5 — Linked Gmail Credentials Extension
+## NEXUS v0.0.6.6 — Workspace Module Toggle Functional Fix
 
-Estender credenciais da conta com Gmail vinculado, **reaproveitando** as colunas já existentes `gmail_email` e `gmail_senha` em `contas_redes_sociais`. Zero migration.
+O toggle em **Configurações → Módulos** já persiste corretamente no banco (`nichos.contas_habilitado`, `nichos.applab_habilitado`) e invalida a query. O bug real é que **a navegação e o roteamento ignoram essas flags**: Contas e AppLab aparecem sempre na navbar e respondem a URLs mesmo quando desabilitados.
 
-### 1. Hooks — `src/hooks/queries/useAccounts.ts`
-- Adicionar `gmail_email: string | null` e `gmail_senha: string | null` à interface `AccountRow`.
-- Estender `AccountInput` com os mesmos campos (opcionais).
-- Persistir os campos nos payloads de `useCreateAccount` e `useUpdateAccount` (string vazia → `null`).
+### Diagnóstico
+- `AppSidebar` monta `navItems` com Contas/AppLab fixos, sem ler `nicho`.
+- `ColaboradorWorkspace.renderContent()` despacha rotas sem checar flags — usuário pode acessar `/contas` por URL mesmo com módulo OFF.
+- `ConfiguracoesNichoTab.handleToggle` já tem optimistic update + rollback + invalidate. Mantém.
 
-### 2. Form — `AccountFormDialog.tsx`
-Adicionar bloco leve **"Gmail Vinculado (Opcional)"** abaixo do bloco de Senha:
-- Toggle `has_linked_gmail` (Switch). Estado inicial = `!!account?.gmail_email`.
-- Quando ligado: inputs `Gmail` (email) + `Senha Gmail` (`PasswordField`).
-- Quando desligado: campos ocultos; no submit, enviar `gmail_email: null, gmail_senha: null` (remove vínculo).
-- Quando ligado mas Gmail vazio: bloquear submit com toast.
+### Mudanças
 
-### 3. Workspace — `AccountWorkspace.tsx`
-Adicionar sub-bloco **"Gmail Access"** dentro do Info panel, abaixo da Senha, separado por divisor sutil:
-- Se `account.gmail_email` existir → mostrar Gmail (com copy) + `PasswordField` readOnly/allowCopy para `gmail_senha`.
-- Se não existir → estado leve: texto "Sem Gmail vinculado" + botão pequeno **"Adicionar Gmail"** que abre o `AccountFormDialog` em modo edit.
+1. **`AppSidebar.tsx`**
+   - Aceitar prop opcional `nicho?: { contas_habilitado?: boolean; applab_habilitado?: boolean }`.
+   - Filtrar `navItems` no `useMemo`:
+     - Planejamento e Config sempre visíveis.
+     - Contas só se `nicho?.contas_habilitado`.
+     - AppLab só se `nicho?.applab_habilitado`.
 
-### 4. Busca — `AccountsGrid.tsx`
-Incluir `gmail_email` e `login_email` no haystack do filtro de busca (sem mudar UI/placeholder).
+2. **`MainLayout.tsx`**
+   - Adicionar prop opcional `nicho` e repassar para `<AppSidebar nicho={nicho} ... />`.
 
-### 5. Versão — `src/main.tsx`
-- `APP_VERSION = "0.0.6.5"`.
+3. **`ColaboradorWorkspace.tsx`**
+   - Passar `nicho` para `<MainLayout nicho={nicho} ... />`.
+   - Em `renderContent()`: se `path` começa com `contas` e `!nicho.contas_habilitado` → `<Navigate to={\`/workspace/${nichoId}\`} replace />`. Mesma regra para `applab` / `!nicho.applab_habilitado`. Bloqueia acesso direto por URL.
 
-### Protegido (não tocar)
-Folder Signal System, WeeklyOperationalTracker, login_email já existente em DB, planner, sidebar, auth, RLS, tema, performance, layout geral.
+4. **Versão — `src/main.tsx`**
+   - `APP_VERSION = "0.0.6.6"`.
 
-### Banco
-**Sem migration.** Reaproveitar `gmail_email` e `gmail_senha` (já existem na `contas_redes_sociais`). Sem nova coluna `has_linked_gmail` — derivado de `gmail_email != null`.
+### Protegido
+Planner, Contas (módulo), AppLab (módulo), Configurações, signal layer das pastas, Supabase/RLS, auth, tema, layout visual. Sem migration.
+
+### Resultado
+Desativar Contas → some da navbar + URL `/contas` redireciona para Planejamento. Reativar → reaparece. Persiste após refresh (já vinha do DB; agora a UI honra).

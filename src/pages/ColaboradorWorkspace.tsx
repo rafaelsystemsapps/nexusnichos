@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import { useNicho, useInvalidateNicho } from "@/hooks/queries";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { PlanejamentoTab } from "@/components/colaborador/planejamentotab";
@@ -30,6 +30,8 @@ export default function ColaboradorWorkspace() {
 
   const path = subPath ?? "";
   const accountMatch = path.match(/^contas\/([^/]+)$/);
+  const contasOn = !!(nicho as any).contas_habilitado;
+  const applabOn = !!(nicho as any).applab_habilitado;
 
   const getPageTitle = () => {
     if (!path || path === "projeto") return "Planejamento";
@@ -42,9 +44,16 @@ export default function ColaboradorWorkspace() {
 
   const renderContent = () => {
     if (!path || path === "projeto") return <PlanejamentoTab nichoId={nichoId!} />;
-    if (path === "contas") return <AccountsGrid nichoId={nichoId!} />;
-    if (accountMatch) return <AccountWorkspace nichoId={nichoId!} accountId={accountMatch[1]} />;
-    if (path === "applab") return <AppLabTab nichoId={nichoId!} />;
+    if (path === "contas" || accountMatch) {
+      if (!contasOn) return <Navigate to={`/workspace/${nichoId}`} replace />;
+      return accountMatch
+        ? <AccountWorkspace nichoId={nichoId!} accountId={accountMatch[1]} />
+        : <AccountsGrid nichoId={nichoId!} />;
+    }
+    if (path === "applab") {
+      if (!applabOn) return <Navigate to={`/workspace/${nichoId}`} replace />;
+      return <AppLabTab nichoId={nichoId!} />;
+    }
     if (path === "configuracoes") {
       return (
         <ConfiguracoesNichoTab
@@ -61,6 +70,7 @@ export default function ColaboradorWorkspace() {
     <MainLayout
       nichoId={nichoId}
       nichoNome={nicho.nome}
+      nicho={nicho as any}
       title={getPageTitle()}
       subtitle={`Workspace: ${nicho.nome}`}
     >
