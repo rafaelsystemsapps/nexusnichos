@@ -1,21 +1,32 @@
-## NEXUS v0.0.6.4 — Remove "Registrar Atividade" do módulo Contas
+## NEXUS v0.0.6.5 — Linked Gmail Credentials Extension
 
-Patch puramente de UI/limpeza. Remove o painel **AccountQuickLog** (Registrar Atividade) da tela da conta, deixando a Rotina Operacional ocupar todo o espaço.
+Estender credenciais da conta com Gmail vinculado, **reaproveitando** as colunas já existentes `gmail_email` e `gmail_senha` em `contas_redes_sociais`. Zero migration.
 
-### Mudanças
+### 1. Hooks — `src/hooks/queries/useAccounts.ts`
+- Adicionar `gmail_email: string | null` e `gmail_senha: string | null` à interface `AccountRow`.
+- Estender `AccountInput` com os mesmos campos (opcionais).
+- Persistir os campos nos payloads de `useCreateAccount` e `useUpdateAccount` (string vazia → `null`).
 
-1. **`AccountWorkspace.tsx`**
-   - Remover import e render de `<AccountQuickLog />`.
-   - Ajustar grid: trocar `xl:grid-cols-4` (3+1) por layout full-width para o `WeeklyOperationalTracker`.
+### 2. Form — `AccountFormDialog.tsx`
+Adicionar bloco leve **"Gmail Vinculado (Opcional)"** abaixo do bloco de Senha:
+- Toggle `has_linked_gmail` (Switch). Estado inicial = `!!account?.gmail_email`.
+- Quando ligado: inputs `Gmail` (email) + `Senha Gmail` (`PasswordField`).
+- Quando desligado: campos ocultos; no submit, enviar `gmail_email: null, gmail_senha: null` (remove vínculo).
+- Quando ligado mas Gmail vazio: bloquear submit com toast.
 
-2. **`main.tsx`**
-   - `APP_VERSION = "0.0.6.4"`.
+### 3. Workspace — `AccountWorkspace.tsx`
+Adicionar sub-bloco **"Gmail Access"** dentro do Info panel, abaixo da Senha, separado por divisor sutil:
+- Se `account.gmail_email` existir → mostrar Gmail (com copy) + `PasswordField` readOnly/allowCopy para `gmail_senha`.
+- Se não existir → estado leve: texto "Sem Gmail vinculado" + botão pequeno **"Adicionar Gmail"** que abre o `AccountFormDialog` em modo edit.
 
-3. **Arquivos mantidos (não deletar)**
-   - `AccountQuickLog.tsx` e `useAccountLogs.ts` permanecem no repo (sem referências), caso queira reintroduzir depois. Posso deletar se preferir limpeza total — me avise.
+### 4. Busca — `AccountsGrid.tsx`
+Incluir `gmail_email` e `login_email` no haystack do filtro de busca (sem mudar UI/placeholder).
 
-### Protegido / não tocar
-- Folder Signal System, Weekly Tracker, login email, username/senha, navegação de pastas, auth, Supabase, RLS, planner, tema, sidebar.
+### 5. Versão — `src/main.tsx`
+- `APP_VERSION = "0.0.6.5"`.
 
-### Resultado
-Tela da conta = só credenciais + Rotina Operacional ampliada. Sem ruído de "Registrar Atividade".
+### Protegido (não tocar)
+Folder Signal System, WeeklyOperationalTracker, login_email já existente em DB, planner, sidebar, auth, RLS, tema, performance, layout geral.
+
+### Banco
+**Sem migration.** Reaproveitar `gmail_email` e `gmail_senha` (já existem na `contas_redes_sociais`). Sem nova coluna `has_linked_gmail` — derivado de `gmail_email != null`.
