@@ -6,7 +6,7 @@ import { useAccount, useDeleteAccount, useSetAccountStatus, statusFromDB, Accoun
 import { PasswordField } from "@/components/shared/PasswordField";
 import { AccountFormDialog, PAISES, PLATAFORMAS } from "./AccountFormDialog";
 import { WeeklyOperationalTracker } from "./tracker/WeeklyOperationalTracker";
-import { AccountQuickLog } from "./AccountQuickLog";
+
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -120,15 +120,8 @@ export function AccountWorkspace({ nichoId, accountId }: Props) {
         </div>
       </div>
 
-      {/* Tracker + Log */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-        <div className="xl:col-span-3">
-          <WeeklyOperationalTracker accountId={accountId} nichoId={nichoId} />
-        </div>
-        <div className="xl:col-span-1">
-          <AccountQuickLog accountId={accountId} nichoId={nichoId} />
-        </div>
-      </div>
+      {/* Tracker */}
+      <WeeklyOperationalTracker accountId={accountId} nichoId={nichoId} />
 
       <AccountFormDialog open={editOpen} onOpenChange={setEditOpen} nichoId={nichoId} account={account} />
 
