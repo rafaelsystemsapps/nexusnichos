@@ -6,7 +6,7 @@ import { useAccount, useDeleteAccount, useSetAccountStatus, statusFromDB, Accoun
 import { PasswordField } from "@/components/shared/PasswordField";
 import { AccountFormDialog, PAISES, PLATAFORMAS } from "./AccountFormDialog";
 import { WeeklyOperationalTracker } from "./tracker/WeeklyOperationalTracker";
-import { AccountQuickLog } from "./AccountQuickLog";
+
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
