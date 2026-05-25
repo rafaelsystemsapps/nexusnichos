@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { PasswordField } from "@/components/shared/PasswordField";
 import { useCreateAccount, useUpdateAccount, AccountStatus, AccountRow } from "@/hooks/queries";
 import { toast } from "sonner";
@@ -54,7 +55,10 @@ export function AccountFormDialog({ open, onOpenChange, nichoId, account }: Prop
       if (account?.status === "pausada" || account?.status === "limitada") return "desabilitada";
       return "ativa";
     })(),
+    gmail_email: account?.gmail_email ?? "",
+    gmail_senha: account?.gmail_senha ?? "",
   });
+  const [hasGmail, setHasGmail] = useState(!!account?.gmail_email);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,12 +66,21 @@ export function AccountFormDialog({ open, onOpenChange, nichoId, account }: Prop
       toast.error("Nome da conta é obrigatório");
       return;
     }
+    if (hasGmail && !form.gmail_email.trim()) {
+      toast.error("Informe o Gmail vinculado ou desligue a opção");
+      return;
+    }
+    const payload = {
+      ...form,
+      gmail_email: hasGmail ? form.gmail_email.trim() || null : null,
+      gmail_senha: hasGmail ? form.gmail_senha || null : null,
+    };
     try {
       if (isEdit && account) {
-        await updateMut.mutateAsync({ id: account.id, nicho_id: nichoId, ...form });
+        await updateMut.mutateAsync({ id: account.id, nicho_id: nichoId, ...payload });
         toast.success("Conta atualizada");
       } else {
-        await createMut.mutateAsync({ nicho_id: nichoId, ...form });
+        await createMut.mutateAsync({ nicho_id: nichoId, ...payload });
         toast.success("Conta criada");
       }
       onOpenChange(false);
@@ -131,6 +144,30 @@ export function AccountFormDialog({ open, onOpenChange, nichoId, account }: Prop
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="rounded-md border border-border/40 bg-card/30 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-xs">Gmail Vinculado (opcional)</Label>
+                <p className="text-[10px] text-muted-foreground">Gmail de recuperação/operação</p>
+              </div>
+              <Switch checked={hasGmail} onCheckedChange={setHasGmail} />
+            </div>
+            {hasGmail && (
+              <div className="space-y-2 pt-1">
+                <Input
+                  type="email"
+                  value={form.gmail_email}
+                  onChange={(e) => setForm({ ...form, gmail_email: e.target.value })}
+                  placeholder="conta.ops@gmail.com"
+                />
+                <PasswordField
+                  value={form.gmail_senha}
+                  onChange={(v) => setForm({ ...form, gmail_senha: v })}
+                  placeholder="Senha do Gmail"
+                />
+              </div>
+            )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
