@@ -29,7 +29,7 @@ export function AccountsGrid({ nichoId }: Props) {
       if (filterPais !== "todos" && a.pais !== filterPais) return false;
       if (search) {
         const q = search.toLowerCase().replace(/^@/, "");
-        const hay = `${a.username ?? ""} ${a.nome_conta}`.toLowerCase();
+        const hay = `${a.username ?? ""} ${a.nome_conta} ${a.gmail_email ?? ""} ${a.login_email ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;

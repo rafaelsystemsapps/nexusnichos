@@ -28,6 +28,9 @@ export interface AccountRow {
   disabled_at: string | null;
   banned_at: string | null;
   created_at: string;
+  gmail_email: string | null;
+  gmail_senha: string | null;
+  login_email: string | null;
 }
 
 export function useAccounts(nichoId: string | undefined) {
@@ -71,6 +74,8 @@ interface AccountInput {
   pais?: string | null;
   data_criacao_conta?: string | null;
   status: AccountStatus;
+  gmail_email?: string | null;
+  gmail_senha?: string | null;
 }
 
 export function useCreateAccount() {
@@ -88,6 +93,8 @@ export function useCreateAccount() {
         status: statusToDB(input.status),
         disabled_at: input.status === "desabilitada" ? new Date().toISOString() : null,
         banned_at: input.status === "banida" ? new Date().toISOString() : null,
+        gmail_email: input.gmail_email || null,
+        gmail_senha: input.gmail_senha || null,
       };
       const { data, error } = await supabase
         .from("contas_redes_sociais")
@@ -115,6 +122,8 @@ export function useUpdateAccount() {
         status: statusToDB(input.status),
         disabled_at: input.status === "desabilitada" ? new Date().toISOString() : null,
         banned_at: input.status === "banida" ? new Date().toISOString() : null,
+        gmail_email: input.gmail_email ?? null,
+        gmail_senha: input.gmail_senha ?? null,
       };
       const { error } = await supabase.from("contas_redes_sociais").update(payload).eq("id", id);
       if (error) throw error;
