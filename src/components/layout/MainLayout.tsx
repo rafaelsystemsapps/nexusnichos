@@ -7,11 +7,12 @@ export interface MainLayoutProps {
   children: ReactNode;
   nichoId?: string;
   nichoNome?: string;
+  nicho?: { contas_habilitado?: boolean; applab_habilitado?: boolean } | null;
   title?: string;
   subtitle?: string;
 }
 
-export function MainLayout({ children, nichoId, nichoNome, title, subtitle }: MainLayoutProps) {
+export function MainLayout({ children, nichoId, nichoNome, nicho, title, subtitle }: MainLayoutProps) {
   const isIOSMobile = useIsIOSMobile();
 
   return (
@@ -19,7 +20,7 @@ export function MainLayout({ children, nichoId, nichoNome, title, subtitle }: Ma
       "min-h-screen bg-background",
       isIOSMobile && "ios-safe-area"
     )}>
-      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} />
+      <AppSidebar nichoId={nichoId} nichoNome={nichoNome} nicho={nicho} />
 
       <main className={cn(
         "min-h-screen",
