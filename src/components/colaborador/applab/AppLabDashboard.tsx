@@ -84,8 +84,8 @@ export function AppLabDashboard({ clients, apps }: Props) {
       </Section>
 
       <Section title="Split">
-        <Stat label="B2B" value={b2b.length} accent="text-blue-400" />
-        <Stat label="B2C" value={b2c.length} accent="text-purple-400" />
+        <Stat label="B2B" value={b2bLen} accent="text-blue-400" />
+        <Stat label="B2C" value={b2cLen} accent="text-purple-400" />
       </Section>
     </div>
   );
