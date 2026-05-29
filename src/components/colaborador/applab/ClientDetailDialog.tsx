@@ -73,6 +73,7 @@ export function ClientDetailDialog({ open, onOpenChange, client, appName, onEdit
                 value={format(new Date(client.created_at), "dd/MM/yyyy")}
               />
               <Field label="Tipo" value={client.app_type.toUpperCase()} />
+              <Field label="App vinculado" value={appName ?? "—"} />
             </div>
             {client.description && <Field label="Descrição" value={client.description} />}
           </section>
