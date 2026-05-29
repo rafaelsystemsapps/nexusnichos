@@ -1,85 +1,78 @@
-# NEXUS v0.0.7.1 — App Lab Architecture Rebuild (Apps + Clients Separation)
+# NEXUS v0.0.7.2 — Stability & Context Recovery Fix
 
-Reestrutura o App Lab para separar **Apps** e **Clientes** como entidades distintas, com vínculo relacional (1 App → N Clientes), e três subabas: **Dashboard**, **Clientes**, **Apps**. Billing continua exclusivo B2B. Sem mudar tema, navegação externa, toggle de módulos ou demais módulos.
+## Diagnóstico (causa raiz confirmada)
 
-## Modelo relacional
+O erro **"Nicho não encontrado"** não é um problema de dados — é uma **race condition de autenticação**:
 
+1. `PerfilProvider` faz o login compartilhado de forma assíncrona (`garantirSessao()` em `useEffect`).
+2. Ao mesmo tempo, `ColaboradorWorkspace` monta e dispara `useNicho` com `enabled: !!nichoId` — ou seja, **imediatamente**, sem esperar a sessão.
+3. Sem sessão, o RLS bloqueia a leitura: `nichos` volta vazio. Como o código usa `.maybeSingle()`, isso retorna `data: null` **sem erro**.
+4. React Query marca `isLoading = false` com `nicho = null` → renderiza "Nicho não encontrado" mesmo o nicho existindo.
+
+Após o login concluir, nada re-dispara a query a tempo de forma confiável, e em reloads o timing muda → erro "aleatório". O mesmo timing atinge AppLab/Contas (queries disparando antes da sessão).
+
+A **dupla renderização** em desenvolvimento vem do `React.StrictMode` (comportamento intencional do React em dev, não ocorre em produção). O patch não vai removê-lo, mas vai eliminar os efeitos colaterais reais (fetches duplicados / fallback prematuro).
+
+## O que vai ser feito
+
+### 1. Sinal global de "auth pronta" (`useAuthReady`)
+- Criar `src/hooks/useAuthReady.ts`: um hook leve baseado em React Query (`queryKey: ["auth-session"]`) que executa `garantirSessao()` + `supabase.auth.getSession()` uma única vez e expõe `{ ready, userId }`.
+- `PerfilProvider` passa a consumir o mesmo mecanismo (fonte única de verdade da sessão), removendo a duplicação de lógica de login e o `ready` local solto.
+
+### 2. Gating de TODAS as queries dependentes da sessão
+Adicionar a condição de sessão pronta ao `enabled` de cada query que depende de RLS:
+- `useNicho` → `enabled: ready && !!nichoId`
+- `useAppLabApps`, `useAppLabClients` → `enabled: ready && !!nichoId`
+- `useAccounts`, `useAccountTasks`, `useAccountLogs`, `useWorkspaceLinks`, `usePlannerNotes` → mesmo padrão
+
+Assim nenhuma query roda antes de a sessão existir, eliminando o vazio causado pelo RLS.
+
+### 3. Distinguir "carregando" de "inexistente" no `ColaboradorWorkspace`
+Lógica atual rende erro cedo demais. Nova ordem:
 ```text
-apps (raiz)
- └── clients (1 app → N clientes)
-       └── client_billing (1:1, só B2B)
+if (!authReady)            -> LoadingScreen   (sessão ainda subindo)
+if (nicho query loading)   -> LoadingScreen
+if (query success && null) -> "Nicho não encontrado"  (realmente inexistente)
+if (query error)           -> estado de erro com botão "Tentar novamente"
 ```
+Só renderiza o erro quando a query **terminou com sucesso** e retornou `null` — nunca durante loading/idle.
 
-## 1. Banco de dados (migration)
+### 4. Guards defensivos nos componentes relacionais (App Lab)
+- `AppLabWorkspace` / `AppsTab` / `ClientsTab` / `AppDetailDialog`: não montar grids/subpastas enquanto `apps`/`clients` ainda carregam; mostrar skeleton/placeholder leve.
+- Verificar `app_id` / `client_id` antes de renderizar pastas vinculadas (evita render com IDs indefinidos).
 
-Criar tabelas novas dedicadas (com `nicho_id` + `user_id` no padrão RLS atual via `get_user_nicho`/`has_role`):
+### 5. Reduzir rerender em cascata (App Lab relacional)
+- Memoizar listas derivadas (clientes por app, contagens, métricas do dashboard) com `useMemo`.
+- Estabilizar handlers com `useCallback` onde passados a filhos.
+- Garantir `key` estável em todos os `.map` de pastas/subpastas.
 
-- **app_lab_apps**: `name`, `app_type` (b2b/b2c), `category`, `country`, `status` (active/inactive/pending), `description`, `nicho_id`, `user_id`, timestamps.
-- **app_lab_clients_v2** (ou reaproveitar `app_lab_clients` adicionando coluna `app_id`): adicionar `app_id uuid` referenciando o app vinculado. Para evitar perda de dados, **adiciono `app_id` à tabela `app_lab_clients` existente** e mantenho `app_type`/credenciais/status.
-- **app_lab_billing**: já existe (1:1 com cliente B2B) — mantida como está.
+### 6. Error Boundary
+- Criar `src/components/ErrorBoundary.tsx` (classe, com fallback de "algo deu errado / recarregar").
+- Envolver o conteúdo do `MainLayout` (renderContent) — protege App Lab, Contas, Workspace e views relacionais de crash total; um módulo que falhe não derruba a workspace inteira.
 
-Cada `CREATE TABLE` novo terá GRANTs (`authenticated`, `service_role`) + RLS (mesmas 4 policies por nicho) + trigger `update_updated_at_column`. Tabelas legadas `applab_apps`/`applab_account_links` permanecem intocadas (sem uso na UI).
+### 7. Versão
+- `src/main.tsx`: `APP_VERSION = "0.0.7.2"`.
 
-## 2. Subnavegação interna
+## Arquivos afetados
 
-`AppLabWorkspace` ganha 3 abas (componente `Tabs`): **Dashboard | Clientes | Apps**. Estado de aba local, sem alterar rota.
+**Criar**
+- `src/hooks/useAuthReady.ts`
+- `src/components/ErrorBoundary.tsx`
 
-## 3. Dashboard (aba 1)
+**Editar**
+- `src/contexts/PerfilContext.tsx` (usar fonte única de sessão)
+- `src/hooks/queries/useNicho.ts`, `useAppLabApps.ts`, `useAppLabClients.ts`, `useAccounts.ts`, `useAccountTasks.ts`, `useAccountLogs.ts`, `useWorkspaceLinks.ts`, `usePlannerNotes.ts` (gating em `enabled`)
+- `src/pages/ColaboradorWorkspace.tsx` (loading vs not-found vs error)
+- `src/components/layout/MainLayout.tsx` (ErrorBoundary ao redor do conteúdo)
+- `src/components/colaborador/applab/AppLabWorkspace.tsx`, `AppsTab.tsx`, `ClientsTab.tsx`, `AppDetailDialog.tsx` (guards + memoization)
+- `src/main.tsx` (versão)
 
-Visão executiva leve com cards:
-- Totais: total apps, total clientes, apps ativos, clientes ativos/aguardando/inativos.
-- Financeiro B2B: MRR total, clientes em atraso, em dia, vencimentos próximos.
-- Split B2B vs B2C.
-
-## 4. Clientes (aba 2)
-
-- Grid de pastas (reusa `ClientCard`), cada cliente mostra: nome, **app vinculado**, tipo, status, billing state (se B2B).
-- Botão **+ Novo Cliente** → `ClientFormDialog` com:
-  - Identidade: nome, tipo, país, descrição.
-  - **Vinculação de App**: dropdown "Vincular app existente" OU "Criar novo app" inline (cria app e já vincula).
-  - Credenciais: login, senha, observações.
-  - Billing (só B2B): mensalidade, vencimento, próximo pagamento, plano.
-- Filtros: nome, app vinculado, ativos, atrasados, B2B/B2C.
-- `ClientDetailDialog`: identidade (com app vinculado + created_at), credenciais, billing (B2B).
-
-## 5. Apps (aba 3)
-
-- Grid de pastas, cada app mostra: nome, tipo, status, país, **nº de clientes vinculados**.
-- Botão **+ Novo App** → `AppFormDialog`: nome, categoria, tipo, status, país, descrição, data criação.
-- `AppDetailDialog` (estilo folder/subfolder): identidade do app + **clientes vinculados como subpastas** (mini-cards). Permite editar/excluir o app.
-- Filtros: nome, ativos, B2B/B2C, nº clientes.
-
-## 6. Estados visuais (padrão NEXUS)
-
-- Ativo: normal. Inativo: opacidade reduzida. Aguardando: tom neutro/âmbar.
-- Billing B2B: verde = em dia, vermelho = atrasado.
-
-## Detalhes técnicos
-
-**Migration** (via ferramenta de migração, com aprovação):
-- `CREATE TABLE public.app_lab_apps (...)` + GRANT + RLS + trigger.
-- `ALTER TABLE public.app_lab_clients ADD COLUMN app_id uuid;`
-
-**Hooks** (`src/hooks/queries/`):
-- Novo `useAppLabApps.ts`: CRUD de apps + contagem de clientes vinculados.
-- Atualizar `useAppLabClients.ts`: incluir `app_id` no select/insert/update e tipo `AppLabClient.app_id`.
-
-**Componentes** (`src/components/colaborador/applab/`):
-- `AppLabWorkspace.tsx`: introduz `Tabs` (Dashboard/Clientes/Apps) e orquestra estados.
-- `AppLabDashboard.tsx` (novo): cards de visão geral (consolida lógica de `AppLabStats`).
-- `ClientsTab.tsx` (novo): grid + filtros + dialogs de clientes (extrai lógica atual).
-- `AppsTab.tsx` (novo): grid + filtros + dialogs de apps.
-- `AppCard.tsx` (novo): pasta de app com nº de clientes.
-- `AppFormDialog.tsx` (novo): criar/editar app.
-- `AppDetailDialog.tsx` (novo): identidade + subpastas de clientes.
-- `ClientFormDialog.tsx`: adicionar seção de vinculação de app (dropdown existente / criar novo inline).
-- `ClientCard.tsx`: exibir nome do app vinculado.
-- Reaproveitar `AppLabFilters.tsx`/`AppLabStats.tsx` (stats migra para dashboard).
-
-**Versão**: `src/main.tsx` → `APP_VERSION = "0.0.7.1"`.
-
-**Protegido (não alterar)**: workspaces, module toggle, dashboard do colaborador, módulo Contas, Planner, auth, estrutura Supabase core, tema e performance.
+## Regras de proteção (não alterar comportamento)
+- App Lab, Planner, Contas, rotina operacional, auth/login invisível compartilhado, Supabase/Lovable Cloud, workspaces, tema e toggles de módulo permanecem funcionalmente idênticos.
+- Sem rebuild visual. Sem mudanças de schema/migração. Sem mascarar erro — apenas corrigir a ordem de render e o timing das queries.
 
 ## Resultado esperado
-
-App Lab passa a ter Dashboard (visão geral), Clientes (pastas de clientes vinculados a apps) e Apps (pastas de apps com clientes como subpastas), com criação relacional de cliente↔app e billing apenas B2B.
+- Fim do "Nicho não encontrado" falso (queries esperam a sessão).
+- Fim de fetches duplicados/fallback prematuro; render previsível.
+- Módulos isolados por error boundary (sem crash total).
+- App Lab relacional estável, sem rerender em cascata.

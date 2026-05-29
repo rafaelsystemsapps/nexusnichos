@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays } from "date-fns";
+import { useAuthReady } from "@/hooks/useAuthReady";
 
 export type PlannerNote = {
   id: string;
@@ -33,6 +34,7 @@ function invalidateAll(qc: ReturnType<typeof useQueryClient>, nichoId: string) {
 }
 
 export function useNotesByDay(nichoId: string, day: string = todayStr()) {
+  const { ready } = useAuthReady();
   return useQuery({
     queryKey: keys.day(nichoId, day),
     queryFn: async () => {
@@ -47,11 +49,12 @@ export function useNotesByDay(nichoId: string, day: string = todayStr()) {
       if (error) throw error;
       return (data ?? []) as PlannerNote[];
     },
-    enabled: !!nichoId,
+    enabled: ready && !!nichoId,
   });
 }
 
 export function usePendingFromPreviousDays(nichoId: string, today: string = todayStr()) {
+  const { ready } = useAuthReady();
   return useQuery({
     queryKey: keys.pendingPrev(nichoId, today),
     queryFn: async () => {
@@ -67,11 +70,12 @@ export function usePendingFromPreviousDays(nichoId: string, today: string = toda
       if (error) throw error;
       return (data ?? []) as PlannerNote[];
     },
-    enabled: !!nichoId,
+    enabled: ready && !!nichoId,
   });
 }
 
 export function useWeekStats(nichoId: string, today: string = todayStr()) {
+  const { ready } = useAuthReady();
   return useQuery({
     queryKey: keys.week(nichoId, today),
     queryFn: async () => {
@@ -91,11 +95,12 @@ export function useWeekStats(nichoId: string, today: string = todayStr()) {
       const produtividade = total > 0 ? Math.round((concluidas / total) * 100) : 0;
       return { concluidas, recuperadas, total, produtividade };
     },
-    enabled: !!nichoId,
+    enabled: ready && !!nichoId,
   });
 }
 
 export function useHistory(nichoId: string, days = 30) {
+  const { ready } = useAuthReady();
   const today = todayStr();
   const from = format(subDays(new Date(), days - 1), "yyyy-MM-dd");
   return useQuery({
@@ -126,7 +131,7 @@ export function useHistory(nichoId: string, days = 30) {
         recuperadas: notes.filter((n) => n.is_recovered).length,
       }));
     },
-    enabled: !!nichoId,
+    enabled: ready && !!nichoId,
   });
 }
 

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthReady } from "@/hooks/useAuthReady";
 
 export interface WorkspaceLink {
   id: string;
@@ -13,6 +14,7 @@ export interface WorkspaceLink {
 }
 
 export function useWorkspaceLink(nichoId: string | undefined, type: string) {
+  const { ready } = useAuthReady();
   return useQuery({
     queryKey: ["workspace-link", nichoId, type],
     queryFn: async () => {
@@ -28,7 +30,7 @@ export function useWorkspaceLink(nichoId: string | undefined, type: string) {
       if (error) throw error;
       return data as WorkspaceLink | null;
     },
-    enabled: !!nichoId && !!type,
+    enabled: ready && !!nichoId && !!type,
   });
 }
 

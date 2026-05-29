@@ -4,7 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 
 // ----- Boot version check: invalidate legacy local state on version bump -----
-const APP_VERSION = "0.0.7.1";
+const APP_VERSION = "0.0.7.2";
 const VERSION_KEY = "nexus_app_version";
 
 try {

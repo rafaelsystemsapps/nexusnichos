@@ -1,10 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
-// Sessão compartilhada — login invisível para que as RLS continuem funcionando.
-// O usuário nunca digita senha nem vê tela de login.
-const SHARED_EMAIL = "rafael.workbiz@gmail.com";
-const SHARED_PASSWORD = "Admin2902";
+import { ensureSession } from "@/lib/session";
 
 export type TipoPerfil = "admin" | "colaborador";
 
@@ -41,13 +37,11 @@ interface PerfilContextType {
 const PerfilContext = createContext<PerfilContextType | undefined>(undefined);
 
 async function garantirSessao() {
-  const { data } = await supabase.auth.getSession();
-  if (data.session) return;
-  const { error } = await supabase.auth.signInWithPassword({
-    email: SHARED_EMAIL,
-    password: SHARED_PASSWORD,
-  });
-  if (error) console.error("Falha no login compartilhado:", error.message);
+  try {
+    await ensureSession();
+  } catch {
+    // erro já logado em ensureSession
+  }
 }
 
 function carregarPerfilSalvo(): Perfil | null {

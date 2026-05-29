@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuthReady } from "@/hooks/useAuthReady";
 
 export type AppType = "b2b" | "b2c";
 export type ClientStatus = "active" | "inactive" | "pending";
@@ -55,9 +56,10 @@ export interface ClientFormInput {
 const QK = (nichoId: string) => ["applab-clients", nichoId];
 
 export function useAppLabClients(nichoId: string) {
+  const { ready } = useAuthReady();
   return useQuery({
     queryKey: QK(nichoId),
-    enabled: !!nichoId,
+    enabled: ready && !!nichoId,
     queryFn: async (): Promise<AppLabClient[]> => {
       const { data: clients, error } = await supabase
         .from("app_lab_clients" as any)
