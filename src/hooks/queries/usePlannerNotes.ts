@@ -49,11 +49,12 @@ export function useNotesByDay(nichoId: string, day: string = todayStr()) {
       if (error) throw error;
       return (data ?? []) as PlannerNote[];
     },
-    enabled: !!nichoId,
+    enabled: ready && !!nichoId,
   });
 }
 
 export function usePendingFromPreviousDays(nichoId: string, today: string = todayStr()) {
+  const { ready } = useAuthReady();
   return useQuery({
     queryKey: keys.pendingPrev(nichoId, today),
     queryFn: async () => {
@@ -69,11 +70,12 @@ export function usePendingFromPreviousDays(nichoId: string, today: string = toda
       if (error) throw error;
       return (data ?? []) as PlannerNote[];
     },
-    enabled: !!nichoId,
+    enabled: ready && !!nichoId,
   });
 }
 
 export function useWeekStats(nichoId: string, today: string = todayStr()) {
+  const { ready } = useAuthReady();
   return useQuery({
     queryKey: keys.week(nichoId, today),
     queryFn: async () => {
@@ -93,7 +95,7 @@ export function useWeekStats(nichoId: string, today: string = todayStr()) {
       const produtividade = total > 0 ? Math.round((concluidas / total) * 100) : 0;
       return { concluidas, recuperadas, total, produtividade };
     },
-    enabled: !!nichoId,
+    enabled: ready && !!nichoId,
   });
 }
 
