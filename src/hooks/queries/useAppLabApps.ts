@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { AppType, ClientStatus } from "./useAppLabClients";
 
 export interface AppLabApp {
@@ -30,9 +31,10 @@ export interface AppFormInput {
 const QK = (nichoId: string) => ["applab-apps", nichoId];
 
 export function useAppLabApps(nichoId: string) {
+  const { ready } = useAuthReady();
   return useQuery({
     queryKey: QK(nichoId),
-    enabled: !!nichoId,
+    enabled: ready && !!nichoId,
     queryFn: async (): Promise<AppLabApp[]> => {
       const { data, error } = await supabase
         .from("app_lab_apps" as any)
