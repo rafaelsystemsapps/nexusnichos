@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthReady } from "@/hooks/useAuthReady";
 
 export type AccountStatus = "ativa" | "desabilitada" | "banida";
 
@@ -34,9 +35,10 @@ export interface AccountRow {
 }
 
 export function useAccounts(nichoId: string | undefined) {
+  const { ready } = useAuthReady();
   return useQuery({
     queryKey: ["accounts", nichoId],
-    enabled: !!nichoId,
+    enabled: ready && !!nichoId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contas_redes_sociais")
