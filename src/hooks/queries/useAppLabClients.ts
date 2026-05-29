@@ -20,6 +20,7 @@ export interface AppLabClient {
   id: string;
   nicho_id: string;
   user_id: string;
+  app_id: string | null;
   name: string;
   app_type: AppType;
   status: ClientStatus;
@@ -37,6 +38,7 @@ export interface ClientFormInput {
   name: string;
   app_type: AppType;
   status: ClientStatus;
+  app_id?: string | null;
   country?: string | null;
   description?: string | null;
   login_email?: string | null;
