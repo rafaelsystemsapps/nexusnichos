@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays } from "date-fns";
+import { useAuthReady } from "@/hooks/useAuthReady";
 
 export type PlannerNote = {
   id: string;
