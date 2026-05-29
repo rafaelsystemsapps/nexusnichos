@@ -1,24 +1,42 @@
 import { useParams, Navigate } from "react-router-dom";
 import { useNicho, useInvalidateNicho } from "@/hooks/queries";
+import { useAuthReady } from "@/hooks/useAuthReady";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { PlanejamentoTab } from "@/components/colaborador/planejamentotab";
 import { AccountsGrid } from "@/components/colaborador/accounts/AccountsGrid";
 import { AccountWorkspace } from "@/components/colaborador/accounts/AccountWorkspace";
 import { AppLabTab } from "@/components/colaborador/AppLabTab";
 import { ConfiguracoesNichoTab } from "@/components/colaborador/ConfiguracoesNichoTab";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Button } from "@/components/ui/button";
 import LoadingScreen from "@/components/LoadingScreen";
 
 export default function ColaboradorWorkspace() {
   const { nichoId, "*": subPath } = useParams<{ nichoId: string; "*": string }>();
 
-  const { data: nicho, isLoading: loading } = useNicho(nichoId);
+  const { ready: authReady } = useAuthReady();
+  const { data: nicho, isLoading, isError, refetch, isSuccess } = useNicho(nichoId);
   const invalidateNicho = useInvalidateNicho(nichoId);
 
-  if (loading) {
+  // Sessão ainda subindo ou query carregando → loading, nunca erro prematuro.
+  if (!authReady || isLoading) {
     return <LoadingScreen />;
   }
 
-  if (!nicho) {
+  // Erro real de rede/RLS → permite tentar novamente (não mascara como "não encontrado").
+  if (isError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <p className="text-lg text-muted-foreground">Não foi possível carregar a workspace.</p>
+          <Button variant="outline" onClick={() => refetch()}>Tentar novamente</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Só renderiza "não encontrado" quando a query terminou com sucesso e retornou nada.
+  if (isSuccess && !nicho) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -26,6 +44,11 @@ export default function ColaboradorWorkspace() {
         </div>
       </div>
     );
+  }
+
+  // Estado intermediário (idle) → loading seguro.
+  if (!nicho) {
+    return <LoadingScreen />;
   }
 
   const path = subPath ?? "";
