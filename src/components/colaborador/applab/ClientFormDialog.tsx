@@ -382,8 +382,8 @@ export function ClientFormDialog({ open, onOpenChange, client, apps, onSubmit, o
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Salvando..." : isEdit ? "Salvar" : "Criar"}
+              <Button type="submit" disabled={isLoading || creatingApp}>
+                {isLoading || creatingApp ? "Salvando..." : isEdit ? "Salvar" : "Criar"}
               </Button>
             </DialogFooter>
           </form>
