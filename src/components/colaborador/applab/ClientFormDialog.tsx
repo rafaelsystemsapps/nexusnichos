@@ -239,6 +239,50 @@ export function ClientFormDialog({ open, onOpenChange, client, apps, onSubmit, o
               />
             </section>
 
+            {/* Vinculação de App */}
+            <section className="space-y-3">
+              <h4 className="text-xs uppercase tracking-wider text-muted-foreground">App vinculado</h4>
+              <RadioGroup
+                value={linkMode}
+                onValueChange={(v) => setLinkMode(v as LinkMode)}
+                className="flex flex-wrap gap-4"
+              >
+                <Label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="none" /> Sem app
+                </Label>
+                <Label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="existing" /> Vincular existente
+                </Label>
+                <Label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="new" /> Criar novo
+                </Label>
+              </RadioGroup>
+              {linkMode === "existing" && (
+                <Select value={selectedAppId} onValueChange={setSelectedAppId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um app" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {apps.length === 0 && (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">Nenhum app cadastrado</div>
+                    )}
+                    {apps.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {linkMode === "new" && (
+                <Input
+                  value={newAppName}
+                  onChange={(e) => setNewAppName(e.target.value)}
+                  placeholder="Nome do novo app"
+                />
+              )}
+            </section>
+
+
+
             {/* Credenciais */}
             <section className="space-y-3">
               <h4 className="text-xs uppercase tracking-wider text-muted-foreground">Credenciais</h4>
