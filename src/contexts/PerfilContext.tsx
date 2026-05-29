@@ -37,13 +37,11 @@ interface PerfilContextType {
 const PerfilContext = createContext<PerfilContextType | undefined>(undefined);
 
 async function garantirSessao() {
-  const { data } = await supabase.auth.getSession();
-  if (data.session) return;
-  const { error } = await supabase.auth.signInWithPassword({
-    email: SHARED_EMAIL,
-    password: SHARED_PASSWORD,
-  });
-  if (error) console.error("Falha no login compartilhado:", error.message);
+  try {
+    await ensureSession();
+  } catch {
+    // erro já logado em ensureSession
+  }
 }
 
 function carregarPerfilSalvo(): Perfil | null {
