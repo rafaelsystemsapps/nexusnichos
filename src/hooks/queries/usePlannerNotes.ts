@@ -131,7 +131,7 @@ export function useHistory(nichoId: string, days = 30) {
         recuperadas: notes.filter((n) => n.is_recovered).length,
       }));
     },
-    enabled: !!nichoId,
+    enabled: ready && !!nichoId,
   });
 }
 
