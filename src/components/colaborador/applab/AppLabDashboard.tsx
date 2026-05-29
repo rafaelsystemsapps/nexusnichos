@@ -28,26 +28,39 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function AppLabDashboard({ clients, apps }: Props) {
-  const totalApps = apps.length;
-  const appsActive = apps.filter((a) => a.status === "active").length;
+  const m = useMemo(() => {
+    const totalApps = apps.length;
+    const appsActive = apps.filter((a) => a.status === "active").length;
 
-  const totalClients = clients.length;
-  const clientsActive = clients.filter((c) => c.status === "active").length;
-  const clientsPending = clients.filter((c) => c.status === "pending").length;
-  const clientsInactive = clients.filter((c) => c.status === "inactive").length;
+    const totalClients = clients.length;
+    const clientsActive = clients.filter((c) => c.status === "active").length;
+    const clientsPending = clients.filter((c) => c.status === "pending").length;
+    const clientsInactive = clients.filter((c) => c.status === "inactive").length;
 
-  const b2b = clients.filter((c) => c.app_type === "b2b");
-  const b2c = clients.filter((c) => c.app_type === "b2c");
+    const b2b = clients.filter((c) => c.app_type === "b2b");
+    const b2c = clients.filter((c) => c.app_type === "b2c");
 
-  const mrr = b2b
-    .filter((c) => c.status === "active")
-    .reduce((sum, c) => sum + Number(c.billing?.monthly_value || 0), 0);
-  const atrasados = b2b.filter((c) => computeBillingStatus(c.billing) === "atrasado").length;
-  const emDia = b2b.length - atrasados;
-  const proximos = b2b.filter((c) => {
-    const d = daysUntil(c.billing?.next_payment);
-    return d !== null && d >= 0 && d <= 7;
-  }).length;
+    const mrr = b2b
+      .filter((c) => c.status === "active")
+      .reduce((sum, c) => sum + Number(c.billing?.monthly_value || 0), 0);
+    const atrasados = b2b.filter((c) => computeBillingStatus(c.billing) === "atrasado").length;
+    const emDia = b2b.length - atrasados;
+    const proximos = b2b.filter((c) => {
+      const d = daysUntil(c.billing?.next_payment);
+      return d !== null && d >= 0 && d <= 7;
+    }).length;
+
+    return {
+      totalApps, appsActive, totalClients, clientsActive, clientsPending,
+      clientsInactive, b2bLen: b2b.length, b2cLen: b2c.length, mrr, atrasados, emDia, proximos,
+    };
+  }, [clients, apps]);
+
+  const {
+    totalApps, appsActive, totalClients, clientsActive, clientsPending,
+    clientsInactive, b2bLen, b2cLen, mrr, atrasados, emDia, proximos,
+  } = m;
+
 
   const fmt = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
