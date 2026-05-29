@@ -18,10 +18,11 @@ const STATUS_LABEL: Record<string, string> = {
 
 interface Props {
   client: AppLabClient;
+  appName?: string | null;
   onClick: (c: AppLabClient) => void;
 }
 
-export function ClientCard({ client, onClick }: Props) {
+export function ClientCard({ client, appName, onClick }: Props) {
   const pais = paisInfo(client.country);
   const isInactive = client.status === "inactive";
   const isPending = client.status === "pending";
