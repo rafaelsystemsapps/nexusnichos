@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { PasswordField } from "@/components/shared/PasswordField";
 import { PAISES } from "@/lib/paises";
 import { AppLabClient, ClientFormInput } from "@/hooks/queries/useAppLabClients";
+import { AppFormInput, AppLabApp } from "@/hooks/queries/useAppLabApps";
 
 const schema = z.object({
   name: z.string().trim().min(1, "Obrigatório").max(120),
