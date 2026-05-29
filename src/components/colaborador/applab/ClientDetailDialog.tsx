@@ -12,6 +12,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   client: AppLabClient | null;
+  appName?: string | null;
   onEdit: (c: AppLabClient) => void;
   onDelete: (c: AppLabClient) => void;
 }
@@ -31,7 +32,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export function ClientDetailDialog({ open, onOpenChange, client, onEdit, onDelete }: Props) {
+export function ClientDetailDialog({ open, onOpenChange, client, appName, onEdit, onDelete }: Props) {
   if (!client) return null;
   const pais = paisInfo(client.country);
   const billingStatus = client.app_type === "b2b" ? computeBillingStatus(client.billing) : null;
@@ -72,6 +73,7 @@ export function ClientDetailDialog({ open, onOpenChange, client, onEdit, onDelet
                 value={format(new Date(client.created_at), "dd/MM/yyyy")}
               />
               <Field label="Tipo" value={client.app_type.toUpperCase()} />
+              <Field label="App vinculado" value={appName ?? "—"} />
             </div>
             {client.description && <Field label="Descrição" value={client.description} />}
           </section>

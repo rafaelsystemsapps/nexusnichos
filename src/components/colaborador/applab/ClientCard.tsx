@@ -18,10 +18,11 @@ const STATUS_LABEL: Record<string, string> = {
 
 interface Props {
   client: AppLabClient;
+  appName?: string | null;
   onClick: (c: AppLabClient) => void;
 }
 
-export function ClientCard({ client, onClick }: Props) {
+export function ClientCard({ client, appName, onClick }: Props) {
   const pais = paisInfo(client.country);
   const isInactive = client.status === "inactive";
   const isPending = client.status === "pending";
@@ -48,8 +49,12 @@ export function ClientCard({ client, onClick }: Props) {
       />
       <div className="text-center min-w-0 w-full">
         <div className="font-semibold text-sm truncate">{client.name}</div>
-        {client.description && (
-          <div className="text-xs text-muted-foreground truncate">{client.description}</div>
+        {appName ? (
+          <div className="text-xs text-primary/80 truncate">📦 {appName}</div>
+        ) : (
+          client.description && (
+            <div className="text-xs text-muted-foreground truncate">{client.description}</div>
+          )
         )}
       </div>
       <div className="flex items-center gap-1.5 text-[10px] flex-wrap justify-center">

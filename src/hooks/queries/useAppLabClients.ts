@@ -20,6 +20,7 @@ export interface AppLabClient {
   id: string;
   nicho_id: string;
   user_id: string;
+  app_id: string | null;
   name: string;
   app_type: AppType;
   status: ClientStatus;
@@ -37,6 +38,7 @@ export interface ClientFormInput {
   name: string;
   app_type: AppType;
   status: ClientStatus;
+  app_id?: string | null;
   country?: string | null;
   description?: string | null;
   login_email?: string | null;
@@ -100,6 +102,7 @@ export function useCreateAppLabClient(nichoId: string) {
           name: input.name,
           app_type: input.app_type,
           status: input.status,
+          app_id: input.app_id ?? null,
           country: input.country ?? "BR",
           description: input.description ?? null,
           login_email: input.login_email ?? null,
@@ -141,6 +144,7 @@ export function useUpdateAppLabClient(nichoId: string) {
           name: input.name,
           app_type: input.app_type,
           status: input.status,
+          app_id: input.app_id ?? null,
           country: input.country ?? "BR",
           description: input.description ?? null,
           login_email: input.login_email ?? null,

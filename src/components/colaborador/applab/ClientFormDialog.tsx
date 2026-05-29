@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { PasswordField } from "@/components/shared/PasswordField";
 import { PAISES } from "@/lib/paises";
 import { AppLabClient, ClientFormInput } from "@/hooks/queries/useAppLabClients";
+import { AppFormInput, AppLabApp } from "@/hooks/queries/useAppLabApps";
 
 const schema = z.object({
   name: z.string().trim().min(1, "Obrigatório").max(120),
@@ -42,12 +43,21 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   client?: AppLabClient | null;
+  apps: AppLabApp[];
   onSubmit: (input: ClientFormInput) => Promise<void> | void;
+  onCreateApp: (input: AppFormInput) => Promise<AppLabApp>;
   isLoading?: boolean;
 }
 
-export function ClientFormDialog({ open, onOpenChange, client, onSubmit, isLoading }: Props) {
+type LinkMode = "none" | "existing" | "new";
+
+export function ClientFormDialog({ open, onOpenChange, client, apps, onSubmit, onCreateApp, isLoading }: Props) {
   const isEdit = !!client;
+  const [linkMode, setLinkMode] = useState<LinkMode>("none");
+  const [selectedAppId, setSelectedAppId] = useState<string>("");
+  const [newAppName, setNewAppName] = useState("");
+  const [creatingApp, setCreatingApp] = useState(false);
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -82,16 +92,38 @@ export function ClientFormDialog({ open, onOpenChange, client, onSubmit, isLoadi
         next_payment: client?.billing?.next_payment ?? "",
         plan: client?.billing?.plan ?? "",
       });
+      setLinkMode(client?.app_id ? "existing" : "none");
+      setSelectedAppId(client?.app_id ?? "");
+      setNewAppName("");
     }
   }, [open, client]);
 
   const appType = form.watch("app_type");
 
   const handle = async (data: FormData) => {
+    let appId: string | null = null;
+    if (linkMode === "existing") {
+      appId = selectedAppId || null;
+    } else if (linkMode === "new" && newAppName.trim()) {
+      setCreatingApp(true);
+      try {
+        const created = await onCreateApp({
+          name: newAppName.trim(),
+          app_type: data.app_type,
+          status: "active",
+          country: data.country || "BR",
+        });
+        appId = created.id;
+      } finally {
+        setCreatingApp(false);
+      }
+    }
+
     await onSubmit({
       name: data.name,
       app_type: data.app_type,
       status: data.status,
+      app_id: appId,
       country: data.country || "BR",
       description: data.description || null,
       login_email: data.login_email || null,
@@ -108,6 +140,8 @@ export function ClientFormDialog({ open, onOpenChange, client, onSubmit, isLoadi
           : null,
     });
   };
+
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -204,6 +238,50 @@ export function ClientFormDialog({ open, onOpenChange, client, onSubmit, isLoadi
                 )}
               />
             </section>
+
+            {/* Vinculação de App */}
+            <section className="space-y-3">
+              <h4 className="text-xs uppercase tracking-wider text-muted-foreground">App vinculado</h4>
+              <RadioGroup
+                value={linkMode}
+                onValueChange={(v) => setLinkMode(v as LinkMode)}
+                className="flex flex-wrap gap-4"
+              >
+                <Label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="none" /> Sem app
+                </Label>
+                <Label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="existing" /> Vincular existente
+                </Label>
+                <Label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="new" /> Criar novo
+                </Label>
+              </RadioGroup>
+              {linkMode === "existing" && (
+                <Select value={selectedAppId} onValueChange={setSelectedAppId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um app" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {apps.length === 0 && (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">Nenhum app cadastrado</div>
+                    )}
+                    {apps.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {linkMode === "new" && (
+                <Input
+                  value={newAppName}
+                  onChange={(e) => setNewAppName(e.target.value)}
+                  placeholder="Nome do novo app"
+                />
+              )}
+            </section>
+
+
 
             {/* Credenciais */}
             <section className="space-y-3">
@@ -304,8 +382,8 @@ export function ClientFormDialog({ open, onOpenChange, client, onSubmit, isLoadi
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Salvando..." : isEdit ? "Salvar" : "Criar"}
+              <Button type="submit" disabled={isLoading || creatingApp}>
+                {isLoading || creatingApp ? "Salvando..." : isEdit ? "Salvar" : "Criar"}
               </Button>
             </DialogFooter>
           </form>
