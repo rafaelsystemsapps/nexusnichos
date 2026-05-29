@@ -12,6 +12,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   client: AppLabClient | null;
+  appName?: string | null;
   onEdit: (c: AppLabClient) => void;
   onDelete: (c: AppLabClient) => void;
 }
