@@ -100,6 +100,7 @@ export function useWeekStats(nichoId: string, today: string = todayStr()) {
 }
 
 export function useHistory(nichoId: string, days = 30) {
+  const { ready } = useAuthReady();
   const today = todayStr();
   const from = format(subDays(new Date(), days - 1), "yyyy-MM-dd");
   return useQuery({
