@@ -32,7 +32,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export function ClientDetailDialog({ open, onOpenChange, client, onEdit, onDelete }: Props) {
+export function ClientDetailDialog({ open, onOpenChange, client, appName, onEdit, onDelete }: Props) {
   if (!client) return null;
   const pais = paisInfo(client.country);
   const billingStatus = client.app_type === "b2b" ? computeBillingStatus(client.billing) : null;
