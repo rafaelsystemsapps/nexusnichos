@@ -171,6 +171,48 @@ export type Database = {
         }
         Relationships: []
       }
+      app_lab_apps: {
+        Row: {
+          app_type: string
+          category: string | null
+          country: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          nicho_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_type?: string
+          category?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          nicho_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_type?: string
+          category?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          nicho_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_lab_billing: {
         Row: {
           billing_status: string | null
@@ -220,6 +262,7 @@ export type Database = {
       }
       app_lab_clients: {
         Row: {
+          app_id: string | null
           app_type: string
           country: string | null
           created_at: string
@@ -235,6 +278,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          app_id?: string | null
           app_type: string
           country?: string | null
           created_at?: string
@@ -250,6 +294,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          app_id?: string | null
           app_type?: string
           country?: string | null
           created_at?: string

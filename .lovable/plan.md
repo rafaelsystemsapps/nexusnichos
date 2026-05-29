@@ -1,145 +1,85 @@
-## NEXUS v0.0.7.0 — App Lab Rebuild: App Portfolio & Client Manager
+# NEXUS v0.0.7.1 — App Lab Architecture Rebuild (Apps + Clients Separation)
 
-Reestrutura completa do módulo App Lab. O módulo atual (apps de teste com vínculos a contas e durações de teste) será substituído por um gestor de **Clientes/Apps** com separação B2B (com billing) vs B2C (portfólio).
+Reestrutura o App Lab para separar **Apps** e **Clientes** como entidades distintas, com vínculo relacional (1 App → N Clientes), e três subabas: **Dashboard**, **Clientes**, **Apps**. Billing continua exclusivo B2B. Sem mudar tema, navegação externa, toggle de módulos ou demais módulos.
 
-Sem mudanças em: sidebar toggle logic, Contas, Planner, Auth, tema, Dashboard, workspace routing. Reaproveita o mesmo padrão visual do módulo Contas (cards/pastas, status com opacidade).
+## Modelo relacional
 
----
+```text
+apps (raiz)
+ └── clients (1 app → N clientes)
+       └── client_billing (1:1, só B2B)
+```
 
-### 1. Banco de dados (migration)
+## 1. Banco de dados (migration)
 
-**Tabelas atuais a manter intactas** (dados legados não serão migrados automaticamente — código antigo deixa de ler):
-- `applab_apps`, `applab_account_links` permanecem no schema mas não são mais usadas. (Decisão: não dropar para não perder dados; futuras limpezas manuais.)
+Criar tabelas novas dedicadas (com `nicho_id` + `user_id` no padrão RLS atual via `get_user_nicho`/`has_role`):
 
-**Novas tabelas:**
+- **app_lab_apps**: `name`, `app_type` (b2b/b2c), `category`, `country`, `status` (active/inactive/pending), `description`, `nicho_id`, `user_id`, timestamps.
+- **app_lab_clients_v2** (ou reaproveitar `app_lab_clients` adicionando coluna `app_id`): adicionar `app_id uuid` referenciando o app vinculado. Para evitar perda de dados, **adiciono `app_id` à tabela `app_lab_clients` existente** e mantenho `app_type`/credenciais/status.
+- **app_lab_billing**: já existe (1:1 com cliente B2B) — mantida como está.
 
-`app_lab_clients`
-- `id uuid PK`
-- `nicho_id uuid NOT NULL` (workspace)
-- `user_id uuid NOT NULL` (criador)
-- `name text NOT NULL`
-- `app_type text NOT NULL` (`b2b` | `b2c`)
-- `status text NOT NULL DEFAULT 'pending'` (`active` | `inactive` | `pending`)
-- `country text` (default `BR`)
-- `description text`
-- `login_email text`
-- `password text`
-- `notes text`
-- `created_at`, `updated_at` (trigger updated_at)
+Cada `CREATE TABLE` novo terá GRANTs (`authenticated`, `service_role`) + RLS (mesmas 4 policies por nicho) + trigger `update_updated_at_column`. Tabelas legadas `applab_apps`/`applab_account_links` permanecem intocadas (sem uso na UI).
 
-RLS (mesmo padrão das outras tabelas do nicho):
-- SELECT/INSERT/UPDATE/DELETE: `has_role(auth.uid(),'admin') OR nicho_id = get_user_nicho(auth.uid())`
-- INSERT exige `user_id = auth.uid()`
+## 2. Subnavegação interna
 
-`app_lab_billing` (1:1 opcional com client B2B)
-- `id uuid PK`
-- `client_id uuid NOT NULL UNIQUE`
-- `nicho_id uuid NOT NULL` (denormalizado para RLS direta)
-- `monthly_value numeric(12,2)`
-- `due_date date` (vencimento atual)
-- `next_payment date` (próximo)
-- `plan text`
-- `billing_status text` (`em_dia` | `atrasado`) — derivado dinamicamente, mas armazenado como cache opcional
-- `created_at`, `updated_at`
+`AppLabWorkspace` ganha 3 abas (componente `Tabs`): **Dashboard | Clientes | Apps**. Estado de aba local, sem alterar rota.
 
-RLS por `nicho_id` (mesmo padrão). Trigger `updated_at`.
+## 3. Dashboard (aba 1)
 
-Index: `app_lab_clients(nicho_id)`, `app_lab_billing(client_id)`.
+Visão executiva leve com cards:
+- Totais: total apps, total clientes, apps ativos, clientes ativos/aguardando/inativos.
+- Financeiro B2B: MRR total, clientes em atraso, em dia, vencimentos próximos.
+- Split B2B vs B2C.
 
----
+## 4. Clientes (aba 2)
 
-### 2. Frontend — estrutura de arquivos
+- Grid de pastas (reusa `ClientCard`), cada cliente mostra: nome, **app vinculado**, tipo, status, billing state (se B2B).
+- Botão **+ Novo Cliente** → `ClientFormDialog` com:
+  - Identidade: nome, tipo, país, descrição.
+  - **Vinculação de App**: dropdown "Vincular app existente" OU "Criar novo app" inline (cria app e já vincula).
+  - Credenciais: login, senha, observações.
+  - Billing (só B2B): mensalidade, vencimento, próximo pagamento, plano.
+- Filtros: nome, app vinculado, ativos, atrasados, B2B/B2C.
+- `ClientDetailDialog`: identidade (com app vinculado + created_at), credenciais, billing (B2B).
 
-Novos:
-- `src/components/colaborador/applab/AppLabWorkspace.tsx` — container (header, stats, filtros, grid, modais)
-- `src/components/colaborador/applab/ClientCard.tsx` — folder/card consistente com `AccountFolderCard`
-- `src/components/colaborador/applab/ClientFormDialog.tsx` — criar/editar cliente, com seção billing condicional a B2B
-- `src/components/colaborador/applab/ClientDetailDialog.tsx` — pasta aberta (Identity / Credenciais / Billing condicional)
-- `src/components/colaborador/applab/AppLabStats.tsx` — mini cards (total, ativos, inativos, aguardando, B2B/B2C, MRR, em dia, atrasados)
-- `src/components/colaborador/applab/AppLabFilters.tsx` — busca + chips de filtro
-- `src/hooks/queries/useAppLabClients.ts` — query/mutations dos clients + join opcional com billing
-- `src/lib/applab-billing.ts` — helpers `computeBillingStatus(billing)`, `daysUntil(date)`
+## 5. Apps (aba 3)
 
-Modificados:
-- `src/components/colaborador/AppLabTab.tsx` — substitui por wrapper que renderiza `<AppLabWorkspace nichoId={...} />`. Arquivos legados (`AppLabCard.tsx`, `AppLabForm.tsx`, `AppLabLinksManager.tsx`) deletados.
-- `src/main.tsx` — `APP_VERSION = "0.0.7.0"`.
+- Grid de pastas, cada app mostra: nome, tipo, status, país, **nº de clientes vinculados**.
+- Botão **+ Novo App** → `AppFormDialog`: nome, categoria, tipo, status, país, descrição, data criação.
+- `AppDetailDialog` (estilo folder/subfolder): identidade do app + **clientes vinculados como subpastas** (mini-cards). Permite editar/excluir o app.
+- Filtros: nome, ativos, B2B/B2C, nº clientes.
 
-Sidebar/routing: **nenhuma mudança**. O item AppLab já é exibido condicionalmente via `nicho.applab_habilitado` (v0.0.6.6) e a rota `/applab` continua apontando para o tab.
+## 6. Estados visuais (padrão NEXUS)
 
----
+- Ativo: normal. Inativo: opacidade reduzida. Aguardando: tom neutro/âmbar.
+- Billing B2B: verde = em dia, vermelho = atrasado.
 
-### 3. UX/Comportamento
+## Detalhes técnicos
 
-**Tela inicial (`AppLabWorkspace`):**
-- Header com título "App Lab" + botão `+ Novo Cliente / App` no canto direito.
-- `AppLabStats` no topo (mini cards leves, sem dashboard pesado):
-  - Totais: total, ativos, inativos, aguardando
-  - Split: B2B / B2C
-  - Receita (só se houver B2B): MRR (soma `monthly_value` de B2B ativos), em dia, atrasados
-- `AppLabFilters`: busca por nome + chips (Todos · B2B · B2C · Ativos · Inativos · Aguardando · Em dia · Atrasados)
-- Grid de `ClientCard`s
+**Migration** (via ferramenta de migração, com aprovação):
+- `CREATE TABLE public.app_lab_apps (...)` + GRANT + RLS + trigger.
+- `ALTER TABLE public.app_lab_clients ADD COLUMN app_id uuid;`
 
-**Card (`ClientCard`):**
-- Visual idêntico ao `AccountFolderCard` (pasta)
-- Mostra: nome, badge tipo (B2B/B2C), badge status, país (bandeira via `lib/paises`)
-- Aplica opacidade:
-  - `pending` → tom neutro/cinza
-  - `active` → normal
-  - `inactive` → `opacity-60`
-- Se B2B: badge billing (🟢 Em dia / 🔴 Atrasado) + "vence em X dias" se `next_payment` definido
-- Click → abre `ClientDetailDialog`
+**Hooks** (`src/hooks/queries/`):
+- Novo `useAppLabApps.ts`: CRUD de apps + contagem de clientes vinculados.
+- Atualizar `useAppLabClients.ts`: incluir `app_id` no select/insert/update e tipo `AppLabClient.app_id`.
 
-**ClientFormDialog (criar/editar):**
-- Seções:
-  1. **Identidade**: nome, tipo (radio B2B/B2C), descrição, país (Select PAISES), data de criação
-  2. **Credenciais**: login/email, senha (`PasswordField`), observação
-  3. **Status**: select (ativo / inativo / aguardando)
-  4. **Billing** (só visível se tipo = B2B): valor mensal, vencimento, próximo pagamento, plano
-- Validação zod
-- Ao salvar B2B: upsert em `app_lab_clients` + upsert em `app_lab_billing` (mesma transação via 2 calls sequenciais). Ao trocar para B2C, deletar registro de billing.
+**Componentes** (`src/components/colaborador/applab/`):
+- `AppLabWorkspace.tsx`: introduz `Tabs` (Dashboard/Clientes/Apps) e orquestra estados.
+- `AppLabDashboard.tsx` (novo): cards de visão geral (consolida lógica de `AppLabStats`).
+- `ClientsTab.tsx` (novo): grid + filtros + dialogs de clientes (extrai lógica atual).
+- `AppsTab.tsx` (novo): grid + filtros + dialogs de apps.
+- `AppCard.tsx` (novo): pasta de app com nº de clientes.
+- `AppFormDialog.tsx` (novo): criar/editar app.
+- `AppDetailDialog.tsx` (novo): identidade + subpastas de clientes.
+- `ClientFormDialog.tsx`: adicionar seção de vinculação de app (dropdown existente / criar novo inline).
+- `ClientCard.tsx`: exibir nome do app vinculado.
+- Reaproveitar `AppLabFilters.tsx`/`AppLabStats.tsx` (stats migra para dashboard).
 
-**ClientDetailDialog:**
-- Abre a "pasta" — view detalhada com seções: App Identity, Credenciais, Billing (B2B only)
-- Botões: Editar, Excluir
-- Billing mostra status calculado em runtime
+**Versão**: `src/main.tsx` → `APP_VERSION = "0.0.7.1"`.
 
-**Billing logic** (`computeBillingStatus`):
-- Se `due_date` < hoje → `atrasado`
-- Senão → `em_dia`
-- `daysUntil(next_payment)` → label "vence em N dias" (ou "vence hoje" / "vencido há N dias")
+**Protegido (não alterar)**: workspaces, module toggle, dashboard do colaborador, módulo Contas, Planner, auth, estrutura Supabase core, tema e performance.
 
----
+## Resultado esperado
 
-### 4. Filtros
-
-Estado local: `searchTerm`, `typeFilter`, `statusFilter`, `billingFilter`. Aplicados no `useMemo` em cima dos clients carregados.
-
----
-
-### 5. Stats
-
-Calculados em `useMemo` no `AppLabWorkspace` a partir da lista carregada (join com billing). MRR = soma de `monthly_value` apenas de B2B `active`.
-
----
-
-### 6. Regras de proteção
-
-Não tocar: `AppSidebar`, `MainLayout`, `ColaboradorWorkspace` routing, `ConfiguracoesNichoTab` toggle, módulos Contas/Planner, auth, tema, tabelas `nichos`/`contas_redes_sociais`/`planner_notes`.
-
----
-
-### Ordem de execução
-
-1. Migration (criar `app_lab_clients`, `app_lab_billing`, RLS, triggers `updated_at`) — **aguardar aprovação do usuário**.
-2. Criar hooks + lib helpers.
-3. Criar componentes novos (Workspace, Card, Form, Detail, Stats, Filters).
-4. Substituir `AppLabTab.tsx` por wrapper.
-5. Deletar arquivos legados.
-6. Bump `APP_VERSION` para `0.0.7.0`.
-7. Validar visual em `/workspace/{id}/applab` e fluxo criar B2B/B2C.
-
----
-
-### Decisão pendente (apenas confirme antes da implementação)
-
-- **Dados antigos** em `applab_apps` / `applab_account_links` serão **abandonados** (tabelas permanecem no banco, sem UI). OK? Se preferir dropar essas tabelas, incluo no migration.
+App Lab passa a ter Dashboard (visão geral), Clientes (pastas de clientes vinculados a apps) e Apps (pastas de apps com clientes como subpastas), com criação relacional de cliente↔app e billing apenas B2B.
