@@ -34,6 +34,7 @@ function invalidateAll(qc: ReturnType<typeof useQueryClient>, nichoId: string) {
 }
 
 export function useNotesByDay(nichoId: string, day: string = todayStr()) {
+  const { ready } = useAuthReady();
   return useQuery({
     queryKey: keys.day(nichoId, day),
     queryFn: async () => {
