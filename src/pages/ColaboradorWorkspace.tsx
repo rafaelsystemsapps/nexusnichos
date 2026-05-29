@@ -97,7 +97,7 @@ export default function ColaboradorWorkspace() {
       title={getPageTitle()}
       subtitle={`Workspace: ${nicho.nome}`}
     >
-      {renderContent()}
+      <ErrorBoundary resetKey={path}>{renderContent()}</ErrorBoundary>
     </MainLayout>
   );
 }
