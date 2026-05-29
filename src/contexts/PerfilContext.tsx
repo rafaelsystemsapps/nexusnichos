@@ -1,10 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
-// Sessão compartilhada — login invisível para que as RLS continuem funcionando.
-// O usuário nunca digita senha nem vê tela de login.
-const SHARED_EMAIL = "rafael.workbiz@gmail.com";
-const SHARED_PASSWORD = "Admin2902";
+import { ensureSession } from "@/lib/session";
 
 export type TipoPerfil = "admin" | "colaborador";
 
