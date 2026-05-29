@@ -43,12 +43,21 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   client?: AppLabClient | null;
+  apps: AppLabApp[];
   onSubmit: (input: ClientFormInput) => Promise<void> | void;
+  onCreateApp: (input: AppFormInput) => Promise<AppLabApp>;
   isLoading?: boolean;
 }
 
-export function ClientFormDialog({ open, onOpenChange, client, onSubmit, isLoading }: Props) {
+type LinkMode = "none" | "existing" | "new";
+
+export function ClientFormDialog({ open, onOpenChange, client, apps, onSubmit, onCreateApp, isLoading }: Props) {
   const isEdit = !!client;
+  const [linkMode, setLinkMode] = useState<LinkMode>("none");
+  const [selectedAppId, setSelectedAppId] = useState<string>("");
+  const [newAppName, setNewAppName] = useState("");
+  const [creatingApp, setCreatingApp] = useState(false);
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -83,16 +92,38 @@ export function ClientFormDialog({ open, onOpenChange, client, onSubmit, isLoadi
         next_payment: client?.billing?.next_payment ?? "",
         plan: client?.billing?.plan ?? "",
       });
+      setLinkMode(client?.app_id ? "existing" : "none");
+      setSelectedAppId(client?.app_id ?? "");
+      setNewAppName("");
     }
   }, [open, client]);
 
   const appType = form.watch("app_type");
 
   const handle = async (data: FormData) => {
+    let appId: string | null = null;
+    if (linkMode === "existing") {
+      appId = selectedAppId || null;
+    } else if (linkMode === "new" && newAppName.trim()) {
+      setCreatingApp(true);
+      try {
+        const created = await onCreateApp({
+          name: newAppName.trim(),
+          app_type: data.app_type,
+          status: "active",
+          country: data.country || "BR",
+        });
+        appId = created.id;
+      } finally {
+        setCreatingApp(false);
+      }
+    }
+
     await onSubmit({
       name: data.name,
       app_type: data.app_type,
       status: data.status,
+      app_id: appId,
       country: data.country || "BR",
       description: data.description || null,
       login_email: data.login_email || null,
@@ -109,6 +140,8 @@ export function ClientFormDialog({ open, onOpenChange, client, onSubmit, isLoadi
           : null,
     });
   };
+
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
