@@ -1,7 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthReady } from "@/hooks/useAuthReady";
 
 export function useNicho(nichoId: string | undefined) {
+  const { ready } = useAuthReady();
   return useQuery({
     queryKey: ["nicho", nichoId],
     queryFn: async () => {
@@ -15,7 +17,7 @@ export function useNicho(nichoId: string | undefined) {
       if (error) throw error;
       return data;
     },
-    enabled: !!nichoId,
+    enabled: ready && !!nichoId,
     staleTime: 1000 * 60 * 5, // 5 min
     gcTime: 1000 * 60 * 30, // 30 min
   });
